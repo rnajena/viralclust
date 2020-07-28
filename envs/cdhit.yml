@@ -1,0 +1,7 @@
+name: cdhit
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.7
+  - cd-hit>=4.8.1
