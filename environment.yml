@@ -1,0 +1,15 @@
+name: viralclust
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.7
+  - cd-hit>=4.8.1
+  - mafft>=7.470
+  - numpy>=1.18.5
+  - colorlog>=4.1.0
+  - biopython>=1.76
+  - umap-learn>=0.4.4
+  - hdbscan>=0.8.26
+  - docopt>=0.6.2
+  - scipy>=1.4.1
