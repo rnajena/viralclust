@@ -47,6 +47,7 @@ log.info """\
     CPUs used:              $params.cores
 
     cd-hit-est parameters:  $params.cdhit_params
+    HDBscan parameters:     $params.hdbscan_params
 
 
     """
@@ -56,11 +57,11 @@ sequences = Channel.fromPath(params.fasta)
 // Channel.fromPath(params.fasta).set{sequences}
 
 include { cdhit } from './modules/cdhit'
-
+include { hdbscan } from './modules/hdbscan'
 
 workflow {
   cdhit(sequences, params.cdhit_params)
-  hdbscan(cdhit.out.cdhit_result)
+  hdbscan(cdhit.out.cdhit_result, params.hdbscan_params)
   // uclust(cdhit.out.cdhit_result)
   // linclust(cdhit.out.cdhit_result)
   // applyMetric(hdb.out, uclust.out, linclust.out)
