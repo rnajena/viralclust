@@ -1,11 +1,9 @@
-name: viralclust
+name: hdbscan
 channels:
   - conda-forge
   - bioconda
 dependencies:
   - python>=3.7
-  - cd-hit>=4.8.1
-  - mafft>=7.470
   - numpy>=1.18.5
   - colorlog>=4.1.0
   - biopython>=1.76
