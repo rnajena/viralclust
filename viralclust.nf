@@ -62,6 +62,7 @@ include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
 if (params.tree) {include { mafft } from './modules/mafft'}
+if (params.tree) {include { fasttree } from './modules/fasttree'}
 if (params.tree) {include { raxmlng } from './modules/raxml-ng'}
 
 
@@ -70,7 +71,8 @@ workflow {
 
   if (params.tree) {
     mafft(remove_redundancy.out.nr_result)
-    raxmlng(mafft.out.mafft_result, params.raxmlng_params)
+    fasttree(mafft.out.mafft_result)
+    //raxmlng(mafft.out.mafft_result, params.raxmlng_params)
   }
 
   hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
