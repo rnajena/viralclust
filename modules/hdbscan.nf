@@ -8,6 +8,8 @@
 process hdbscan {
   label 'hdbscan'
   publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*_repr.fasta"
+  publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*.txt"
+  publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "cluster*.fasta"
 
   input:
     path(sequences)
@@ -15,6 +17,7 @@ process hdbscan {
 
   output:
     path "${sequences.baseName}_repr.fasta", emit: hdbscan_result
+    path "*"
 
   script:
   """

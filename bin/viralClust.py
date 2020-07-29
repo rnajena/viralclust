@@ -90,7 +90,7 @@ def create_logger():
     handle = logging.StreamHandler()
     #handle.setLevel(logging.WARNING)
 
-    formatter = ColoredFormatter("%(log_color)sVeGETA %(levelname)s -- %(asctime)s -- %(message)s", "%Y-%m-%d %H:%M:%S", 
+    formatter = ColoredFormatter("%(log_color)sViralClust %(levelname)s -- %(asctime)s -- %(message)s", "%Y-%m-%d %H:%M:%S", 
                                     log_colors={
                                             'DEBUG':    'bold_cyan',
                                             'INFO':     'bold_white',
@@ -157,7 +157,7 @@ def parse_arguments(d_args):
   if output == 'pwd':
     output = os.getcwd()
   now = str(datetime.now()).split('.')[0].replace(' ','_').replace(':','-')
-  output = f"{output}/viralClust-{now}"
+  #output = f"{output}/viralClust-{now}"
   create_outdir(output)
 
   subcluster = d_args['--subcluster']
@@ -173,13 +173,13 @@ def perform_clustering():
   multiPool = Pool(processes=proc)
   virusClusterer = Clusterer(logger, inputSequences, k, proc, outdir, goi=goi)
 
-  logger.info("Removing 100% identical sequences.")
-  code = virusClusterer.remove_redundancy()
-  logger.info("Sequences are all parsed.")
+  #logger.info("Removing 100% identical sequences.")
+  #code = virusClusterer.remove_redundancy()
+  #logger.info("Sequences are all parsed.")
 
-  if code == 1:
-    __abort_cluster(virusClusterer, inputSequences)
-    return 0
+  #if code == 1:
+  #  __abort_cluster(virusClusterer, inputSequences)
+  #  return 0
 
   if goi:
     logger.info(f"Found {len(virusClusterer.goiHeader)} genome(s) of interest.")
@@ -212,8 +212,8 @@ def perform_clustering():
   if not subcluster:
     return 0
 
-  for file in glob.glob(f"{outdir}/cluster*.fa"):
-    if file == f"{outdir.rstrip('/')}/cluster-1.fa":
+  for file in glob.glob(f"{outdir}/cluster*.fasta"):
+    if file == f"{outdir.rstrip('/')}/cluster-1.fasta":
       continue
     virusSubClusterer = Clusterer(logger, file, k, proc, outdir, subCluster=True)
     code = virusSubClusterer.remove_redundancy()
