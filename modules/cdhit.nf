@@ -6,18 +6,18 @@
 
 process cdhit {
   label 'cdhit'
-  publishDir "${params.output}/${params.cdhit_output}", mode: 'copy', pattern: '*_clustered.fasta'
+  publishDir "${params.output}/${params.cdhit_output}", mode: 'copy', pattern: '*_cdhitest.fasta'
 
   input:
     path(sequences)
     val(addParams)
 
   output:
-    path "${sequences.baseName}_clustered.fasta", emit: cdhit_result
+    path "${sequences.baseName}_cdhitest.fasta", emit: cdhit_result
 
   script:  
   """
-    cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_clustered.fasta"
+    cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
   """
 }
 

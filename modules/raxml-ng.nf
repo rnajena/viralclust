@@ -17,7 +17,7 @@ process raxmlng {
 
   script:
   """
-    raxml-ng --all --msa ${alignment} ${addParams} --threads ${params.cores}
+    raxml-ng --all --msa ${alignment} ${addParams} --threads ${task.cpus}
   """
 
 

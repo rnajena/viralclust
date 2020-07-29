@@ -19,14 +19,12 @@ println "Workdir location:"
 println "  $workflow.workDir"
 println "Launchdir location:"
 println "  $workflow.launchDir"
-println "Permanent cache directory:"
-println "  $params.permanentCacheDir"
 println "Configuration files:"
 println "  $workflow.configFiles\u001B[0m"
 println " "
 
 if (workflow.profile == 'standard' || workflow.profile.contains('local')) {
-    println "\033[2mCPUs to use: $params.cores, maximal CPS to use: $params.max_cores\u001B[0m"
+    println "\033[2mCPUs to use: $params.cores, maximal CPUs to use: $params.max_cores\u001B[0m"
     println " "
 }
 
@@ -48,10 +46,10 @@ log.info """\
     Input File:             $params.fasta
     Output path:            $params.output
     CPUs used:              $params.cores
-
-    cd-hit-est parameters:  $params.cdhit_params
-    HDBscan parameters:     $params.hdbscan_params
-    RAxML-ng parameters:    $params.raxmlng_params
+    ${sw -> if (params.cdhit_params != '') sw << "cd-hit-est parameters:  ${params.cdhit_params}"}
+    ${sw -> if (params.hdbscan_params != '') sw << "HDBscan parameters:     ${params.hdbscan_params}"}
+    ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust.params}"}
+    ${sw -> if (params.tree) sw << "RAxML-ng parameters:    ${params.raxmlng_params}"}
 
 
     """
@@ -61,23 +59,25 @@ sequences = Channel.fromPath(params.fasta)
 // Channel.fromPath(params.fasta).set{sequences}
 
 include { remove_redundancy; cdhit } from './modules/cdhit'
-// include { rename_fasta_header } from './modules/rename_fasta_header'
-//include { cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
+include { sumaclust } from './modules/sumaclust'
 if (params.tree) {include { mafft } from './modules/mafft'}
 if (params.tree) {include { raxmlng } from './modules/raxml-ng'}
-//include { mafft } from './modules/mafft'
-//include { raxmlng } from './modules/raxml-ng'
+
 
 workflow {
   remove_redundancy(sequences)
-  // rename_fasta_header(cdhit.out.cdhit_result)
+
   if (params.tree) {
     mafft(remove_redundancy.out.nr_result)
     raxmlng(mafft.out.mafft_result, params.raxmlng_params)
   }
+
   hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
   cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
+  sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
+
+
   // uclust(cdhit.out.cdhit_result)
   // linclust(cdhit.out.cdhit_result)
   // applyMetric(hdb.out, uclust.out, linclust.out)
