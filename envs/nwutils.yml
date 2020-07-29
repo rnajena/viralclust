@@ -1,0 +1,8 @@
+name: nwutils
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.7
+  - newick_utils>=1.6
+  - librsvg>=2.49.3

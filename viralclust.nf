@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-nextflow.preview.dsl=2
+nextflow.enable.dsl=2
 
 
 /*
@@ -61,9 +61,12 @@ sequences = Channel.fromPath(params.fasta)
 include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
-if (params.tree) {include { mafft } from './modules/mafft'}
-if (params.tree) {include { fasttree } from './modules/fasttree'}
-if (params.tree) {include { raxmlng } from './modules/raxml-ng'}
+if (params.tree) {
+  include { mafft } from './modules/mafft'
+  include { fasttree } from './modules/fasttree'
+  include { raxmlng } from './modules/raxml-ng'
+  include { nwdisplay } from './modules/nwutils'
+}
 
 
 workflow {
@@ -72,6 +75,7 @@ workflow {
   if (params.tree) {
     mafft(remove_redundancy.out.nr_result)
     fasttree(mafft.out.mafft_result)
+    nwdisplay(fasttree.out.fasttree_result)
     //raxmlng(mafft.out.mafft_result, params.raxmlng_params)
   }
 
