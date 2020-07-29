@@ -1,0 +1,7 @@
+name: sumaclust
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.7
+  - sumaclust>=1.0.31
