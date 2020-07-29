@@ -39,6 +39,9 @@ if ( params.fasta == '' ) {
 }
 
 
+umap_hdbscan_script = Channel.fromPath( workflow.projectDir + '/bin/viralClust.py', checkIfExists: true )
+
+
 log.info """\
     VIRALCLUST -- CLUSTER YOUR VIRUSES
     ==================================
@@ -48,6 +51,7 @@ log.info """\
 
     cd-hit-est parameters:  $params.cdhit_params
     HDBscan parameters:     $params.hdbscan_params
+    RAxML-ng parameters:    $params.raxmlng_params
 
 
     """
@@ -56,12 +60,24 @@ log.info """\
 sequences = Channel.fromPath(params.fasta)
 // Channel.fromPath(params.fasta).set{sequences}
 
-include { cdhit } from './modules/cdhit'
+include { remove_redundancy; cdhit } from './modules/cdhit'
+// include { rename_fasta_header } from './modules/rename_fasta_header'
+//include { cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
+if (params.tree) {include { mafft } from './modules/mafft'}
+if (params.tree) {include { raxmlng } from './modules/raxml-ng'}
+//include { mafft } from './modules/mafft'
+//include { raxmlng } from './modules/raxml-ng'
 
 workflow {
-  cdhit(sequences, params.cdhit_params)
-  hdbscan(cdhit.out.cdhit_result, params.hdbscan_params)
+  remove_redundancy(sequences)
+  // rename_fasta_header(cdhit.out.cdhit_result)
+  if (params.tree) {
+    mafft(remove_redundancy.out.nr_result)
+    raxmlng(mafft.out.mafft_result, params.raxmlng_params)
+  }
+  hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
+  cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
   // uclust(cdhit.out.cdhit_result)
   // linclust(cdhit.out.cdhit_result)
   // applyMetric(hdb.out, uclust.out, linclust.out)

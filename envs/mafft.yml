@@ -1,0 +1,7 @@
+name: mafft
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.7
+  - mafft>=7.4
