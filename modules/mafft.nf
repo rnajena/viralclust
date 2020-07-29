@@ -16,7 +16,7 @@ process mafft {
 
   script:
   """
-  mafft --thread ${params.cores} --reorder ${sequences} > "${sequences.baseName}_mafft.aln"
+  mafft --thread ${task.cpus} --reorder ${sequences} > "${sequences.baseName}_mafft.aln"
   """
 
 

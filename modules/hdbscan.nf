@@ -7,7 +7,7 @@
 
 process hdbscan {
   label 'hdbscan'
-  publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*_repr.fasta"
+  publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*_hdbscan.fasta"
   publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*.txt"
   publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "cluster*.fasta"
 
@@ -16,12 +16,12 @@ process hdbscan {
     val(addParams)
 
   output:
-    path "${sequences.baseName}_repr.fasta", emit: hdbscan_result
+    path "${sequences.baseName}_hdbscan.fasta", emit: hdbscan_result
     path "*"
 
   script:
   """
-    python3 ${baseDir}/bin/viralClust.py -p ${params.cores} ${addParams} ${sequences}
+    python3 ${baseDir}/bin/viralClust.py -p ${task.cpus} ${addParams} ${sequences}
   """
 
 }

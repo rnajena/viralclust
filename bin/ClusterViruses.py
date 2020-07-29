@@ -174,7 +174,7 @@ class Clusterer(object):
     self.d_sequences = self.read_sequences()  
     if self.d_sequences == 1:
       import shutil
-      shutil.copyfile(self.sequenceFile, f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_repr.fasta')
+      shutil.copyfile(self.sequenceFile, f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_hdbscan.fasta')
       return 1
 
     p = Pool(self.proc)
@@ -229,7 +229,7 @@ class Clusterer(object):
 
     except TypeError:
       import shutil
-      shutil.copyfile(self.sequenceFile, f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_repr.fasta')
+      shutil.copyfile(self.sequenceFile, f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_hdbscan.fasta')
       return 1
 
     self.allCluster = list(zip([x[0] for x in profiles], self.clusterlabel))
@@ -337,7 +337,7 @@ class Clusterer(object):
       
     #  outputPath = f'{outdir}/{os.path.splitext(os.path.basename(self.reducedSequences))[0]}_repr.fa'
     #else:
-    outputPath = f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_repr.fasta'
+    outputPath = f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_hdbscan.fasta'
 
     with open(outputPath, 'w') as outStream:
       for centroidID, sequence in reprSeqs.items():
