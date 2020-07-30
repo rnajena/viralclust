@@ -1,0 +1,7 @@
+name: vsearch
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.7
+  - vsearch>=2.15
