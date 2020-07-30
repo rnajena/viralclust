@@ -38,7 +38,7 @@ if ( params.fasta == '' ) {
 
 
 umap_hdbscan_script = Channel.fromPath( workflow.projectDir + '/bin/viralClust.py', checkIfExists: true )
-
+umap_hdbscan_class = Channel.fromPath( workflow.projectDir + '/bin/ClusterViruses.py', checkIfExists: true )
 
 log.info """\
     VIRALCLUST -- CLUSTER YOUR VIRUSES
@@ -46,14 +46,16 @@ log.info """\
     Input File:             $params.fasta
     Output path:            $params.output
     CPUs used:              $params.cores
+    ${msg -> if (params.tree) msg << "Tree will be calculated"}
     ${sw -> if (params.cdhit_params != '') sw << "cd-hit-est parameters:  ${params.cdhit_params}"}
     ${sw -> if (params.hdbscan_params != '') sw << "HDBscan parameters:     ${params.hdbscan_params}"}
-    ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust.params}"}
-    ${sw -> if (params.tree) sw << "RAxML-ng parameters:    ${params.raxmlng_params}"}
-
+    ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust_params}"}
+    ${sw -> if (params.vsearch_params != '') sw << "vsearch parameters:     ${params.vsearch_params}"}
+    
 
     """
     .stripIndent()
+// ${sw -> if (params.tree) sw << "RAxML-ng parameters:    ${params.raxmlng_params}"}
 
 sequences = Channel.fromPath(params.fasta)
 // Channel.fromPath(params.fasta).set{sequences}
@@ -61,6 +63,8 @@ sequences = Channel.fromPath(params.fasta)
 include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
+include { vsearch } from './modules/vsearch'
+
 if (params.tree) {
   include { mafft } from './modules/mafft'
   include { fasttree } from './modules/fasttree'
@@ -82,6 +86,7 @@ workflow {
   hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
   cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
   sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
+  vsearch(remove_redundancy.out.nr_result, params.vsearch_params)
 
 
   // uclust(cdhit.out.cdhit_result)
