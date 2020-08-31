@@ -1,9 +1,0 @@
-name: meshclust
-channels:
-  - conda-forge
-  - bioconda
-  - lmfaber
-dependencies:
-  - python>=3.7
-  - meshclust>=1.2
-  - meshclust2>=2.3
