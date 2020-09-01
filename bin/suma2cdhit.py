@@ -40,7 +40,7 @@ with open(outputFile, 'w') as outputStream:
     seqInCluster = [header for header, headerInfo in clusterInfo.items() if headerInfo['cluster'] == centroid.lstrip('>')]
     outputStream.write(f">Cluster {idx}\n")
     for seqIdx, header in enumerate(seqInCluster):
-      outputStream.write(f"{seqIdx}\t{len(fastaContent[header])}, {header}")
+      outputStream.write(f"{seqIdx}\t{len(fastaContent[header])}nt, {header}")
       if header == centroid:
         outputStream.write(' *\n')
       else:
