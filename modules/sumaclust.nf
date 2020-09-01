@@ -6,7 +6,7 @@
 
 process sumaclust {
   label 'sumaclust'
-  publishDir "${params.output}/${params.sumaclust_output}", mode: 'copy', pattern: '*sumaclust.fasta'
+  publishDir "${params.output}/${params.sumaclust_output}", mode: 'copy', pattern: '*sumaclust.fasta*'
   
 
   input:
@@ -15,10 +15,13 @@ process sumaclust {
 
   output:
     path "${sequences.baseName}_sumaclust.fasta", emit: sumaclust_result
+    path "${sequences.baseName}_sumaclust.fasta.clstr"
 
   script:
   """
-  sumaclust ${addParams} ${sequences} | grep "cluster_center=True" > "${sequences.baseName}_sumaclust.fasta"
+  sumaclust ${addParams} ${sequences}  > "${sequences.baseName}_sumaclust.fasta"
+  python3 ${projectDir}/bin/suma2cdhit.py "${sequences.baseName}_sumaclust.fasta"
+
   """
 
 
