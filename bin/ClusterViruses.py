@@ -237,7 +237,7 @@ class Clusterer(object):
       with open(f'{self.outdir}/cluster.txt', 'w') as outStream:
         for i in set(self.clusterlabel):
           with open(f'{self.outdir}/cluster{i}.fasta', 'w') as fastaOut:
-            outStream.write(f"Cluster: {i}\n")
+            outStream.write(f">Cluster {i}\n")
             for idx, label in self.allCluster:
               if label == i:
                 if idx in Clusterer.goiHeader:
@@ -332,13 +332,20 @@ class Clusterer(object):
             longestCDS = len(allORFs)
             positiveStrand = strand
       reprSeqs[centroidID] = positiveStrand 
-    
-    #if not self.subCluster:
-      
-    #  outputPath = f'{outdir}/{os.path.splitext(os.path.basename(self.reducedSequences))[0]}_repr.fa'
-    #else:
+
     outputPath = f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_hdbscan.fasta'
 
     with open(outputPath, 'w') as outStream:
       for centroidID, sequence in reprSeqs.items():
-        outStream.write(f">{Clusterer.id2header[centroidID]}\n{sequence}\n")    
+        outStream.write(f">{Clusterer.id2header[centroidID]}\n{sequence}\n")
+
+    with open(f'{outputPath}.clstr', 'w') as outStream:
+      for i in set(self.clusterlabel):
+        outStream.write(f">Cluster {i}\n")
+        seqInCluster = [idx for idx,label in self.allCluster if label == i]
+        for idx, seqIdx in enumerate(seqInCluster):
+          outStream.write(f"{idx}\t{len(self.d_sequences[seqIdx])}nt, >{Clusterer.id2header[seqIdx]} ")
+          if seqIdx in self.centroids:
+            outStream.write('*\n')
+          else:
+            outStream.write("at +/13.37%\n")

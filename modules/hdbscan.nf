@@ -8,7 +8,7 @@
 process hdbscan {
   label 'hdbscan'
   publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*_hdbscan.fasta"
-  publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*.txt"
+  publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*.clstr"
   publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "cluster*.fasta"
 
   input:
