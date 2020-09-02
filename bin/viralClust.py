@@ -201,7 +201,7 @@ def perform_clustering():
 
   logger.info("Extracting centroid sequences and writing results to file.\n")
   virusClusterer.get_centroids(multiPool)
-  virusClusterer.split_centroids()
+  virusClusterer.output_centroids()
   
   logger.info(f"Extracting representative sequences for each cluster.")
   sequences = virusClusterer.d_sequences
@@ -233,7 +233,7 @@ def perform_clustering():
       continue
 
     virusSubClusterer.get_centroids(multiPool)
-    virusSubClusterer.split_centroids()
+    virusSubClusterer.output_centroids()
     del virusSubClusterer
 
 if __name__ == "__main__":

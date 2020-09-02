@@ -12,7 +12,6 @@ import math
 import numpy as np
 import os
 import subprocess
-import re
 
 
 import scipy
@@ -30,24 +29,6 @@ class Clusterer(object):
   header2id = {}
   dim = 0
   matrix = np.empty(shape=(dim,dim))
-  codon2aminoacid = { 
-        'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M', 
-        'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACT':'T', 
-        'AAC':'N', 'AAT':'N', 'AAA':'K', 'AAG':'K', 
-        'AGC':'S', 'AGT':'S', 'AGA':'R', 'AGG':'R', 
-        'CTA':'L', 'CTC':'L', 'CTG':'L', 'CTT':'L', 
-        'CCA':'P', 'CCC':'P', 'CCG':'P', 'CCT':'P', 
-        'CAC':'H', 'CAT':'H', 'CAA':'Q', 'CAG':'Q', 
-        'CGA':'R', 'CGC':'R', 'CGG':'R', 'CGT':'R', 
-        'GTA':'V', 'GTC':'V', 'GTG':'V', 'GTT':'V', 
-        'GCA':'A', 'GCC':'A', 'GCG':'A', 'GCT':'A', 
-        'GAC':'D', 'GAT':'D', 'GAA':'E', 'GAG':'E', 
-        'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGT':'G', 
-        'TCA':'S', 'TCC':'S', 'TCG':'S', 'TCT':'S', 
-        'TTC':'F', 'TTT':'F', 'TTA':'L', 'TTG':'L', 
-        'TAC':'Y', 'TAT':'Y', 'TAA':'*', 'TAG':'*', 
-        'TGC':'C', 'TGT':'C', 'TGA':'*', 'TGG':'W', 
-    }
 
   genomeOfInterest = ''
   goiHeader = []
@@ -73,34 +54,12 @@ class Clusterer(object):
     self.proc = proc
     self.d_sequences = {}    
     self.centroids = []
-    self.regex_orf = re.compile(r'M[^*]{25,}?\*')
     self.allCluster = []
     self.clusterlabel = []
     self.probabilities = []
 
     if goi:
       Clusterer.genomeOfInterest = goi
-
-  def rev_comp(self, sequence):
-    """
-    """
-    d_comp = {"A" : "T", "C" : "G", "G" : "C", "T" : "A"}
-    return ("".join([d_comp[nt] if nt in d_comp else nt for nt in sequence[::-1]]))
-  
-  # def remove_redundancy(self):
-  #   """
-  #   """
-  #   if not self.subCluster:
-  #     cmd = f"cd-hit-est -i {self.sequenceFile} -o {self.reducedSequences} -c 1"
-  #     TRASH = open(os.devnull, 'w')
-  #     subprocess.run(cmd.split(), check=True, stderr=TRASH, stdout=TRASH)
-  #     TRASH.close()
-      
-  #   self.d_sequences = self.read_sequences()  
-  #   if self.d_sequences == 1:
-  #     import shutil
-  #     shutil.copyfile(self.sequenceFile, f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_repr.fa')
-  #     return 1
 
   def __parse_fasta(self, filePath, goi=False):
     """
@@ -113,15 +72,12 @@ class Clusterer(object):
       for line in inputStream:
         if line.startswith(">"):
           if header:
-            seq = seq + "X"*10 + self.rev_comp(seq)
             yield (header, seq)
 
           header = line.rstrip("\n").replace(':','_').replace(' ','_').lstrip(">")
           seq = ''
         else:
           seq += line.rstrip("\n").upper().replace('U','T')
-
-      seq = seq + "X"*10 + self.rev_comp(seq)
       yield (header, seq)
 
   def read_sequences(self):
@@ -305,34 +261,10 @@ class Clusterer(object):
     p.join()
 
 
-  def split_centroids(self):
+  def output_centroids(self):
     """
     """
-    
-    centroids = { centroid : self.d_sequences[centroid].split("X"*10) for centroid in self.centroids }
-    reprSeqs = {}
-    for centroidID, strands in centroids.items():
-      positiveStrand = ""
-      longestCDS = 0
-
-      for strand in strands:
-        for frame in range(3):
-          proteinSequence = ""
-          for fragment in range(frame, len(strand), 3):
-            codon = strand[fragment:fragment+3]
-            if len(codon) != 3:
-              continue
-            try:
-              proteinSequence += self.codon2aminoacid[codon]
-            except KeyError:
-              proteinSequence += 'X'
-          matches = self.regex_orf.findall(proteinSequence)
-          allORFs = "".join([x for x in matches if x])
-          if len(allORFs) > longestCDS:
-            longestCDS = len(allORFs)
-            positiveStrand = strand
-      reprSeqs[centroidID] = positiveStrand 
-
+    reprSeqs = {centroid : self.d_sequences[centroid] for centroid in self.centroids}
     outputPath = f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_hdbscan.fasta'
 
     with open(outputPath, 'w') as outStream:
