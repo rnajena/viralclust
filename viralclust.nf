@@ -62,6 +62,7 @@ log.info """\
 sequences = Channel.fromPath(params.fasta)
 // Channel.fromPath(params.fasta).set{sequences}
 
+include { sort_sequences } from './modules/sortsequences'
 include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
@@ -76,7 +77,8 @@ if (params.tree) {
 
 
 workflow {
-  remove_redundancy(sequences)
+  sort_sequences(sequences)
+  remove_redundancy(sort_sequences.out.sort_result)
 
   if (params.tree) {
     mafft(remove_redundancy.out.nr_result)
