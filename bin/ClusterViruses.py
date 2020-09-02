@@ -24,7 +24,7 @@ import hdbscan
 class Clusterer(object):
   """
   """
- 
+
   id2header = {}
   d_profiles = {}
   header2id = {}
@@ -34,7 +34,7 @@ class Clusterer(object):
         'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M', 
         'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACT':'T', 
         'AAC':'N', 'AAT':'N', 'AAA':'K', 'AAG':'K', 
-        'AGC':'S', 'AGT':'S', 'AGA':'R', 'AGG':'R',                  
+        'AGC':'S', 'AGT':'S', 'AGA':'R', 'AGG':'R', 
         'CTA':'L', 'CTC':'L', 'CTG':'L', 'CTT':'L', 
         'CCA':'P', 'CCC':'P', 'CCG':'P', 'CCT':'P', 
         'CAC':'H', 'CAT':'H', 'CAA':'Q', 'CAG':'Q', 
