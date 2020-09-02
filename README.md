@@ -12,14 +12,20 @@ I am not responsible for any results produced with ViralClust nor for the conclu
 
 
 Clone the repository.
+
 `git clone https://github.com/klamkiew/viralclust.git`
 
 Create a conda environment for nextflow.
+
 `conda create --name nextflow`
+
 `conda activate nextflow`
+
 and actually install nextflow.
+
 `conda install -c bioconda nextflow`
 
 
 Run this command to perform the (currently) full analyses: apply all cluster algorithm, build a MSA and a tree.
+
 `nextflow run viralclust.nf --fasta "<INPUT FASTA>" --max_cores "<CPUs TO USE>" --workdir "<TMP-DIRECTORY>" --output "<OUTPUT DIRECTORY>" --tree`
