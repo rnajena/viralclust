@@ -36,7 +36,7 @@ if ( params.fasta == '' ) {
   exit 1, "ERROR: --fasta is a required parameter"
 }
 
-
+sortSequence = Channel.fromPath( workflow.projectDir + '/bin/sort_sequences.py', checkIfExists: true )
 umap_hdbscan_script = Channel.fromPath( workflow.projectDir + '/bin/viralClust.py', checkIfExists: true )
 umap_hdbscan_class = Channel.fromPath( workflow.projectDir + '/bin/ClusterViruses.py', checkIfExists: true )
 sumaclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/suma2cdhit.py', checkIfExists: true )
