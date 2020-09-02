@@ -65,7 +65,7 @@ sequences = Channel.fromPath(params.fasta)
 include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
-include { vsearch } from './modules/vsearch'
+include { vclust } from './modules/vsearch'
 
 if (params.tree) {
   include { mafft } from './modules/mafft'
@@ -88,7 +88,7 @@ workflow {
   hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
   cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
   sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
-  vsearch(remove_redundancy.out.nr_result, params.vsearch_params)
+  vclust(remove_redundancy.out.nr_result, params.vsearch_params)
 
 
   // uclust(cdhit.out.cdhit_result)
