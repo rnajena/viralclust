@@ -15,7 +15,7 @@ process sumaclust {
 
   output:
     path "${sequences.baseName}_sumaclust.fasta", emit: sumaclust_result
-    path "${sequences.baseName}_sumaclust.fasta.clstr"
+    path "${sequences.baseName}_sumaclust.fasta.clstr", emit: sumaclust_cluster
 
   script:
   """
