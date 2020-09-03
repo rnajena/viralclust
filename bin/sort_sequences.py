@@ -11,6 +11,7 @@ import re
 sequenceFile = sys.argv[1]
 
 regex_orf = re.compile(r'M[^*]{25,}?\*')
+genbankACCRegex = re.compile(r'[^A-Z]([A-Z][0-9]{5}|[A-Z]{2}[0-9]{6}|[A-Z]{2}[0-9]{8}|NC_[0-9]{6})[^0-9]')
 
 codon2aminoacid = { 
     'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M', 
@@ -55,6 +56,9 @@ def parse_fasta(filePath):
           yield (header, seq)
 
         header = line.rstrip("\n").replace(':','_').replace(' ','_').lstrip(">")
+        accessionID = set(re.findall(genbankACCRegex, header))
+        if len(accessionID) == 1:
+          header = accessionID.pop()
         seq = ''
       else:
         seq += line.rstrip("\n").upper().replace('U','T')
@@ -79,8 +83,8 @@ for header, sequence in parse_fasta(sequenceFile):
           proteinSequence += 'X'
       matches = regex_orf.findall(proteinSequence)
       allORFs = "".join([x for x in matches if x])
-      if len(allORFs) > longestCDS:
-        longestCDS = len(allORFs)
+      if len(allORFs)/float(len(strand)) > longestCDS:
+        longestCDS = len(allORFs)/float(len(strand))
         positiveStrand = strand
   
   print(f">{header}\n{positiveStrand}")
