@@ -17,11 +17,13 @@ process hdbscan {
 
   output:
     path "${sequences.baseName}_hdbscan.fasta", emit: hdbscan_result
+    path "${sequences.baseName}_hdbscan.fasta.clstr", emit: hdbscan_cluster
     path "*"
 
   script:
   """
     python3 ${baseDir}/bin/viralClust.py -p ${task.cpus} ${addParams} ${sequences}
+  
   """
 
 }

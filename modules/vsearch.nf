@@ -15,12 +15,13 @@ process vclust {
   output:
     path "${sequences.baseName}_vsearch.fasta"
     path "${sequences.baseName}_vsearch_cluster.uc"
-    path "${sequences.baseName}_vsearch_cluster.uc.clstr"
+    path "${sequences.baseName}_vsearch_cluster.uc.clstr", emit: vclust_cluster
 
   script:
   """
   vsearch ${addParams} --threads ${task.cpus} --cluster_fast ${sequences} --centroids ${sequences.baseName}_vsearch.fasta --uc ${sequences.baseName}_vsearch_cluster.uc
   python3 ${projectDir}/bin/vclust2cdhit.py ${sequences.baseName}_vsearch_cluster.uc
+
   """
 
 
