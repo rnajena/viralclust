@@ -54,4 +54,5 @@ with open(cssFile, 'w') as outputStream:
 
 with open(ornamentFile, 'w') as outputStream:
   outputStream.write(f'"<circle style=\'fill:cyan;stroke:blue\' r=\'3\'/>" I {" ".join(centroids)}\n')
-  outputStream.write(f'"<circle style=\'fill:red;stroke:red\' r=\'3\'/>" I {" ".join(failbob)}\n')
+  if failbob:
+    outputStream.write(f'"<circle style=\'fill:red;stroke:red\' r=\'3\'/>" I {" ".join(failbob)}\n')

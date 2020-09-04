@@ -29,3 +29,7 @@ and actually install nextflow.
 Run this command to perform the (currently) full analyses: apply all cluster algorithm, build a MSA and a tree.
 
 `nextflow run viralclust.nf --fasta "<INPUT FASTA>" --max_cores "<CPUs TO USE>" --workdir "<TMP-DIRECTORY>" --output "<OUTPUT DIRECTORY>" --tree`
+
+---
+
+![DAG.png]{/pic/flowchart.png}

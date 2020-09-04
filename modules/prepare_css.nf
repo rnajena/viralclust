@@ -13,8 +13,8 @@ process prepare_css {
     path(clusterFile)
 
   output:
-    path "${clusterFile.baseName}_cluster_css.map"
-    path "${clusterFile.baseName}_ornaments.map"    
+    tuple val("${clusterFile.baseName}"), path ("${clusterFile.baseName}_cluster_css.map"),  path ("${clusterFile.baseName}_ornaments.map"), emit: css_cluster
+    //tuple val(clusterFile), path ("${clusterFile.baseName}_ornaments.map"), emit: css_ornaments
 
   script:
   """
