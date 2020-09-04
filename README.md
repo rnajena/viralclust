@@ -32,4 +32,4 @@ Run this command to perform the (currently) full analyses: apply all cluster alg
 
 ---
 
-![DAG.png]{/pic/flowchart.png}
+![Workflow graph](/pic/flowchart.png)
