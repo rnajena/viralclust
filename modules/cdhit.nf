@@ -19,6 +19,8 @@ process cdhit {
   script:  
   """
     cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
+    cat "${sequences.baseName}_cdhitest.fasta.clstr" | tr -d "." > tmp
+    mv tmp "${sequences.baseName}_cdhitest.fasta.clstr"
   """
 }
 
