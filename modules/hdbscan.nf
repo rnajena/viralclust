@@ -16,9 +16,9 @@ process hdbscan {
     val(addParams)
 
   output:
+    //tuple val("${params.output}/${params.hdbscan_output}"), path("${sequences.baseName}_hdbscan.fasta"), emit: hdbscan_result
     path "${sequences.baseName}_hdbscan.fasta", emit: hdbscan_result
     path "${sequences.baseName}_hdbscan.fasta.clstr", emit: hdbscan_cluster
-    path "*"
 
   script:
   """
