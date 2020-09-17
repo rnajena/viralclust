@@ -13,6 +13,7 @@ process cdhit {
     val(addParams)
 
   output:
+    // tuple val("${params.output}/${params.cdhit_output}"), path ("${sequences.baseName}_cdhitest.fasta"), emit: cdhit_result
     path "${sequences.baseName}_cdhitest.fasta", emit: cdhit_result
     path "${sequences.baseName}_cdhitest.fasta.clstr", emit: cdhit_cluster
 
