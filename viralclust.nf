@@ -80,11 +80,11 @@ if (params.tree) {
 
 workflow {
   sort_sequences(sequences)
-  remove_redundancy(sort_sequences.out.sort_result)
+  // remove_redundancy(sort_sequences.out.sort_result)
 
-  hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
-  cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
-  sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
+  // hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
+  // cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
+  // sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
   //vclust(remove_redundancy.out.nr_result, params.vsearch_params)
 
 
