@@ -8,10 +8,12 @@
 import sys
 import re
 
+import utils
+
 sequenceFile = sys.argv[1]
 
 regex_orf = re.compile(r'M[^*]{25,}?\*')
-genbankACCRegex = re.compile(r'[^A-Z]([A-Z][0-9]{5}|[A-Z]{2}[0-9]{6}|[A-Z]{2}[0-9]{8}|NC_[0-9]{6})[^0-9]')
+#genbankACCRegex = re.compile(r'[^A-Z]([A-Z][0-9]{5}|[A-Z]{2}[0-9]{6}|[A-Z]{2}[0-9]{8}|NC_[0-9]{6})[^0-9]')
 
 codon2aminoacid = { 
     'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M', 
@@ -33,43 +35,44 @@ codon2aminoacid = {
   }
 
 
-def rev_comp(sequence):
-  """
-  """
-  d_comp = {"A" : "T", "C" : "G", "G" : "C", "T" : "A"}
-  return ("".join([d_comp[nt] if nt in d_comp else nt for nt in sequence[::-1]]))
+# def rev_comp(sequence):
+#   """
+#   """
+#   d_comp = {"A" : "T", "C" : "G", "G" : "C", "T" : "A"}
+#   return ("".join([d_comp[nt] if nt in d_comp else nt for nt in sequence[::-1]]))
 
 
 
-def parse_fasta(filePath):
-  """
-  """
+# def parse_fasta(filePath):
+#   """
+#   """
 
-  with open(filePath, 'r') as inputStream:
-    header = ''
-    seq = ''
+#   with open(filePath, 'r') as inputStream:
+#     header = ''
+#     seq = ''
 
-    for line in inputStream:
-      if line.startswith(">"):
-        if header:
-          seq = seq + "X"*10 + rev_comp(seq)
-          yield (header, seq)
+#     for line in inputStream:
+#       if line.startswith(">"):
+#         if header:
+#           seq = seq + "X"*10 + rev_comp(seq)
+#           yield (header, seq)
 
-        header = line.rstrip("\n").replace(':','_').replace(' ','_').lstrip(">")
-        accessionID = set(re.findall(genbankACCRegex, header))
-        if len(accessionID) == 1:
-          header = accessionID.pop()
-        seq = ''
-      else:
-        seq += line.rstrip("\n").upper().replace('U','T')
+#         header = line.rstrip("\n").replace(':','_').replace(' ','_').lstrip(">")
+#         accessionID = set(re.findall(genbankACCRegex, header))
+#         if len(accessionID) == 1:
+#           header = accessionID.pop()
+#         seq = ''
+#       else:
+#         seq += line.rstrip("\n").upper().replace('U','T')
 
-    seq = seq + "X"*10 + rev_comp(seq)
-    yield (header, seq)
+#     seq = seq + "X"*10 + rev_comp(seq)
+#     yield (header, seq)
 
-for header, sequence in parse_fasta(sequenceFile):
+for header, sequence in utils.parse_fasta(sequenceFile):
   positiveStrand = ""
   longestCDS = 0
-  strands = sequence.split("X"*10)
+  #strands = sequence.split("X"*10)
+  strands = [sequence, utils.reverseComplement(sequence)]
   for strand in strands:
     for frame in range(3):
       proteinSequence = ""

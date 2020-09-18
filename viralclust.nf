@@ -68,6 +68,7 @@ include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
 include { vclust } from './modules/vsearch'
+include { reverseComp } from './modules/reverseComp'
 
 if (params.tree) {
   include { mafft } from './modules/mafft'
@@ -82,30 +83,24 @@ workflow {
   sort_sequences(sequences)
   // remove_redundancy(sort_sequences.out.sort_result)
 
-  // hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
-  // cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
-  // sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
-  //vclust(remove_redundancy.out.nr_result, params.vsearch_params)
-
+  hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
+  cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
+  sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
+  vclust(remove_redundancy.out.nr_result, params.vsearch_params)
+  
+  revCompChannel = hdbscan.out.hdbscan_result.concat(cdhit.out.cdhit_result, sumaclust.out.sumaclust_result, vclust.out.vclust_result)
+  reverseComp(revCompChannel)
 
   if (params.tree) {
     mafft(remove_redundancy.out.nr_result)
     fasttree(mafft.out.mafft_result)
     colorChannel = vclust.out.vclust_cluster.concat(sumaclust.out.sumaclust_cluster, cdhit.out.cdhit_cluster, hdbscan.out.hdbscan_cluster)
-    //colorChannel.view()
+
     prepare_css(colorChannel)
-    //prepare_css.out.css_cluster.collate(3).view()
+
     nwChannel = fasttree.out.fasttree_result.combine(prepare_css.out.css_cluster)
     nwdisplay(nwChannel)
-    //nwChannel.view()
-    //nwdisplay(fasttree.out.fasttree_result, prepare_css.out.css_cluster.collect())
-    //prepare_css.out.css_cluster.subscribe( nwdisplay(fasttree.out.fasttree_result, prepare_css.out.css_cluster, prepare_css.out.css_ornaments) )
 
-
-    // prepare_css.out.css_cluster.view()
-    // prepare_css.out.css_ornaments.view()
-    // nwdisplay(fasttree.out.fasttree_result, prepare_css.out.css_cluster)
-    //raxmlng(mafft.out.mafft_result, params.raxmlng_params)
   }
 
 

@@ -25,6 +25,7 @@ cssFile = basename + "_cluster_css.map"
 centroids = []
 failbob = []
 cluster = defaultdict(list)
+clusterNumber = -1
 
 with open(clusterFile, 'r') as inputStream:
   for line in inputStream:
