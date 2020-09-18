@@ -14,8 +14,7 @@ process sumaclust {
     val(addParams)
 
   output:
-    // tuple val ("${params.output}/${params.sumaclust_output}"), path ("${sequences.baseName}_sumaclust.fasta"), emit: sumaclust_result
-    path "${sequences.baseName}_sumaclust.fasta", emit: sumaclust_result
+    tuple val ("${params.output}/${params.sumaclust_output}"), path ("${sequences.baseName}_sumaclust.fasta"), emit: sumaclust_result
     path "${sequences.baseName}_sumaclust.fasta.clstr", emit: sumaclust_cluster
     
 

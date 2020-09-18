@@ -68,7 +68,7 @@ include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
 include { vclust } from './modules/vsearch'
-//include { reverseComp } from './modules/reverseComp'
+include { reverseComp } from './modules/reverseComp'
 
 if (params.tree) {
   include { mafft } from './modules/mafft'
@@ -88,9 +88,8 @@ workflow {
   sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
   vclust(remove_redundancy.out.nr_result, params.vsearch_params)
   
-  //revCompChannel = hdbscan.out.hdbscan_result.concat(cdhit.out.cdhit_result, sumaclust.out.sumaclust_result, vclust.out.vclust_result)
-  //revCompChannel.view()
-  //reverseComp(revCompChannel)
+  revCompChannel = hdbscan.out.hdbscan_result.concat(cdhit.out.cdhit_result, sumaclust.out.sumaclust_result, vclust.out.vclust_result)
+  reverseComp(revCompChannel)
 
   if (params.tree) {
     mafft(remove_redundancy.out.nr_result)
