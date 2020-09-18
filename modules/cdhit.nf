@@ -13,12 +13,14 @@ process cdhit {
     val(addParams)
 
   output:
-    path "${sequences.baseName}_cdhitest.fasta", emit: cdhit_result
+    tuple val("${params.output}/${params.cdhit_output}"), path ("${sequences.baseName}_cdhitest.fasta"), emit: cdhit_result
     path "${sequences.baseName}_cdhitest.fasta.clstr", emit: cdhit_cluster
 
   script:  
   """
     cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
+    cat "${sequences.baseName}_cdhitest.fasta.clstr" | tr -d "." > tmp
+    mv tmp "${sequences.baseName}_cdhitest.fasta.clstr"
   """
 }
 

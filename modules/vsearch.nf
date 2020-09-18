@@ -13,7 +13,7 @@ process vclust {
     val(addParams)
 
   output:
-    path "${sequences.baseName}_vsearch.fasta"
+    tuple val("${params.output}/${params.vsearch_output}"), path ("${sequences.baseName}_vsearch.fasta"), emit: vclust_result
     path "${sequences.baseName}_vsearch_cluster.uc"
     path "${sequences.baseName}_vsearch_cluster.uc.clstr", emit: vclust_cluster
 

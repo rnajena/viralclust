@@ -5,6 +5,7 @@
 ************************************************************************/
 
 process raxmlng {
+  
   label 'raxmlng'
   publishDir "${params.output}/${params.raxml-ng_output}", mode: 'copy'
 
