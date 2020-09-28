@@ -21,7 +21,7 @@ process hdbscan {
 
   script:
   """
-    python3 ${baseDir}/bin/viralClust.py -p ${task.cpus} ${addParams} ${sequences}
+    python3 ${baseDir}/bin/hdbscan_virus.py -p ${task.cpus} ${addParams} ${sequences}
   
   """
 
