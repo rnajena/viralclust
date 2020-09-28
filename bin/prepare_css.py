@@ -12,6 +12,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
+import utils
+
 clusterFile = sys.argv[1]
 basename = os.path.basename(clusterFile)
 basename = os.path.splitext(basename)[0]
@@ -22,25 +24,27 @@ cssFile = basename + "_cluster_css.map"
 #  ornamentFile = "ornaments.map"
 #  cssFile = "cluster_css.map"
 
-centroids = []
-failbob = []
-cluster = defaultdict(list)
-clusterNumber = -1
+# centroids = []
+# failbob = []
+# cluster = defaultdict(list)
+# clusterNumber = -1
 
-with open(clusterFile, 'r') as inputStream:
-  for line in inputStream:
-    line = line.rstrip()
-    if line.startswith('>'):
-      clusterNumber = line.split(' ')[1]
-      continue
-    else:
-      if clusterNumber == -1:
-        failbob.append(accID)
-        continue
-      accID = line.split('>')[1].split(' ')[0]
-      if line.endswith('*'):
-        centroids.append(accID)
-      cluster[clusterNumber].append(accID)
+# with open(clusterFile, 'r') as inputStream:
+#   for line in inputStream:
+#     line = line.rstrip()
+#     if line.startswith('>'):
+#       clusterNumber = line.split(' ')[1]
+#       continue
+#     else:
+#       accID = line.split('>')[1].split(' ')[0]
+#       if clusterNumber == -1:
+#         failbob.append(accID)
+#         continue
+#       if line.endswith('*'):
+#         centroids.append(accID)
+#       cluster[clusterNumber].append(accID)
+
+cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 
 cmap = matplotlib.cm.get_cmap('Spectral')
 norm = matplotlib.colors.Normalize(vmin=1,vmax=len(cluster))

@@ -7,9 +7,9 @@
 
 import sys
 import re
+from collections import defaultdict
 
-
-genbankACCRegex = re.compile(r'[^A-Z]([A-Z][0-9]{5}|[A-Z]{2}[0-9]{6}|[A-Z]{2}[0-9]{8}|NC_[0-9]{6})[^0-9]')
+genbankACCRegex = re.compile(r'[^A-Z]([A-Z]{2}[0-9]{8}|[A-Z]{2}[0-9]{6}|[A-Z][0-9]{5}|NC_[0-9]{6})[^0-9]')
 
 def reverseComplement(sequence):
   """
@@ -31,7 +31,7 @@ def parse_fasta(filePath):
     for line in inputStream:
       if line.startswith(">"):
         if header:
-          seq = seq #+ "X"*10 + rev_comp(seq)
+          seq = seq
           yield (header, seq)
 
         header = line.rstrip("\n").replace(':','_').replace(' ','_').lstrip(">")
@@ -42,5 +42,27 @@ def parse_fasta(filePath):
       else:
         seq += line.rstrip("\n").upper().replace('U','T')
 
-    seq = seq #+ "X"*10 + rev_comp(seq)
+    seq = seq
     yield (header, seq)
+
+def parse_clusterFile(clusterFile):
+  centroids = []
+  failbob = []
+  cluster = defaultdict(list)
+  clusterNumber = -1
+  with open(clusterFile, 'r') as inputStream:
+    for line in inputStream:
+      line = line.rstrip()
+      if line.startswith('>'):
+        clusterNumber = line.split(' ')[1]
+        continue
+      else:
+        accID = line.split('>')[1].split(' ')[0]
+        if clusterNumber == -1:
+          failbob.append(accID)
+          continue
+        if line.endswith('*'):
+          centroids.append(accID)
+        cluster[clusterNumber].append(accID)
+
+  return(cluster, centroids, failbob)
