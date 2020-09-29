@@ -6,6 +6,7 @@
 
 import sys
 import dendropy
+import numpy as np
 
 import utils
 
@@ -25,6 +26,10 @@ try:
 except KeyError:
   pass
 
+if not failbob:
+  failbob = [cluster[0] for _,cluster in cluster.items() if len(cluster) == 1]
+  cluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1}
+  # print(failbob)
 
 tree = dendropy.Tree.get(path=treeFile, schema='newick')
 dm = tree.phylogenetic_distance_matrix()
@@ -46,5 +51,9 @@ for idx, cl in cluster.items():
     clusterSum += (dm.distance(t1,centroid_taxon))
   overallSum += clusterSum / len(cl)
 avgOverallSum = overallSum / len(cluster)
-    
-print(len(allSequences), len(centroids), avgOverallSum)
+
+allCluster = np.array([len(cl) for _,cl in cluster.items()])
+# print(allCluster)
+
+print("Number of Sequences, Number of Cluster, smallest cluster, largest cluster, average cluster size, median cluster size , Average distance to nearest centroid, number of unclustered sequences")
+print(f"{len(allSequences)}, {len(cluster)}, {np.min(allCluster)}, {np.max(allCluster)}, {np.mean(allCluster)}, {np.median(allCluster)}, {avgOverallSum}, {len(failbob)}")

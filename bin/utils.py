@@ -54,7 +54,7 @@ def parse_clusterFile(clusterFile):
     for line in inputStream:
       line = line.rstrip()
       if line.startswith('>'):
-        clusterNumber = line.split(' ')[1]
+        clusterNumber = int(line.split(' ')[1])
         continue
       else:
         accID = line.split('>')[1].split(' ')[0]
