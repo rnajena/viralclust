@@ -7,6 +7,7 @@
 process nwdisplay {
   label 'nwdisplay'
   publishDir "${params.output}/${params.nwdisplay_output}", mode: 'copy', pattern: "*_nwdisplay*"
+  publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "*pdf"
 
   input:
     tuple path(newick), val(name), path(css), path(ornaments)

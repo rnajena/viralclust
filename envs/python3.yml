@@ -5,3 +5,4 @@ channels:
 dependencies:
   - python>=3.7
   - matplotlib>=3.3.1
+  - dendropy>=4.2.0
