@@ -12,12 +12,12 @@ import utils
 
 treeFile = sys.argv[1]
 seqFile = sys.argv[2]
-centroidFile = sys.argv[3]
-clusterFile = sys.argv[4]
+#centroidFile = sys.argv[2]
+clusterFile = sys.argv[3]
 
 
 allSequences = {header : seq for header,seq in utils.parse_fasta(seqFile)}
-centroidSequences = {header : seq for header,seq in utils.parse_fasta(centroidFile)}
+#centroidSequences = {header : seq for header,seq in utils.parse_fasta(centroidFile)}
 cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 
 # HDBScan specific. -1 describe sequences that are not clustered at all.
@@ -55,5 +55,4 @@ avgOverallSum = overallSum / len(cluster)
 allCluster = np.array([len(cl) for _,cl in cluster.items()])
 # print(allCluster)
 
-print("Number of Sequences, Number of Cluster, smallest cluster, largest cluster, average cluster size, median cluster size , Average distance to nearest centroid, number of unclustered sequences")
 print(f"{len(allSequences)}, {len(cluster)}, {np.min(allCluster)}, {np.max(allCluster)}, {np.mean(allCluster)}, {np.median(allCluster)}, {avgOverallSum}, {len(failbob)}")
