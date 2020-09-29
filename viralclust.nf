@@ -40,8 +40,10 @@ sortSequence = Channel.fromPath( workflow.projectDir + '/bin/sort_sequences.py',
 umap_hdbscan_script = Channel.fromPath( workflow.projectDir + '/bin/hdbscan_virus.py', checkIfExists: true )
 umap_hdbscan_class = Channel.fromPath( workflow.projectDir + '/bin/ClusterViruses.py', checkIfExists: true )
 sumaclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/suma2cdhit.py', checkIfExists: true )
+cdhit2cdhit = Channel.fromPath( workflow.projectDir + '/bin/cdhit2goodcdhit.py', checkIfExists: true )
 vclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/vclust2cdhit.py', checkIfExists: true )
 prepareCSS = Channel.fromPath( workflow.projectDir + '/bin/prepare_css.py', checkIfExists: true )
+clusterStats = Channel.fromPath( workflow.projectDir + '/bin/cluster_statistics.py', checkIfExists: true )
 
 log.info """\
     VIRALCLUST -- CLUSTER YOUR VIRUSES
@@ -58,10 +60,8 @@ log.info """\
 
     """
     .stripIndent()
-// ${sw -> if (params.tree) sw << "RAxML-ng parameters:    ${params.raxmlng_params}"}
 
 sequences = Channel.fromPath(params.fasta)
-// Channel.fromPath(params.fasta).set{sequences}
 
 include { sort_sequences } from './modules/sortsequences'
 include { remove_redundancy; cdhit } from './modules/cdhit'
@@ -76,6 +76,7 @@ if (params.tree) {
   include { raxmlng } from './modules/raxml-ng'
   include { nwdisplay } from './modules/nwutils'
   include { prepare_css } from './modules/prepare_css'
+  include { evaluate } from './modules/evaluate'
 }
 
 
