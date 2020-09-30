@@ -8,11 +8,11 @@
 viralClust v 0.1
 
 ViralClust is a python program that takes several genome sequences
-from different viruses as an input. 
-These will be clustered these sequences into groups (clades) based 
+from different viruses as an input.
+These will be clustered these sequences into groups (clades) based
 on their sequence similarity. For each clade, the centroid sequence is
 determined as representative genome, i.e. the sequence with the lowest
-distance to all other sequences of this clade. 
+distance to all other sequences of this clade.
 
 Python Dependencies:
   docopt
@@ -42,7 +42,7 @@ Options:
   -k KMER, --kmer KMER                    Length of the considered kmer. [Default: 7]
   -p PROCESSES, --process PROCESSES       Specify the number of CPU cores that are used. [Default: 1]
 
-  --subcluster                            Additionally to the initial cluster step, each cluster gets analyzed for 
+  --subcluster                            Additionally to the initial cluster step, each cluster gets analyzed for
                                           local structures and relations which results in subcluster for each cluster. [Default: False]
 
 Version:
@@ -90,7 +90,7 @@ def create_logger():
     handle = logging.StreamHandler()
     #handle.setLevel(logging.WARNING)
 
-    formatter = ColoredFormatter("%(log_color)sViralClust %(levelname)s -- %(asctime)s -- %(message)s", "%Y-%m-%d %H:%M:%S", 
+    formatter = ColoredFormatter("%(log_color)sViralClust %(levelname)s -- %(asctime)s -- %(message)s", "%Y-%m-%d %H:%M:%S",
                                     log_colors={
                                             'DEBUG':    'bold_cyan',
                                             'INFO':     'bold_white',
@@ -126,7 +126,7 @@ def parse_arguments(d_args):
     print("viralClust version 0.1")
     exit(0)
 
-  
+
   verbose = d_args['--verbose']
   if verbose:
     logger.setLevel(logging.INFO)
@@ -146,7 +146,7 @@ def parse_arguments(d_args):
   except ValueError:
     logger.error("Invalid parameter for k-mer size. Please input a number.")
     exit(2)
-  
+
   try:
     proc = int(d_args['--process'])
   except ValueError:
@@ -202,7 +202,7 @@ def perform_clustering():
   logger.info("Extracting centroid sequences and writing results to file.\n")
   virusClusterer.get_centroids(multiPool)
   virusClusterer.output_centroids()
-  
+
   logger.info(f"Extracting representative sequences for each cluster.")
   sequences = virusClusterer.d_sequences
   distanceMatrix = virusClusterer.matrix
@@ -217,7 +217,7 @@ def perform_clustering():
       continue
     virusSubClusterer = Clusterer(logger, file, k, proc, outdir, subCluster=True)
     code = virusSubClusterer.remove_redundancy()
-    
+
     if code == 1:
       __abort_cluster(virusSubClusterer, file)
       #logger.warn(f"Too few sequences for clustering in {os.path.basename(file)}. Alignment will be calculated with all sequences of this cluster.")
@@ -225,7 +225,7 @@ def perform_clustering():
       continue
 
     code = virusSubClusterer.apply_umap()
-    
+
     if code == 1:
       __abort_cluster(virusSubClusterer, file)
       #logger.warn(f"Too few sequences for clustering in {os.path.basename(file)}. Alignment will be calculated with all sequences of this cluster.")

@@ -46,13 +46,13 @@ class Clusterer(object):
     else:
 
       self.reducedSequences = f"{self.outdir}/{os.path.basename(sequenceFile)}"
-    
+
     self.k = k
 
     nucleotides = set(["A","C","G","T"])
     self.allKmers = {''.join(kmer):x for x,kmer in enumerate(itertools.product(nucleotides, repeat=self.k))}
     self.proc = proc
-    self.d_sequences = {}    
+    self.d_sequences = {}
     self.centroids = []
     self.allCluster = []
     self.clusterlabel = []
@@ -93,7 +93,7 @@ class Clusterer(object):
         fastaContent[idHead] = sequence
       else:
         fastaContent[Clusterer.header2id[header]] = sequence
-    
+
     if Clusterer.genomeOfInterest and not self.subCluster:
       for header, sequence in self.__parse_fasta(Clusterer.genomeOfInterest):
           idHead += 1
@@ -102,7 +102,7 @@ class Clusterer(object):
           Clusterer.header2id[header] = idHead
           fastaContent[idHead] = sequence
 
-    if not self.subCluster:      
+    if not self.subCluster:
       Clusterer.dim = len(fastaContent)
       Clusterer.matrix = np.zeros(shape=(Clusterer.dim, Clusterer.dim), dtype=float)
 
@@ -118,7 +118,7 @@ class Clusterer(object):
     profile = [0]*len(self.allKmers)
     for k in iter([sequence[start : start + self.k] for start in range(len(sequence) - self.k)]):
         try:
-          profile[self.allKmers[k]] += 1 
+          profile[self.allKmers[k]] += 1
         except KeyError:
           continue
     kmerSum = sum(profile)
@@ -127,7 +127,7 @@ class Clusterer(object):
 
   def determine_profile(self, proc):
 
-    self.d_sequences = self.read_sequences()  
+    self.d_sequences = self.read_sequences()
     if self.d_sequences == 1:
       import shutil
       shutil.copyfile(self.sequenceFile, f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_hdbscan.fasta')
@@ -137,7 +137,7 @@ class Clusterer(object):
     allProfiles = p.map(self.profile, self.d_sequences.items())
     p.close()
     p.join()
-    for header, profile in allProfiles:  
+    for header, profile in allProfiles:
       Clusterer.d_profiles[header] = profile
 
   def calc_pd(self, seqs):
@@ -147,12 +147,12 @@ class Clusterer(object):
       try:
         stuff = (element[0], element[1])
       except TypeError:
-        return None   
+        return None
     seq1, profile1 = seqs[0]
     seq2, profile2 = seqs[1]
     distance = scipy.spatial.distance.cosine(profile1, profile2)
     return (seq1, seq2, distance)
-    #       
+    #
 
   def apply_umap(self):
     """
@@ -164,7 +164,7 @@ class Clusterer(object):
       neighbors, dist = 5, 0.0
     else:
       neighbors, dist = 50, 0.25
-  
+
 
     try:
       clusterable_embedding = umap.UMAP(
@@ -227,7 +227,7 @@ class Clusterer(object):
           seq1, seq2, dist = result
           Clusterer.matrix[seq1][seq2] = dist
           Clusterer.matrix[seq2][seq1] = dist
-      
+
       tmpMinimum = math.inf
       centroidOfCluster = -1
 
@@ -235,7 +235,7 @@ class Clusterer(object):
         centroidOfCluster = cluster[0]
         self.centroids.append(centroidOfCluster)
         continue
-    
+
       for sequence in sequences:
         averagedDistance = 0
 
@@ -248,10 +248,10 @@ class Clusterer(object):
           if sequence == neighborSequence:
             continue
           averagedDistance += Clusterer.matrix[sequence][neighborSequence]
-          
+
 
         averagedDistance /= len(sequences)-1
-        
+
         if averagedDistance < tmpMinimum:
           tmpMinimum = averagedDistance
           centroidOfCluster = sequence
