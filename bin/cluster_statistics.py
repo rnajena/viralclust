@@ -4,20 +4,83 @@
 # Author: Kevin Lamkiewicz
 # Email: kevin.lamkiewicz@uni-jena.de
 
+"""
+Usage:
+  cluster_statistics.py [options] <treeFile> <seqFile> <clusterFile>
+
+Options:
+  -h, --help  Prints this help and exits.
+  --ncbi      Connects to the NCBI nuccore and taxonomy database to get taxonomic information based of the
+              header line of each fasta record. Note: Recommended, if a GenBank ID is part of the header.
+
+"""
+
 import sys
 import dendropy
 import numpy as np
 
 import utils
 
-treeFile = sys.argv[1]
-seqFile = sys.argv[2]
-#centroidFile = sys.argv[2]
-clusterFile = sys.argv[3]
+from docopt import docopt
+from Bio import Entrez
+from collections import defaultdict
 
+def get_clade_by_rank(rank, taxIDs, target_record):
+  scientificNames = {}
+  for x in target_record:
+    if x['Rank'] == rank:
+      scientificNames[x['TaxId']] = x['ScientificName']
+    else:
+      for level in x['LineageEx']:
+        if level['Rank'] == rank:
+          scientificNames[x['TaxId']] = level['ScientificName']
+          break
+  return {accessionID : scientificNames[taxID] if not taxID == 'XXXXX' else "unclassified" for accessionID, taxID in taxIDs.items()}
+
+def retrieve_taxonomy():
+  speciesPerCluster = 0
+  genusPerCluster = 0
+  clusterPerSpecies = defaultdict(set)
+  clusterPerGenus = defaultdict(set)
+
+  Entrez.email = "some_example@mail.com"
+
+  for clusterID, accessionIDs in cluster.items():
+    handle = Entrez.elink(dbfrom='nuccore', db='taxonomy', id=accessionIDs, idtype='acc', rettype='xml' )
+    record = Entrez.read(handle)
+    handle.close()
+
+    taxIDs = { x['IdList'][0] : x['LinkSetDb'][0]['Link'][0]['Id'] if x['LinkSetDb'] else "XXXXX" for x in record }
+    target_handle = Entrez.efetch(db='taxonomy', id=list(taxIDs.values()), retmode='xml')
+    target_record = Entrez.read(target_handle)
+    target_handle.close()
+
+    accID2species = get_clade_by_rank('species', taxIDs, target_record)
+    accID2genus = get_clade_by_rank('genus', taxIDs, target_record)
+    speciesPerCluster += len(set(accID2species.values()))
+    genusPerCluster += len(set(accID2genus.values()))
+
+    for accID, species in accID2species.items():
+      clusterPerSpecies[species].add(clusterID)
+    for accID, genus in accID2genus.items():
+      clusterPerGenus[genus].add(clusterID)
+
+
+  avgClusterPerSpecies = sum([len(x) for x in clusterPerSpecies.values()])/len(clusterPerSpecies)
+  avgClusterPerGenus = sum([len(x) for x in clusterPerGenus.values()])/len(clusterPerGenus)
+  return(avgClusterPerSpecies, avgClusterPerGenus)
+
+#########################################################################
+
+args = docopt(__doc__)
+
+
+treeFile = args['<treeFile>']
+seqFile = args['<seqFile>']
+clusterFile = args['<clusterFile>']
+NCBI = args['--ncbi']
 
 allSequences = {header : seq for header,seq in utils.parse_fasta(seqFile)}
-#centroidSequences = {header : seq for header,seq in utils.parse_fasta(centroidFile)}
 cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 
 # HDBScan specific. -1 describe sequences that are not clustered at all.
@@ -53,6 +116,14 @@ for idx, cl in cluster.items():
 avgOverallSum = overallSum / len(cluster)
 
 allCluster = np.array([len(cl) for _,cl in cluster.items()])
-# print(allCluster)
 
-print(f"{len(allSequences)}, {len(cluster)}, {np.min(allCluster)}, {np.max(allCluster)}, {np.mean(allCluster)}, {np.median(allCluster)}, {avgOverallSum}, {len(failbob)}")
+if NCBI:
+  (avgClusterPerSpecies, avgClusterPerGenus) = retrieve_taxonomy()
+else:
+  avgClusterPerSpecies = avgClusterPerGenus = '--'
+
+
+
+
+print(f"{len(allSequences)}, {len(cluster)}, {np.min(allCluster)}, {np.max(allCluster)}, {np.mean(allCluster)}, {np.median(allCluster)}, {avgOverallSum}, {len(failbob)} {avgClusterPerSpecies} {avgClusterPerGenus}")
+
