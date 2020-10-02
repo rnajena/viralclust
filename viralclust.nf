@@ -28,8 +28,8 @@ if (workflow.profile == 'standard' || workflow.profile.contains('local')) {
     println " "
 }
 
-if ( params.profile ) { 
-  exit 1, "ERROR: --profile is WRONG use -profile" 
+if ( params.profile ) {
+  exit 1, "ERROR: --profile is WRONG use -profile"
 }
 
 if ( params.fasta == '' ) {
@@ -45,18 +45,25 @@ vclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/vclust2cdhit.py', c
 prepareCSS = Channel.fromPath( workflow.projectDir + '/bin/prepare_css.py', checkIfExists: true )
 clusterStats = Channel.fromPath( workflow.projectDir + '/bin/cluster_statistics.py', checkIfExists: true )
 
+implicitTree = false
+eval_params = ''
+if (params.ncbi) {
+  implicitTree = true
+  eval_params = '--ncbi'
+}
+
 log.info """\
     VIRALCLUST -- CLUSTER YOUR VIRUSES
     ==================================
     Input File:             $params.fasta
     Output path:            $params.output
     CPUs used:              $params.cores
-    ${msg -> if (params.tree) msg << "Tree will be calculated"}
+    ${msg -> if (params.tree | implicitTree) msg << "Tree will be calculated"}
     ${sw -> if (params.cdhit_params != '') sw << "cd-hit-est parameters:  ${params.cdhit_params}"}
     ${sw -> if (params.hdbscan_params != '') sw << "HDBscan parameters:     ${params.hdbscan_params}"}
     ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust_params}"}
     ${sw -> if (params.vsearch_params != '') sw << "vsearch parameters:     ${params.vsearch_params}"}
-    
+
 
     """
     .stripIndent()
@@ -70,10 +77,9 @@ include { sumaclust } from './modules/sumaclust'
 include { vclust } from './modules/vsearch'
 include { reverseComp } from './modules/reverseComp'
 
-if (params.tree) {
+if (params.tree | implicitTree) {
   include { mafft } from './modules/mafft'
   include { fasttree } from './modules/fasttree'
-  include { raxmlng } from './modules/raxml-ng'
   include { nwdisplay } from './modules/nwutils'
   include { prepare_css } from './modules/prepare_css'
   include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
@@ -88,11 +94,11 @@ workflow {
   cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
   sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
   vclust(remove_redundancy.out.nr_result, params.vsearch_params)
-  
+
   revCompChannel = hdbscan.out.hdbscan_result.concat(cdhit.out.cdhit_result, sumaclust.out.sumaclust_result, vclust.out.vclust_result)
   reverseComp(revCompChannel)
 
-  if (params.tree) {
+  if (params.tree | implicitTree) {
     mafft(remove_redundancy.out.nr_result)
     fasttree(mafft.out.mafft_result)
     colorChannel = vclust.out.vclust_cluster.concat(sumaclust.out.sumaclust_cluster, cdhit.out.cdhit_cluster, hdbscan.out.hdbscan_cluster)
@@ -106,9 +112,9 @@ workflow {
     vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
 
     clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval)
-    evalChannel = clusterEval.combine(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result)
-    
-    
+    evalChannel = clusterEval.combine(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(Channel.value(eval_params))
+
+
     evaluate_cluster(evalChannel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
