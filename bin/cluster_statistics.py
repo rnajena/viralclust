@@ -17,6 +17,7 @@ Options:
 
 import sys
 import dendropy
+import re
 import numpy as np
 
 import utils
@@ -27,6 +28,7 @@ from collections import defaultdict
 
 def get_clade_by_rank(rank, taxIDs, target_record):
   scientificNames = {}
+
   for x in target_record:
     if x['Rank'] == rank:
       scientificNames[x['TaxId']] = x['ScientificName']
@@ -35,7 +37,8 @@ def get_clade_by_rank(rank, taxIDs, target_record):
         if level['Rank'] == rank:
           scientificNames[x['TaxId']] = level['ScientificName']
           break
-  return {accessionID : scientificNames[taxID] if not taxID == 'XXXXX' else "unclassified" for accessionID, taxID in taxIDs.items()}
+  accID2Name = {accessionID : scientificNames[taxID] if not taxID == 'XXXXX' else "unclassified" for accessionID, taxID in taxIDs.items()}
+  return accID2Name
 
 def retrieve_taxonomy():
   speciesPerCluster = 0
@@ -44,9 +47,13 @@ def retrieve_taxonomy():
   clusterPerGenus = defaultdict(set)
 
   Entrez.email = "some_example@mail.com"
+  genbankACCRegex = re.compile(r'([A-Z]{2}[0-9]{8}|[A-Z]{2}[0-9]{6}|[A-Z][0-9]{5}|NC_[0-9]{6})')
 
   for clusterID, accessionIDs in cluster.items():
-    handle = Entrez.elink(dbfrom='nuccore', db='taxonomy', id=accessionIDs, idtype='acc', rettype='xml' )
+    validIDs = list(filter(genbankACCRegex.match, accessionIDs))
+    invalidIDs = [x for x in accessionIDs if x not in validIDs]
+
+    handle = Entrez.elink(dbfrom='nuccore', db='taxonomy', id=validIDs, idtype='acc', rettype='xml')
     record = Entrez.read(handle)
     handle.close()
 
@@ -125,5 +132,5 @@ else:
 
 
 
-print(f"{len(allSequences)}, {len(cluster)}, {np.min(allCluster)}, {np.max(allCluster)}, {np.mean(allCluster)}, {np.median(allCluster)}, {avgOverallSum}, {len(failbob)} {avgClusterPerSpecies} {avgClusterPerGenus}")
+print(f"{len(allSequences)}, {len(cluster)}, {np.min(allCluster)}, {np.max(allCluster)}, {np.mean(allCluster)}, {np.median(allCluster)}, {avgOverallSum}, {len(failbob)}, {avgClusterPerSpecies}, {avgClusterPerGenus}")
 

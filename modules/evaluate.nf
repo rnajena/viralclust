@@ -8,14 +8,14 @@ process evaluate_cluster {
   label 'evaluate'
 
   input:
-    tuple val(name), path(clusterFile), path(newick), path(sequences)
+    tuple val(name), path(clusterFile), path(newick), path(sequences), val(addParams)
 
   output:
     path "${name}_stats.out", emit: eval_result
 
   script:
   """
-    echo ${name}, \$(python3 ${projectDir}/bin/cluster_statistics.py "${newick}" "${sequences}" "${clusterFile}") >> ${name}_stats.out    
+    echo ${name}, \$(python3 ${projectDir}/bin/cluster_statistics.py "${addParams}" "${newick}" "${sequences}" "${clusterFile}") > ${name}_stats.out
   """
 
 }
