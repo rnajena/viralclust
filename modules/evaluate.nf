@@ -35,7 +35,7 @@ process merge_evaluation {
 
   script:
   """
-  echo "Algorithm, Number of Sequences, Number of Cluster, smallest cluster, largest cluster, average cluster size, median cluster size , Average distance to nearest centroid, number of unclustered sequences" > "${sequences.baseName}_summary.csv"
+  echo "Algorithm,Number_of_Sequences,Number_of_Cluster,smallest_cluster,largest_cluster,average_cluster_size,median_cluster_size,Average_distance_to_nearest_centroid,number_of_unclustered_sequences" > "${sequences.baseName}_summary.csv"
   cat ${evaluations} >> "${sequences.baseName}_summary.csv"
   """
 }

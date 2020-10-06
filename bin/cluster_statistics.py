@@ -106,7 +106,7 @@ def retrieve_taxonomy(prefix):
             if feature['GBQualifier_name'] == 'collection_date':
               collectionDate = feature['GBQualifier_value']
 
-          accID2GBdescription[record['GBSeq_primary-accession'].split('.')[0]] = record['GBSeq_definition'] + ', ' + country + ', ' + collectionDate
+          accID2GBdescription[record['GBSeq_primary-accession'].split('.')[0]] = f"{record['GBSeq_definition'].replace(' ','_')},{country.replace(' ','_')},{collectionDate.replace(' ','_')}"
         #for gb_record in SeqIO.parse(nuccore_handle, 'genbank'):
         #  accID2GBdescription[gb_record.id.split('.')[0]] = gb_record.description
       # print(list(accID2species.keys()))
@@ -118,9 +118,9 @@ def retrieve_taxonomy(prefix):
 
 
 
-      outputStream.write(f"Cluster: {clusterID}\n")
+      outputStream.write(f"Cluster: {int(clusterID)+1}\n")
       for acc, genusName in accID2genus.items():
-        outputStream.write(f"{acc}, {genusName}, {accID2species[acc]}, {accID2GBdescription[acc]}\n")
+        outputStream.write(f"{acc},{genusName.replace(' ','_')},{accID2species[acc].replace(' ','_')},{accID2GBdescription[acc]}\n")
       for acc in invalidIDs:
         outputStream.write(f"{acc}, --, --, --\n")
       outputStream.write(f"####################\n")
@@ -189,5 +189,5 @@ else:
 
 
 
-print(f"{len(allSequences)}, {len(realCluster)}, {np.min(allCluster)}, {np.max(allCluster)}, {np.mean(allCluster)}, {np.median(allCluster)}, {avgOverallSum}, {len(failbob)}, {avgClusterPerSpecies}, {avgClusterPerGenus}")
+print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster)},{np.median(allCluster)},{avgOverallSum},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")
 
