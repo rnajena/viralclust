@@ -146,14 +146,16 @@ allSequences = {header : seq for header,seq in utils.parse_fasta(seqFile)}
 cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 
 # HDBScan specific. -1 describe sequences that are not clustered at all.
-try:
-  cluster.pop('-1')
-except KeyError:
-  pass
+#try:
+#  cluster.pop('-1')
+#except KeyError:
+#  pass
+
+
 
 if not failbob:
-  failbob = [cluster[0] for _,cluster in cluster.items() if len(cluster) == 1]
-  realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1}
+  failbob = [cluster for idx,cluster in cluster.items() if len(cluster) == 1]
+realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 or idx != '-1'}
   # print(failbob)
 
 tree = dendropy.Tree.get(path=treeFile, schema='newick')
