@@ -17,7 +17,8 @@ process evaluate_cluster {
 
   script:
   """
-    echo ${name}, \$(python3 ${projectDir}/bin/cluster_statistics.py "${addParams}" --toolName "${name}" "${newick}" "${sequences}" "${clusterFile}") > ${name}_stats.out
+    output=\$(python3 ${projectDir}/bin/cluster_statistics.py "${addParams}" --toolName "${name}" "${newick}" "${sequences}" "${clusterFile}")
+    echo ${name},\$output > ${name}_stats.out
   """
 
 }
