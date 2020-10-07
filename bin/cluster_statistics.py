@@ -57,9 +57,13 @@ def retrieve_taxonomy(prefix):
       validIDs = list(filter(genbankACCRegex.match, accessionIDs))
       invalidIDs = [x for x in accessionIDs if x not in validIDs]
 
-      handle = Entrez.elink(dbfrom='nuccore', db='taxonomy', id=validIDs, idtype='acc', rettype='xml')
-      record = Entrez.read(handle)
-      handle.close()
+      try:
+        handle = Entrez.elink(dbfrom='nuccore', db='taxonomy', id=validIDs, idtype='acc', rettype='xml')
+        record = Entrez.read(handle)
+        handle.close()
+      except RuntimeError:
+        print(validIDs)
+        exit(0)
 
       taxIDs = { str(x['IdList'][0]).split('.')[0] : x['LinkSetDb'][0]['Link'][0]['Id'] if x['LinkSetDb'] else "XXXXX" for x in record }
       target_handle = Entrez.efetch(db='taxonomy', id=list(taxIDs.values()), retmode='xml')
@@ -155,7 +159,7 @@ cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 
 if not failbob:
   failbob = [cluster for idx,cluster in cluster.items() if len(cluster) == 1]
-realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 or idx != '-1'}
+realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 and idx != '-1'}
   # print(failbob)
 
 tree = dendropy.Tree.get(path=treeFile, schema='newick')
@@ -189,5 +193,5 @@ else:
 
 
 
-print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster)},{np.median(allCluster)},{avgOverallSum},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")
+print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{avgOverallSum:.3f},{len(failbob)},{avgClusterPerSpecies:.2f},{avgClusterPerGenus:.2f}")
 
