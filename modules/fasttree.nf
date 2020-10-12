@@ -9,7 +9,7 @@ process fasttree {
   publishDir "${params.output}/${params.fasttree_output}", mode: 'copy', pattern: '*_fasttree.nwk'
 
   input:
-    path(alignment)
+    tuple val(name), path(alignment)
 
   output:
     path "${alignment.baseName}_fasttree.nwk", emit: fasttree_result

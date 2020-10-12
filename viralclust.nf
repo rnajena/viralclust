@@ -99,24 +99,27 @@ workflow {
   reverseComp(revCompChannel)
 
   if (params.tree | implicitTree) {
-    mafft(remove_redundancy.out.nr_result)
+    mafft(revCompChannel)
     fasttree(mafft.out.mafft_result)
-    colorChannel = vclust.out.vclust_cluster.concat(sumaclust.out.sumaclust_cluster, cdhit.out.cdhit_cluster, hdbscan.out.hdbscan_cluster)
-    prepare_css(colorChannel)
-    nwChannel = fasttree.out.fasttree_result.combine(prepare_css.out.css_cluster)
-    nwdisplay(nwChannel)
+    nwdisplay(fasttree.out.fasttree_result)
+    // mafft(remove_redundancy.out.nr_result)
+    // fasttree(mafft.out.mafft_result)
+    // colorChannel = vclust.out.vclust_cluster.concat(sumaclust.out.sumaclust_cluster, cdhit.out.cdhit_cluster, hdbscan.out.hdbscan_cluster)
+    // prepare_css(colorChannel)
+    // nwChannel = fasttree.out.fasttree_result.combine(prepare_css.out.css_cluster)
+    // nwdisplay(nwChannel)
 
-    hdbEval = Channel.value('HDBscan').combine(hdbscan.out.hdbscan_cluster)
-    cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
-    sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
-    vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
+    // hdbEval = Channel.value('HDBscan').combine(hdbscan.out.hdbscan_cluster)
+    // cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
+    // sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
+    // vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
 
-    clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval)
-    evalChannel = clusterEval.combine(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(Channel.value(eval_params))
+    // clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval)
+    // evalChannel = clusterEval.combine(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(Channel.value(eval_params))
 
 
-    evaluate_cluster(evalChannel)
-    merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+    // evaluate_cluster(evalChannel)
+    // merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
   }
 
