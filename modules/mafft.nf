@@ -9,10 +9,10 @@ process mafft {
   publishDir "${params.output}/${params.mafft_output}", mode: 'copy', pattern: '*aln'
 
   input:
-    path(sequences)
+    tuple val(name), path(sequences)
 
   output:
-    path "${sequences.baseName}_mafft.aln", emit: mafft_result
+    tuple val(name), path("${sequences.baseName}_mafft.aln"), emit: mafft_result
 
   script:
   """
