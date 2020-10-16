@@ -11,18 +11,17 @@ process nwdisplay {
 
   input:
     //tuple path(newick), val(name), path(css), path(ornaments)
-    path(newick)
+    tuple val(name), path(newick)
 
   output:
     //path "${name}_nwdisplay.svg", emit: nwdisplay_result
     //path "${name}_nwdisplay.pdf"
     path "${newick}_nwdisplay.svg", emit: nwdisplay_result
     path "${newick}_nwdisplay.pdf"
-  
 
   script:
   """
-  nw_display -v 25 -i "font-size:2" -l "font-size:6;font-family:helvetica;font-style:italic" -Il -w 5000 -r -b "opacity:0" -s ${newick} > "${newick}_nwdisplay.svg"
+  nw_reroot "${newick}" | nw_display -v 20 -i "font-size:3" -l "font-size:4;font-family:helvetica;font-style:italic" -b "font-size:3;opacity:0" -s - > "${newick}_nwdisplay.svg"
   rsvg-convert -f pdf -o "${newick}_nwdisplay.pdf" ${newick}_nwdisplay.svg
 
   """

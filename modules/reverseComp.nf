@@ -1,20 +1,20 @@
 /************************************************************************
-* SUMACLUST
+* Reverse Comp
 *
-* Cluster sequences with sumaclust.
+* Generate reverse complementary sequences based on input records.
 ************************************************************************/
 
 process reverseComp {
   label 'revcomp'
   publishDir "${path}", mode: 'copy', pattern: '*.fasta'
-  
+
 
   input:
-    tuple val(path), path(sequences)
-    
+    tuple val(name), val(path), path(sequences)
+
 
   output:
-    path(outpath)  
+    tuple val(name), path(outpath)
 
   script:
   outpath = "${sequences}".reverse().replaceFirst("positive".reverse(),"negative".reverse()).reverse()

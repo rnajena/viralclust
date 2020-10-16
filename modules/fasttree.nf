@@ -12,7 +12,7 @@ process fasttree {
     tuple val(name), path(alignment)
 
   output:
-    path "${alignment.baseName}_fasttree.nwk", emit: fasttree_result
+    tuple val(name), path("${alignment.baseName}_fasttree.nwk"), emit: fasttree_result
 
   script:
   """

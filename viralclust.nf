@@ -47,6 +47,8 @@ clusterStats = Channel.fromPath( workflow.projectDir + '/bin/cluster_statistics.
 
 implicitTree = false
 eval_params = ''
+ncbiEval = Channel.from(false).combine(Channel.from(false))
+
 if (params.ncbi) {
   implicitTree = true
   eval_params = '--ncbi'
@@ -85,17 +87,31 @@ if (params.tree | implicitTree) {
   include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
 }
 
+if (params.ncbi) {
+  include { get_ncbi_meta } from './modules/ncbi_meta'
+}
 
 workflow {
   sort_sequences(sequences)
   remove_redundancy(sort_sequences.out.sort_result)
+
+  if (params.ncbi) {
+    get_ncbi_meta(remove_redundancy.out.nr_result)
+    ncbiEval = Channel.from(eval_params).combine(get_ncbi_meta.out.pkl_ncbi)
+  }
 
   hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
   cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
   sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
   vclust(remove_redundancy.out.nr_result, params.vsearch_params)
 
-  revCompChannel = hdbscan.out.hdbscan_result.concat(cdhit.out.cdhit_result, sumaclust.out.sumaclust_result, vclust.out.vclust_result)
+
+  // ToDo: Put the names here as well.
+  hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
+  cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
+  sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
+  vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
+  revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC)
   reverseComp(revCompChannel)
 
   if (params.tree | implicitTree) {
@@ -109,18 +125,18 @@ workflow {
     // nwChannel = fasttree.out.fasttree_result.combine(prepare_css.out.css_cluster)
     // nwdisplay(nwChannel)
 
-    // hdbEval = Channel.value('HDBscan').combine(hdbscan.out.hdbscan_cluster)
-    // cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
-    // sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
-    // vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
+    hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
+    cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
+    sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
+    vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
 
-    // clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval)
-    // evalChannel = clusterEval.combine(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(Channel.value(eval_params))
+    clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval)
 
-
-    // evaluate_cluster(evalChannel)
-    // merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
-
+    evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(ncbiEval)
+    //evalChannel.view()
+    //evalChannel = clusterEval.combine(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(Channel.value(eval_params))
+    evaluate_cluster(evalChannel)
+    merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
   }
 
 
