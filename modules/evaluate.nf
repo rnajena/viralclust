@@ -9,15 +9,17 @@ process evaluate_cluster {
   publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "*txt"
 
   input:
-    tuple val(name), path(clusterFile), path(newick), path(sequences), val(addParams)
+    tuple val(name), path(clusterFile), path(newick), path(sequences), val(flag), val(addParams)
 
   output:
     path "${name}_stats.out", emit: eval_result
     path ("${name}_taxonomy_info.txt") optional true
 
   script:
+  def flag = flag == false ? '' : flag
+  def addParams = addParams == false ? '' : addParams
   """
-    output=\$(python3 ${projectDir}/bin/cluster_statistics.py "${addParams}" --toolName "${name}" "${newick}" "${sequences}" "${clusterFile}")
+    output=\$(python3 ${projectDir}/bin/cluster_statistics.py ${flag} ${addParams} --toolName "${name}" "${newick}" "${sequences}" "${clusterFile}")
     echo ${name},\$output > ${name}_stats.out
   """
 
