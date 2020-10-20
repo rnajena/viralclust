@@ -16,7 +16,7 @@ process cdhit {
     tuple val("${params.output}/${params.cdhit_output}"), path ("${sequences.baseName}_cdhitest.fasta"), emit: cdhit_result
     path "${sequences.baseName}_cdhitest.fasta.clstr", emit: cdhit_cluster
 
-  script:  
+  script:
   """
     cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
     python3 ${baseDir}/bin/cdhit2goodcdhit.py "${sequences.baseName}_cdhitest.fasta.clstr" ${sequences} > tmp.clstr
@@ -36,7 +36,7 @@ process remove_redundancy {
     path "${sequences.baseName}_nr.fasta", emit: nr_result
     path "${sequences.baseName}_nr.error.log"
 
-  script:  
+  script:
   """
     cd-hit-est -c 1 -i ${sequences} -o "${sequences.baseName}_nr.fasta"  2>"${sequences.baseName}_nr.error.log"
     sed -E "/>/ s/[:,()' ;]/_/g" "${sequences.baseName}_nr.fasta" > ${sequences.baseName}_renamed.fasta

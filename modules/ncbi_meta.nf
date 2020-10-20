@@ -15,6 +15,6 @@ process get_ncbi_meta {
 
   script:
   """
-    python3 ${projectDir}/bin/get_ncbi_taxonomy.py "${sequences}"
+    python3 ${projectDir}/bin/get_ncbi_information.py "${sequences}"
   """
 }

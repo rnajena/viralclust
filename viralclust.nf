@@ -37,12 +37,15 @@ if ( params.fasta == '' ) {
 }
 
 sortSequence = Channel.fromPath( workflow.projectDir + '/bin/sort_sequences.py', checkIfExists: true )
+rc_script = Channel.fromPath( workflow.projectDir + '/bin/reverse_complement.py', checkIfExists: true )
+utils = Channel.fromPath( workflow.projectDir + '/bin/utils.py', checkIfExists: true )
+ncbi_script = Channel.fromPath( workflow.projectDir + '/bin/get_ncbi_information.py', checkIfExists: true)
 umap_hdbscan_script = Channel.fromPath( workflow.projectDir + '/bin/hdbscan_virus.py', checkIfExists: true )
 umap_hdbscan_class = Channel.fromPath( workflow.projectDir + '/bin/ClusterViruses.py', checkIfExists: true )
 sumaclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/suma2cdhit.py', checkIfExists: true )
 cdhit2cdhit = Channel.fromPath( workflow.projectDir + '/bin/cdhit2goodcdhit.py', checkIfExists: true )
 vclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/vclust2cdhit.py', checkIfExists: true )
-prepareCSS = Channel.fromPath( workflow.projectDir + '/bin/prepare_css.py', checkIfExists: true )
+mmseq2cdhit = Channel.fromPath( workflow.projectDir + '/bin/mmseqs2cdhit.py', checkIfExists: true )
 clusterStats = Channel.fromPath( workflow.projectDir + '/bin/cluster_statistics.py', checkIfExists: true )
 
 implicitTree = false
@@ -84,7 +87,6 @@ if (params.tree | implicitTree) {
   include { mafft } from './modules/mafft'
   include { fasttree } from './modules/fasttree'
   include { nwdisplay } from './modules/nwutils'
-  include { prepare_css } from './modules/prepare_css'
   include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
 }
 
@@ -108,7 +110,6 @@ workflow {
   mmseqs(remove_redundancy.out.nr_result, params.vsearch_params)
 
 
-  // ToDo: Put the names here as well.
   hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
   cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
   sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
@@ -121,12 +122,6 @@ workflow {
     mafft(revCompChannel)
     fasttree(mafft.out.mafft_result)
     nwdisplay(fasttree.out.fasttree_result)
-    // mafft(remove_redundancy.out.nr_result)
-    // fasttree(mafft.out.mafft_result)
-    // colorChannel = vclust.out.vclust_cluster.concat(sumaclust.out.sumaclust_cluster, cdhit.out.cdhit_cluster, hdbscan.out.hdbscan_cluster)
-    // prepare_css(colorChannel)
-    // nwChannel = fasttree.out.fasttree_result.combine(prepare_css.out.css_cluster)
-    // nwdisplay(nwChannel)
 
     hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
     cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
@@ -137,8 +132,6 @@ workflow {
     clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
 
     evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(ncbiEval)
-    //evalChannel.view()
-    //evalChannel = clusterEval.combine(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(Channel.value(eval_params))
     evaluate_cluster(evalChannel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
   }

@@ -10,12 +10,9 @@ process nwdisplay {
   publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "*pdf"
 
   input:
-    //tuple path(newick), val(name), path(css), path(ornaments)
     tuple val(name), path(newick)
 
   output:
-    //path "${name}_nwdisplay.svg", emit: nwdisplay_result
-    //path "${name}_nwdisplay.pdf"
     path "${newick}_nwdisplay.svg", emit: nwdisplay_result
     path "${newick}_nwdisplay.pdf"
 
