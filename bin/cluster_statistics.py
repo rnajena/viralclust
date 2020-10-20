@@ -45,16 +45,23 @@ from collections import defaultdict
 
 def retrieve_taxonomy(prefix, accID2desc):
 
+  avgClusterPerSpecies = defaultdict(set)
+  avgClusterPerGenus = defaultdict(set)
 
   with open(f'{prefix}_taxonomy_info.txt', 'w') as outputStream:
     for clusterID, accessionIDs in cluster.items():
       outputStream.write(f"Cluster: {int(clusterID)+1}\n")
       for acc in accessionIDs:
         if acc in accID2desc:
-          outputStream.write(f"{acc},{accID2desc[acc]}\n")
+          description = accID2desc[acc]
+          if clusterID in realCluster:
+            avgClusterPerSpecies[description.split(',')[0]].add(clusterID)
+            avgClusterPerGenus[description.split(',')[1]].add(clusterID)
+          outputStream.write(f"{acc},{description}\n")
         else:
           outputStream.write(f"{acc},--,--,--\n")
       outputStream.write(f"####################\n")
+    return(avgClusterPerSpecies, avgClusterPerGenus)
 
 #   speciesPerCluster = 0
 #   genusPerCluster = 0
@@ -102,24 +109,7 @@ realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) 
 
 tree = dendropy.Tree.get(path=treeFile, schema='newick')
 dm = tree.phylogenetic_distance_matrix()
-
-#print(tree.leaf_nodes())
-
-overallSum = 0
-# for idx, cl in realCluster.items():
-#   clusterSum = 0
-#   for header in cl:
-#     if header in centroids:
-#       centroid = header
-#       centroid_taxon = tree.find_node_with_taxon_label(centroid.replace('_',' ')).taxon
-#       break
-#   for header in cl:
-#     if header == centroid:
-#       continue
-#     t1 = tree.find_node_with_taxon_label(header.replace('_',' ')).taxon
-#     clusterSum += (dm.distance(t1,centroid_taxon))
-#   overallSum += clusterSum / len(cl)
-avgOverallSum = overallSum / len(realCluster)
+allDistances = dm.distances()
 
 allCluster = np.array([len(cl) for _,cl in realCluster.items()])
 
@@ -127,12 +117,16 @@ if NCBI:
   import pickle
   with open(args['--ncbi'], 'rb') as inputStream:
     accID2desc = pickle.load(inputStream)
-  retrieve_taxonomy(PREFIX, accID2desc)
+
+  (clusterPerSpecies, clusterPerGenus) = retrieve_taxonomy(PREFIX, accID2desc)
+  #avgClusterPerSpecies = sum([len(x) for x in clusterPerSpecies.values()])/len(clusterPerSpecies)
+  avgClusterPerSpecies = np.mean([len(x) for x in clusterPerSpecies.values()])
+  #avgClusterPerGenus = sum([len(x) for x in clusterPerGenus.values()])/len(clusterPerGenus)
+  avgClusterPerGenus = np.mean([len(x) for x in clusterPerGenus.values()])
+
 else:
   avgClusterPerSpecies = avgClusterPerGenus = '--'
 
 
-
-
-print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{avgOverallSum:.3f},{len(failbob)}")#,{avgClusterPerSpecies:.2f},{avgClusterPerGenus:.2f}")
+print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies:.2f},{avgClusterPerGenus:.2f}")
 
