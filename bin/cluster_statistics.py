@@ -29,20 +29,6 @@ from Bio import Entrez
 from Bio import SeqIO
 from collections import defaultdict
 
-# def get_clade_by_rank(rank, taxIDs, target_record):
-#   scientificNames = {}
-
-#   for x in target_record:
-#     if x['Rank'] == rank:
-#       scientificNames[x['TaxId']] = x['ScientificName']
-#     else:
-#       for level in x['LineageEx']:
-#         if level['Rank'] == rank:
-#           scientificNames[x['TaxId']] = level['ScientificName']
-#           break
-#   accID2Name = {accessionID : scientificNames[taxID] if not taxID == 'XXXXX' else "unclassified" for accessionID, taxID in taxIDs.items()}
-#   return accID2Name
-
 def retrieve_taxonomy(prefix, accID2desc):
 
   avgClusterPerSpecies = defaultdict(set)
@@ -63,23 +49,6 @@ def retrieve_taxonomy(prefix, accID2desc):
       outputStream.write(f"####################\n")
     return(avgClusterPerSpecies, avgClusterPerGenus)
 
-#   speciesPerCluster = 0
-#   genusPerCluster = 0
-#   clusterPerSpecies = defaultdict(set)
-#   clusterPerGenus = defaultdict(set)
-# outputStream.write(f"Cluster: {int(clusterID)+1}\n")
-# for acc, genusName in accID2genus.items():
-#   outputStream.write(f"{acc},{genusName.replace(' ','_')},{accID2species[acc].replace(' ','_')},{accID2GBdescription[acc]}\n")
-# for acc in invalidIDs:
-#   outputStream.write(f"{acc}, --, --, --\n")
-# outputStream.write(f"####################\n")
-
-
-
-  # avgClusterPerSpecies = sum([len(x) for x in clusterPerSpecies.values()])/len(clusterPerSpecies)
-  # avgClusterPerGenus = sum([len(x) for x in clusterPerGenus.values()])/len(clusterPerGenus)
-  # return(avgClusterPerSpecies, avgClusterPerGenus)
-
 #########################################################################
 
 args = docopt(__doc__)
@@ -94,18 +63,10 @@ PREFIX = args['--toolName']
 allSequences = {header : seq for header,seq in utils.parse_fasta(seqFile)}
 cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 
-# HDBScan specific. -1 describe sequences that are not clustered at all.
-#try:
-#  cluster.pop('-1')
-#except KeyError:
-#  pass
-
-
 
 if not failbob:
   failbob = [cluster for idx,cluster in cluster.items() if len(cluster) == 1]
 realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 and idx != '-1'}
-  # print(failbob)
 
 tree = dendropy.Tree.get(path=treeFile, schema='newick')
 dm = tree.phylogenetic_distance_matrix()
@@ -119,9 +80,7 @@ if NCBI:
     accID2desc = pickle.load(inputStream)
 
   (clusterPerSpecies, clusterPerGenus) = retrieve_taxonomy(PREFIX, accID2desc)
-  #avgClusterPerSpecies = sum([len(x) for x in clusterPerSpecies.values()])/len(clusterPerSpecies)
   avgClusterPerSpecies = np.mean([len(x) for x in clusterPerSpecies.values()])
-  #avgClusterPerGenus = sum([len(x) for x in clusterPerGenus.values()])/len(clusterPerGenus)
   avgClusterPerGenus = np.mean([len(x) for x in clusterPerGenus.values()])
 
 else:

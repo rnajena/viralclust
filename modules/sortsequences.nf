@@ -1,7 +1,7 @@
 /************************************************************************
 * SORTSEQUENCES
 *
-* Sort all input sequences (fasta) into positive 
+* Sort all input sequences (fasta) into positive
 * strands (highest ORF density)
 ************************************************************************/
 
