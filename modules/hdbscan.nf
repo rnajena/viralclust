@@ -1,7 +1,7 @@
 /************************************************************************
 * HDBSCAN
 *
-* Utilizing UMAP and HDBSCAN to cluster sequences based on their 
+* Utilizing UMAP and HDBSCAN to cluster sequences based on their
 * k-mer vector representation and the cosine distance
 ************************************************************************/
 
@@ -22,7 +22,7 @@ process hdbscan {
   script:
   """
     python3 ${baseDir}/bin/hdbscan_virus.py -p ${task.cpus} ${addParams} ${sequences}
-  
+
   """
 
 }
