@@ -26,7 +26,7 @@ def get_clade_by_rank(rank, taxIDs, target_record):
         if level['Rank'] == rank:
           scientificNames[x['TaxId']] = level['ScientificName']
           break
-  accID2Name = {accessionID : scientificNames[taxID] if not taxID == 'XXXXX' else "unclassified" for accessionID, taxID in taxIDs.items()}
+  accID2Name = {accessionID : scientificNames[taxID].replace(' ','_') if not taxID == 'XXXXX' else "unclassified" for accessionID, taxID in taxIDs.items()}
   return accID2Name
 
 def retrieve_taxonomy(prefix):
