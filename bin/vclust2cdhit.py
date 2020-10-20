@@ -20,7 +20,7 @@ with open(inputFile, 'r') as inputStream:
     lineArray = line.strip().split('\t')
     if line.startswith('S'):
       centroids[lineArray[1]] = (lineArray[8], lineArray[2])
-      
+
     if line.startswith('H'):
       if lineArray[1] in cluster:
         cluster[lineArray[1]].append((lineArray[8], lineArray[2], lineArray[3]))
