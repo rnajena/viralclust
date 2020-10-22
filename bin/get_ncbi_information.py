@@ -26,7 +26,7 @@ def get_clade_by_rank(rank, taxIDs, target_record):
         if level['Rank'] == rank:
           scientificNames[x['TaxId']] = level['ScientificName']
           break
-  accID2Name = {accessionID : scientificNames[taxID].replace(' ','_') if not taxID == 'XXXXX' else "unclassified" for accessionID, taxID in taxIDs.items()}
+  accID2Name = {accessionID : scientificNames[taxID].replace(' ','_') if taxID in scientificNames else "unclassified" for accessionID, taxID in taxIDs.items()}
   return accID2Name
 
 def retrieve_taxonomy(prefix):
@@ -37,13 +37,16 @@ def retrieve_taxonomy(prefix):
   validIDs = list(filter(genbankACCRegex.match, accessionIDs))
   invalidIDs = [x for x in accessionIDs if x not in validIDs]
 
-  try:
-    handle = Entrez.elink(dbfrom='nuccore', db='taxonomy', id=validIDs, idtype='acc', rettype='xml')
-    record = Entrez.read(handle)
-    handle.close()
-  except RuntimeError:
-    print(validIDs)
-    exit(0)
+  while 1:
+    try:
+      handle = Entrez.elink(dbfrom='nuccore', db='taxonomy', id=validIDs, idtype='acc', rettype='xml')
+      record = Entrez.read(handle)
+      handle.close()
+    except RuntimeError:
+      time.sleep(5)
+      continue
+    break
+
 
   taxIDs = { str(x['IdList'][0]).split('.')[0] : x['LinkSetDb'][0]['Link'][0]['Id'] if x['LinkSetDb'] else "XXXXX" for x in record }
   values = list(set(taxIDs.values()))
