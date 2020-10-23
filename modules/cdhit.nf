@@ -7,6 +7,9 @@
 process cdhit {
   label 'cdhit'
   publishDir "${params.output}/${params.cdhit_output}", mode: 'copy', pattern: '*_cdhitest.fasta*'
+  publishDir "${params.output}/${params.cdhit_output}", mode: 'copy', pattern: '*UNCLUSTERED*'
+  publishDir "${params.output}/${params.summary_output}/unclustered_sequences", mode: 'copy', pattern: '*UNCLUSTERED.fasta'
+  publishDir "${params.output}/${params.summary_output}/clustered_sequences", mode: 'copy', pattern: '*_cdhitest.fasta'
 
   input:
     path(sequences)
@@ -15,12 +18,14 @@ process cdhit {
   output:
     tuple val("${params.output}/${params.cdhit_output}"), path ("${sequences.baseName}_cdhitest.fasta"), emit: cdhit_result
     path "${sequences.baseName}_cdhitest.fasta.clstr", emit: cdhit_cluster
+    path "${sequences.baseName}_cdhitest_UNCLUSTERED.fasta"
 
   script:
   """
     cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
     python3 ${baseDir}/bin/cdhit2goodcdhit.py "${sequences.baseName}_cdhitest.fasta.clstr" ${sequences} > tmp.clstr
     mv tmp.clstr "${sequences.baseName}_cdhitest.fasta.clstr"
+    python3 ${projectDir}/bin/filter_unclustered.py "${sequences.baseName}_cdhitest.fasta" "${sequences.baseName}_cdhitest.fasta.clstr"
   """
 }
 

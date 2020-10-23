@@ -48,12 +48,12 @@ vclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/vclust2cdhit.py', c
 mmseq2cdhit = Channel.fromPath( workflow.projectDir + '/bin/mmseqs2cdhit.py', checkIfExists: true )
 clusterStats = Channel.fromPath( workflow.projectDir + '/bin/cluster_statistics.py', checkIfExists: true )
 
-implicitTree = false
+implicitEval = false
 eval_params = ''
 ncbiEval = Channel.from(false).combine(Channel.from(false))
 
 if (params.ncbi) {
-  implicitTree = true
+  implicitEval = true
   eval_params = '--ncbi'
 }
 
@@ -63,11 +63,11 @@ log.info """\
     Input File:             $params.fasta
     Output path:            $params.output
     CPUs used:              $params.cores
-    ${msg -> if (params.tree | implicitTree) msg << "Tree will be calculated"}
+    ${msg -> if (params.eval | implicitEval) msg << "Tree will be calculated"}
     ${sw -> if (params.cdhit_params != '') sw << "cd-hit-est parameters:  ${params.cdhit_params}"}
     ${sw -> if (params.hdbscan_params != '') sw << "HDBscan parameters:     ${params.hdbscan_params}"}
     ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust_params}"}
-    ${sw -> if (params.vsearch_params != '') sw << "vsearch parameters:     ${params.vsearch_params}"}
+    ${sw -> if (params.vclust_params != '') sw << "vclust parameters:     ${params.vclust_params}"}
 
 
     """
@@ -79,11 +79,11 @@ include { sort_sequences } from './modules/sortsequences'
 include { remove_redundancy; cdhit } from './modules/cdhit'
 include { hdbscan } from './modules/hdbscan'
 include { sumaclust } from './modules/sumaclust'
-include { vclust } from './modules/vsearch'
+include { vclust } from './modules/vclust'
 include { mmseqs } from './modules/mmseqs'
 include { reverseComp } from './modules/reverseComp'
 
-if (params.tree | implicitTree) {
+if (params.eval | implicitEval) {
   include { mafft } from './modules/mafft'
   include { fasttree } from './modules/fasttree'
   include { nwdisplay } from './modules/nwutils'
@@ -106,8 +106,8 @@ workflow {
   hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
   cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
   sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
-  vclust(remove_redundancy.out.nr_result, params.vsearch_params)
-  mmseqs(remove_redundancy.out.nr_result, params.vsearch_params)
+  vclust(remove_redundancy.out.nr_result, params.vclust_params)
+  mmseqs(remove_redundancy.out.nr_result, params.vclust_params)
 
 
   hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
@@ -118,7 +118,7 @@ workflow {
   revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
   reverseComp(revCompChannel)
 
-  if (params.tree | implicitTree) {
+  if (params.eval | implicitEval) {
     mafft(revCompChannel)
     fasttree(mafft.out.mafft_result)
     nwdisplay(fasttree.out.fasttree_result)

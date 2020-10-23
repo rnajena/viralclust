@@ -31,10 +31,10 @@ def parse_fasta(filePath):
     for line in inputStream:
       if line.startswith(">"):
         if header:
-          seq = seq
+          # seq = seq
           yield (header, seq)
 
-        header = line.rstrip("\n").replace(':','_').replace(' ','_').lstrip(">")
+        header = line.rstrip("\n ").replace(':','_').replace(' ','_').lstrip(">")
         accessionID = set(re.findall(genbankACCRegex, header))
         if len(accessionID) == 1:
           header = accessionID.pop()
@@ -42,7 +42,7 @@ def parse_fasta(filePath):
       else:
         seq += line.rstrip("\n").upper().replace('U','T')
 
-    seq = seq
+    #seq = seq
     yield (header, seq)
 
 def parse_clusterFile(clusterFile):
