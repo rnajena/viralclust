@@ -19,7 +19,7 @@ originalHeader = sorted([ header for header, _ in utils.parse_fasta(sequenceFile
 truncatedHeader = []
 with open(inputFile, 'r') as inputStream:
   for line in inputStream:
-    if line.startswith('>'): 
+    if line.startswith('>'):
       continue
     truncatedHeader.append(line.strip().split('>')[1].split(' ')[0])
 

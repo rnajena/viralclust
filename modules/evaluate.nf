@@ -28,6 +28,8 @@ process evaluate_cluster {
 process merge_evaluation {
   label 'evalMerger'
   publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "${sequences.baseName}_summary.csv"
+  publishDir "${params.output}/${params.summary_output}", mode: 'copy', pattern: "${sequences.baseName}_summary.csv"
+
 
   input:
   path(evaluations)
