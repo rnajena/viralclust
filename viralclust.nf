@@ -32,8 +32,8 @@ if ( params.profile ) {
   exit 1, "ERROR: --profile is WRONG use -profile"
 }
 
-if ( params.fasta == '' ) {
-  exit 1, "ERROR: --fasta is a required parameter"
+if ( params.fasta == ''  && ! params.update_ncbi) {
+  exit 1, "ERROR: --fasta or --update_ncbi is a required parameter.\nMake sure at least one is set."
 }
 
 sortSequence = Channel.fromPath( workflow.projectDir + '/bin/sort_sequences.py', checkIfExists: true )
@@ -73,6 +73,9 @@ log.info """\
     """
     .stripIndent()
 
+if (params.fasta) {
+
+
 sequences = Channel.fromPath(params.fasta)
 
 include { sort_sequences } from './modules/sortsequences'
@@ -93,8 +96,16 @@ if (params.eval | implicitEval) {
 if (params.ncbi) {
   include { get_ncbi_meta } from './modules/ncbi_meta'
 }
+}
+if (params.update_ncbi) {
+  include {update_ncbi_metainfo} from './modules/update_ncbi_metainfo'
+}
 
-workflow {
+workflow update_metadata {
+  update_ncbi_metainfo()
+}
+
+workflow clustering {
   sort_sequences(sequences)
   remove_redundancy(sort_sequences.out.sort_result)
 
@@ -135,6 +146,58 @@ workflow {
     evaluate_cluster(evalChannel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
   }
+}
+
+workflow {
+
+  if (params.update_ncbi) {
+    update_metadata()
+  }
+
+  if (params.fasta) {
+    clustering()
+  }
+
+  // sort_sequences(sequences)
+  // remove_redundancy(sort_sequences.out.sort_result)
+
+  // if (params.ncbi) {
+  //   get_ncbi_meta(remove_redundancy.out.nr_result)
+  //   ncbiEval = Channel.from(eval_params).combine(get_ncbi_meta.out.pkl_ncbi)
+  // }
+
+  // hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
+  // cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
+  // sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
+  // vclust(remove_redundancy.out.nr_result, params.vclust_params)
+  // mmseqs(remove_redundancy.out.nr_result, params.vclust_params)
+
+
+  // hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
+  // cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
+  // sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
+  // vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
+  // mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
+  // revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
+  // reverseComp(revCompChannel)
+
+  // if (params.eval | implicitEval) {
+  //   mafft(revCompChannel)
+  //   fasttree(mafft.out.mafft_result)
+  //   nwdisplay(fasttree.out.fasttree_result)
+
+  //   hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
+  //   cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
+  //   sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
+  //   vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
+  //   mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
+
+  //   clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
+
+  //   evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(ncbiEval)
+  //   evaluate_cluster(evalChannel)
+  //   merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+  //}
 
 
 }
