@@ -105,13 +105,35 @@ workflow update_metadata {
   update_ncbi_metainfo()
 }
 
+workflow annotate_metadata {
+  get_ncbi_meta(remove_redundancy.out.nr_result)
+  ncbiEval = Channel.from(eval_params).combine(get_ncbi_meta.out.pkl_ncbi)
+}
+
+workflow evaluate_cluster {
+  mafft(revCompChannel)
+  fasttree(mafft.out.mafft_result)
+  nwdisplay(fasttree.out.fasttree_result)
+
+  hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
+  cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
+  sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
+  vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
+  mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
+
+  clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
+
+  evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(ncbiEval)
+  evaluate_cluster(evalChannel)
+  merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+}
+
 workflow clustering {
   sort_sequences(sequences)
   remove_redundancy(sort_sequences.out.sort_result)
 
   if (params.ncbi) {
-    get_ncbi_meta(remove_redundancy.out.nr_result)
-    ncbiEval = Channel.from(eval_params).combine(get_ncbi_meta.out.pkl_ncbi)
+    annotate_metadata()
   }
 
   hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
@@ -130,21 +152,7 @@ workflow clustering {
   reverseComp(revCompChannel)
 
   if (params.eval | implicitEval) {
-    mafft(revCompChannel)
-    fasttree(mafft.out.mafft_result)
-    nwdisplay(fasttree.out.fasttree_result)
-
-    hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
-    cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
-    sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
-    vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
-    mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
-
-    clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
-
-    evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(ncbiEval)
-    evaluate_cluster(evalChannel)
-    merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+    evaluate_cluster()
   }
 }
 
