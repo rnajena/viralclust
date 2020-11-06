@@ -43,4 +43,4 @@ for accession in gb_vrl:
 
 currentTime = time.asctime()
 
-pickle.dump((currentTime, d_metaInformation), open('test.pkl', 'wb'))
+pickle.dump((currentTime, d_metaInformation), open(f'{sys.argv[1]}/test.pkl', 'wb'))
