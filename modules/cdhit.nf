@@ -43,7 +43,7 @@ process remove_redundancy {
 
   script:
   """
-    cd-hit-est -c 1 -i ${sequences} -o "${sequences.baseName}_nr.fasta"  2>"${sequences.baseName}_nr.error.log"
+    cd-hit-est -M 4000 -c 1 -i ${sequences} -o "${sequences.baseName}_nr.fasta"  2>"${sequences.baseName}_nr.error.log"
     sed -E "/>/ s/[:,()' ;]/_/g" "${sequences.baseName}_nr.fasta" > ${sequences.baseName}_renamed.fasta
     mv ${sequences.baseName}_renamed.fasta ${sequences.baseName}_nr.fasta
   """
