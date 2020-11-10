@@ -21,6 +21,7 @@ import dendropy
 import re
 import numpy as np
 import time
+from datetime import datetime
 
 import utils
 
@@ -41,11 +42,11 @@ def retrieve_taxonomy(prefix, accID2desc):
         if acc in accID2desc:
           description = accID2desc[acc]
           if clusterID in realCluster:
-            avgClusterPerSpecies[description.split(',')[0]].add(clusterID)
-            avgClusterPerGenus[description.split(',')[1]].add(clusterID)
-          outputStream.write(f"{acc},{description}\n")
+            avgClusterPerSpecies[description[2][1]].add(clusterID)
+            avgClusterPerGenus[description[2][0]].add(clusterID)
+          outputStream.write(f"{acc},{','.join(description[2])},{description[0]},{description[1]}\n")
         else:
-          outputStream.write(f"{acc},--,--,--\n")
+          outputStream.write(f"{acc},--,--,--,--,--\n")
       outputStream.write(f"####################\n")
     return(avgClusterPerSpecies, avgClusterPerGenus)
 
@@ -77,15 +78,20 @@ allCluster = np.array([len(cl) for _,cl in realCluster.items()])
 if NCBI:
   import pickle
   with open(args['--ncbi'], 'rb') as inputStream:
-    accID2desc = pickle.load(inputStream)
-
+    timestamp, accID2desc = pickle.load(inputStream)
+  accID2desc = {header : metaInfo for header,metaInfo in accID2desc.items() if header in allSequences}
   (clusterPerSpecies, clusterPerGenus) = retrieve_taxonomy(PREFIX, accID2desc)
   avgClusterPerSpecies = np.mean([len(x) for x in clusterPerSpecies.values()])
   avgClusterPerGenus = np.mean([len(x) for x in clusterPerGenus.values()])
+  print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies:.2f},{avgClusterPerGenus:.2f}")
+
+  then = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
+  now = datetime.strptime(time.asctime(), "%a %b %d %H:%M:%S %Y")
+  difference = now - then
+  if difference.seconds >= 90:
+    with open("WARNING.txt", 'w') as outputStream:
+      outputStream.write("Warning: Your NCBI meta information database is older than 90 days.\nPlease consider updating the database:\nnextflow run viralclust.nf --update_ncbi\n")
 
 else:
   avgClusterPerSpecies = avgClusterPerGenus = '--'
-
-
-print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies:.2f},{avgClusterPerGenus:.2f}")
-
+  print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")

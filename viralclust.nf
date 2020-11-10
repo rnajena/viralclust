@@ -47,6 +47,7 @@ cdhit2cdhit = Channel.fromPath( workflow.projectDir + '/bin/cdhit2goodcdhit.py',
 vclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/vclust2cdhit.py', checkIfExists: true )
 mmseq2cdhit = Channel.fromPath( workflow.projectDir + '/bin/mmseqs2cdhit.py', checkIfExists: true )
 clusterStats = Channel.fromPath( workflow.projectDir + '/bin/cluster_statistics.py', checkIfExists: true )
+ncbiMeta = Channel.fromPath ( workflow.projectDir + '/data/ncbi_metainfo.pkl', checkIfExists: true )
 
 implicitEval = false
 eval_params = ''
@@ -54,7 +55,7 @@ ncbiEval = Channel.from(false).combine(Channel.from(false))
 
 if (params.ncbi) {
   implicitEval = true
-  eval_params = '--ncbi'
+  eval_params = "--ncbi"// ${projectDir}/data/ncbi_metainfo.pkl"
 }
 
 log.info """\
@@ -75,28 +76,29 @@ log.info """\
 
 if (params.fasta) {
 
+  sequences = Channel.fromPath(params.fasta)
 
-sequences = Channel.fromPath(params.fasta)
+  include { sort_sequences } from './modules/sortsequences'
+  include { remove_redundancy; cdhit } from './modules/cdhit'
+  include { hdbscan } from './modules/hdbscan'
+  include { sumaclust } from './modules/sumaclust'
+  include { vclust } from './modules/vclust'
+  include { mmseqs } from './modules/mmseqs'
+  include { reverseComp } from './modules/reverseComp'
 
-include { sort_sequences } from './modules/sortsequences'
-include { remove_redundancy; cdhit } from './modules/cdhit'
-include { hdbscan } from './modules/hdbscan'
-include { sumaclust } from './modules/sumaclust'
-include { vclust } from './modules/vclust'
-include { mmseqs } from './modules/mmseqs'
-include { reverseComp } from './modules/reverseComp'
+  if (params.eval | implicitEval) {
+    include { mafft } from './modules/mafft'
+    include { fasttree } from './modules/fasttree'
+    include { nwdisplay } from './modules/nwutils'
+    include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
+  }
 
-if (params.eval | implicitEval) {
-  include { mafft } from './modules/mafft'
-  include { fasttree } from './modules/fasttree'
-  include { nwdisplay } from './modules/nwutils'
-  include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
+  if (params.ncbi) {
+    include { get_ncbi_meta } from './modules/ncbi_meta'
+  }
 }
 
-if (params.ncbi) {
-  include { get_ncbi_meta } from './modules/ncbi_meta'
-}
-}
+
 if (params.update_ncbi) {
   include {update_ncbi_metainfo} from './modules/update_ncbi_metainfo'
 }
@@ -106,54 +108,95 @@ workflow update_metadata {
 }
 
 workflow annotate_metadata {
-  get_ncbi_meta(remove_redundancy.out.nr_result)
-  ncbiEval = Channel.from(eval_params).combine(get_ncbi_meta.out.pkl_ncbi)
+  take:
+    non_redundant_ch
+
+  main:
+    get_ncbi_meta(non_redundant_ch)
+    ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
+
+  emit:
+    ncbiEval
 }
 
-workflow evaluate_cluster {
-  mafft(revCompChannel)
-  fasttree(mafft.out.mafft_result)
-  nwdisplay(fasttree.out.fasttree_result)
-
-  hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
-  cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
-  sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
-  vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
-  mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
-
-  clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
-
-  evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(ncbiEval)
-  evaluate_cluster(evalChannel)
-  merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+workflow preprocessing {
+  main:
+    sort_sequences(sequences)
+    remove_redundancy(sort_sequences.out.sort_result)
+    non_redundant_ch = remove_redundancy.out.nr_result
+  emit:
+    non_redundant_ch
 }
 
 workflow clustering {
-  sort_sequences(sequences)
-  remove_redundancy(sort_sequences.out.sort_result)
 
-  if (params.ncbi) {
-    annotate_metadata()
-  }
+  take:
+    non_redundant_ch
 
-  hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
-  cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
-  sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
-  vclust(remove_redundancy.out.nr_result, params.vclust_params)
-  mmseqs(remove_redundancy.out.nr_result, params.vclust_params)
+  main:
+    // if (params.ncbi) {
+    //   annotate_metadata(non_redundant_ch)
+    //   ncbiEval = annotate_metadata.out.ncbiEval
+    // }
+
+    hdbscan(non_redundant_ch, params.hdbscan_params)
+    cdhit(non_redundant_ch, params.cdhit_params)
+    sumaclust(non_redundant_ch, params.sumaclust_params)
+    vclust(non_redundant_ch, params.vclust_params)
+    mmseqs(non_redundant_ch, params.vclust_params)
 
 
-  hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
-  cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
-  sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
-  vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
-  mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
-  revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
-  reverseComp(revCompChannel)
+    hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
+    cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
+    sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
+    vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
+    mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
+    revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
+    reverseComp(revCompChannel)
 
-  if (params.eval | implicitEval) {
-    evaluate_cluster()
-  }
+    hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
+    cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
+    sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
+    vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
+    mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
+    clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
+
+  emit:
+    revCompChannel
+    clusterEval
+}
+
+workflow evaluation {
+  take:
+    revCompChannel
+    clusterEval
+    non_redundant_ch
+
+  main:
+    mafft(revCompChannel)
+    fasttree(mafft.out.mafft_result)
+    nwdisplay(fasttree.out.fasttree_result)
+
+    if (params.ncbi) {
+      ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
+    }
+
+    evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(non_redundant_ch).combine(ncbiEval)
+    evaluate_cluster(evalChannel)
+    merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+
+    //sequences = Channel.fromPath(params.fasta)
+    evaluate_cluster.out.warning.first().subscribe{
+
+      log.warn """\
+
+      ##########################################################
+      NCBI meta information is older than 90 days.
+      Please consider updating using the following command:
+        nextflow run viralclust.nf --update_ncbi
+      ##########################################################
+      """.stripIndent()
+    }
 }
 
 workflow {
@@ -163,9 +206,13 @@ workflow {
   }
 
   if (params.fasta) {
-    clustering()
+    preprocessing()
+    clustering(preprocessing.out.non_redundant_ch)
   }
 
+  if (params.eval | implicitEval) {
+    evaluation(clustering.out.revCompChannel, clustering.out.clusterEval, preprocessing.out.non_redundant_ch)
+  }
   // sort_sequences(sequences)
   // remove_redundancy(sort_sequences.out.sort_result)
 

@@ -26,21 +26,21 @@ for accession in gb_vrl:
 
   country = re.findall(countryRegex, genbankEntry)
   if country:
-    country = country[0]
+    country = country[0].replace('\n',' ').replace(' ','_')
   else:
     country = '--'
 
   accessionDate = re.findall(accessionDateRegex, genbankEntry)
   if accessionDate:
-    accessionDate = accessionDate[0]
+    accessionDate = accessionDate[0].replace('\n',' ').replace(' ','_')
   else:
     accessionDate = '--'
 
-  taxonomy = gb_vrl[accession].annotations['taxonomy'][-2:]
+  taxonomy = gb_vrl[accession].annotations['taxonomy'][-2:] + [gb_vrl[accession].annotations['organism']]
+  taxonomy = list(map(lambda x : x.replace('\n',' ').replace(' ','_'), taxonomy))
 
 
-  d_metaInformation[accession.split('.')[0]] = (country, accessionDate, taxonomy)
-
+  d_metaInformation[accession.split('.')[0]] = (country.strip(), accessionDate.strip(), taxonomy)
 currentTime = time.asctime()
 
 pickle.dump((currentTime, d_metaInformation), open(f'{sys.argv[1]}/test.pkl', 'wb'))

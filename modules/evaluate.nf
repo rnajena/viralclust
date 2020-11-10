@@ -6,7 +6,7 @@
 
 process evaluate_cluster {
   label 'evaluate'
-  publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "*txt"
+  publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "*_info.txt"
 
   input:
     tuple val(name), path(clusterFile), path(newick), path(sequences), val(flag), val(addParams)
@@ -14,6 +14,7 @@ process evaluate_cluster {
   output:
     path "${name}_stats.out", emit: eval_result
     path ("${name}_taxonomy_info.txt") optional true
+    path "WARNING.txt", optional: true, emit: warning
 
   script:
   def flag = flag == false ? '' : flag
