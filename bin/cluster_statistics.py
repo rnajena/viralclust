@@ -88,7 +88,7 @@ if NCBI:
   then = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
   now = datetime.strptime(time.asctime(), "%a %b %d %H:%M:%S %Y")
   difference = now - then
-  if difference.seconds >= 90:
+  if difference.days >= 90:
     with open("WARNING.txt", 'w') as outputStream:
       outputStream.write("Warning: Your NCBI meta information database is older than 90 days.\nPlease consider updating the database:\nnextflow run viralclust.nf --update_ncbi\n")
 
