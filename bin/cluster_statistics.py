@@ -79,11 +79,14 @@ if NCBI:
   import pickle
   with open(args['--ncbi'], 'rb') as inputStream:
     timestamp, accID2desc = pickle.load(inputStream)
+
   accID2desc = {header : metaInfo for header,metaInfo in accID2desc.items() if header in allSequences}
   (clusterPerSpecies, clusterPerGenus) = retrieve_taxonomy(PREFIX, accID2desc)
   avgClusterPerSpecies = np.mean([len(x) for x in clusterPerSpecies.values()])
+  avgClusterPerSpecies = f"{avgClusterPerSpecies:.2f}"
   avgClusterPerGenus = np.mean([len(x) for x in clusterPerGenus.values()])
-  print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies:.2f},{avgClusterPerGenus:.2f}")
+  avgClusterPerGenus = f"{avgClusterPerGenus:.2f}"
+
 
   then = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
   now = datetime.strptime(time.asctime(), "%a %b %d %H:%M:%S %Y")
@@ -94,4 +97,4 @@ if NCBI:
 
 else:
   avgClusterPerSpecies = avgClusterPerGenus = '--'
-  print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")
+print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")
