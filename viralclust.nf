@@ -47,7 +47,7 @@ cdhit2cdhit = Channel.fromPath( workflow.projectDir + '/bin/cdhit2goodcdhit.py',
 vclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/vclust2cdhit.py', checkIfExists: true )
 mmseq2cdhit = Channel.fromPath( workflow.projectDir + '/bin/mmseqs2cdhit.py', checkIfExists: true )
 clusterStats = Channel.fromPath( workflow.projectDir + '/bin/cluster_statistics.py', checkIfExists: true )
-ncbiMeta = Channel.fromPath ( workflow.projectDir + '/data/ncbi_metainfo.pkl', checkIfExists: true )
+// ncbiMeta = Channel.fromPath ( workflow.projectDir + '/data/ncbi_metainfo.pkl', checkIfExists: true )
 
 implicitEval = false
 eval_params = ''
@@ -95,6 +95,17 @@ if (params.fasta) {
 
   if (params.ncbi) {
     include { get_ncbi_meta } from './modules/ncbi_meta'
+    ncbi_metainfo_ch = file("${workflow.projectDir}/data/ncbi_metainfo.pkl")
+    if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
+      include { update_ncbi_metainfo } from './modules/update_ncbi_metainfo'
+
+      log.warn """ \
+      No NCBI meta information database found.
+      Database will be downloaded and stored for this and future runs!
+      """.stripIndent()
+    } else {
+      ncbiMeta = Channel.fromPath ( workflow.projectDir + '/data/ncbi_metainfo.pkl')
+    }
   }
 }
 
@@ -178,6 +189,10 @@ workflow evaluation {
     nwdisplay(fasttree.out.fasttree_result)
 
     if (params.ncbi) {
+      if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
+        update_metadata()
+        ncbiMeta = Channel.fromPath ( workflow.projectDir + '/data/ncbi_metainfo.pkl')
+      }
       ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
     }
 

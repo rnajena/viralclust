@@ -43,4 +43,4 @@ for accession in gb_vrl:
   d_metaInformation[accession.split('.')[0]] = (country.strip(), accessionDate.strip(), taxonomy)
 currentTime = time.asctime()
 
-pickle.dump((currentTime, d_metaInformation), open(f'{sys.argv[1]}/test.pkl', 'wb'))
+pickle.dump((currentTime, d_metaInformation), open(f'{sys.argv[1]}/ncbi_metainfo.pkl', 'wb'))
