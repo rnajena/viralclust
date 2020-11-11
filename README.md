@@ -18,19 +18,32 @@ Of course, you can install NextFlow on your system how ever you like, but consid
 
 * First install [conda](https://docs.conda.io/en/latest/) on your system: You'll find the latest installer [here](https://docs.conda.io/en/latest/miniconda.html).
 * Next, make sure that conda is part of your `$PATH` variable, which is usually the case. For any issues, please refer to the respective [installation guide](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
-**Warning**: Currently, ViralClust is running on Linux systems. Windows and MacOS support may follow at some point, but has never been tested so far.
+<sub>**Warning**: Currently, ViralClust is running on Linux systems. Windows and MacOS support may follow at some point, but has never been tested so far.</sub>
 * Create a conda environment and install NextFlow within this environment:
-<details><summary>Click here to see how:</summary>
+  <details><summary><sub>Click here to see how:</sub></summary>
 
-```bash
-conda create -n nextflow -c bioconda nextflow
-conda activate nextflow
-```
-</details>
-**Alternative**: You can also use the `environment.yml` provided, after cloning the repo:
-`conda env create -f environment.yml`
+  ```bash
+  conda create -n nextflow -c bioconda nextflow
+  conda activate nextflow
+  ```
+  </details>
+
+  <sub>**Alternative**: You can also use the `environment.yml` provided, after cloning the repo:</sub>
+  <details><summary><sub>Click here to see how:</sub></summary>
+
+  ```bash
+  conda env create -f environment.yml
+  ```
+   </details>
+
 * Clone the github repository for the latest version of ViralClust, or download the latest stable release version here.
-`git clone https://github.com/klamkiew/viralClust.git && cd viralClust`
+  <details><summary><sub>Click here to see how:</sub></summary>
+
+  ```bash
+  `git clone https://github.com/klamkiew/viralClust.git && cd viralClust`
+  ```
+   </details>
+
 * Done!
 
 ***
