@@ -96,11 +96,11 @@ There are many more parameters, especially directly connected to the behaviour o
 
 ### Cluster Tools
 
-Since ViralClust is nothing without the great work of awesome minds, it is only fair to give credit, where credit is due. Currently, five different approaches are used, to cluster input genomes. CD-HIT, sumaclust and vsearch all implement the same algorithmic idea, but with minor, subtle changes in their respective heuristics. We further utilize the clustering module of MMSeqs2. And, last but not least, ViralClust implements a `k-mer` based clustering method, which is realized with the help of UMAP and HDBscan.
+Since ViralClust is nothing without the great work of awesome minds, it is only fair to give credit, where credit is due. Currently, five different approaches are used, to cluster input genomes. CD-HIT, sumaclust and vsearch all implement the same algorithmic idea, but with minor, subtle changes in their respective heuristics. I further utilize the clustering module of MMSeqs2. And, last but not least, ViralClust implements a `k-mer` based clustering method, which is realized with the help of UMAP and HDBscan.
 
-For all tools, we link the respective manual and/or github page. Firstly, because we think, all of those are great tools, which you are implicitly using by using ViralClust. And second, because ViralClust offers the possibility to set all parameters of all tools; therefore, if you need something very specific, you can check out the respective documentations.
+For all tools, the respective manual and/or github page is linked. Firstly, because I think, all of those are great tools, which you are implicitly using by using ViralClust. And second, because ViralClust offers the possibility to set all parameters of all tools; therefore, if you need something very specific, you can check out the respective documentations.
 
-And, in case of using any of the results provided by ViralClust in a scientific publication, we would be grateful to be cited. In our eyes, it is only fair that you not only cite ViralClust, but also the clustering method you ultimately decided for, even if ViralClust was assisting you in the decision.
+And, in case of using any of the results provided by ViralClust in a scientific publication, I would be grateful to be cited. In my eyes, it is only fair that you not only cite ViralClust, but also the clustering method you ultimately decided for, even if ViralClust was assisting you in the decision.
 
 <details><summary>Click here for all citations</summary>
 
