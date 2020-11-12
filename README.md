@@ -13,6 +13,11 @@ I am not responsible for any results produced with ViralClust nor for the conclu
 
 ***
 
+### Overview: What is this about?
+
+
+***
+
 ### Installation
 In order to run ViralClust, I recommend creating a conda environment dedicated for NextFlow.
 Of course, you can install NextFlow on your system how ever you like, but considering potential users not having sudo permissions, the conda way proofed to be simple.
@@ -70,7 +75,45 @@ In the mean time, let's talk about parameters and options.
 ### Parameters & Options
 
 Let us briefly go over the most important parameters and options. There is a more detailed overview of all possible flags, parameters and additional stuff you can
-do in the help of message of the pipeline - and at the end of this file.
+do in the help of message of the pipeline - and at the [end of this file](#help-message).
+
+`--fasta <PATH>` is the main parameter you **have** to set. This will tell ViralClust where your genomes are located. `<PATH>` refers to a multiple fasta sequence file, which stores all your genomes of interest.
+
+`--goi <PATH>` is similar to the `--fasta` parameter, but the sequences stored in this specfic fasta file are your **g**enomes **o**f **i**nterest, or shortly GOI. Using this parameter tells ViralClust to include all genomes present in `goi.fasta` in the final set of representative sequences. You have a secret in-house lab-strain that is not published yet? Put it in your `goi.fasta`.
+
+`--eval` and `--ncbi` are two parameters, that do more for you than just clustering. Since ViralClust is running several clustering algorithms, it can be hard to decide which one produced the most appriopate results. Worry not, since `--eval` is here to help you. Additionally to the clustering results, you'll get a brief overview of the clusters, that arose from the different algorithms. With `--ncbi` enabled, ViralClust further scans your genome identifiers (the lines in your `fasta` file starting with `>`) for GenBank accession IDs and uses them to retrieve further information from the NCBI about the taxonomy of the sequence, as well as accession date and country. Note that using `--ncbi` implicitly also sets `--eval`.
+
+`--update_ncbi` is used whenever you need to update the database of ViralClust. As soon as you run the pipeline with `--ncbi` enabled for the first time, this is done automatically for you. Each viral GenBank entry currently available from the NCBI is processed and for each entry, ViralClust stores the accession ID, taxonomy, accession date and accession country for future uses.
+
+`--output <PATH>` specifies the output directory, where all results are stored. Per default, this is a folder called `viralclust_result` which will be created in the directory that you are currently in.
+
+`--max_cores` and `--cores` determine how many CPU cores are used at maximum and how many cores are used for one individual process at maximum, respectively. The default values cause ViralClust to use all available cores, but for each individual step in the pipeline, only 1 core is used.
+
+There are many more parameters, especially directly connected to the behaviour of Nextflow, which are not explained here. The main things are covered, for the rest, I refer to the [clustering section](#cluster-tools) and the [complete help message](#help-message) of ViralClust.
+
+
+***
+
+### Cluster Tools
+
+Since ViralClust is nothing without the great work of awesome minds, it is only fair to give credit, where credit is due. Currently, five different approaches are used, to cluster input genomes. CD-HIT, sumaclust and vsearch all implement the same algorithmic idea, but with minor, subtle changes in their respective heuristics. We further utilize the clustering module of MMSeqs2. And, last but not least, ViralClust implements a `k-mer` based clustering method, which is realized with the help of UMAP and HDBscan.
+
+For all tools, we link the respective manual and/or github page. Firstly, because we think, all of those are great tools, which you are implicitly using by using ViralClust. And second, because ViralClust offers the possibility to set all parameters of all tools; therefore, if you need something very specific, you can check out the respective documentations.
+
+And, in case of using any of the results provided by ViralClust in a scientific publication, we would be grateful to be cited. In our eyes, it is only fair that you not only cite ViralClust, but also the clustering method you ultimately decided for, even if ViralClust was assisting you in the decision.
+
+<details><summary>Click here for all citations</summary>
+
+  * CD-HIT:
+
+  * sumaclust:
+
+  * vsearch:
+
+  * MMSeqs2:
+
+  * UMAP & HDBscan:
+</details>
 
 ***
 
