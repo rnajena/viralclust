@@ -9,15 +9,16 @@ process update_ncbi_metainfo {
   label 'update_ncbi'
 
   input:
+    path(cacheDir)
 
   output:
 
   script:
   """
-  wget -N -q -P ${projectDir}/data/ ftp://ftp.ncbi.nih.gov/genbank/gbvrl*.seq.gz
-  gunzip  ${projectDir}/data/*.gz
-  python3 ${projectDir}/bin/ncbi_information_dump.py  ${projectDir}/data
-  rm ${projectDir}/data/*seq ${projectDir}/data/*idx
+  wget -N -q -P ${projectDir}/${cacheDir}/ ftp://ftp.ncbi.nih.gov/genbank/gbvrl*.seq.gz
+  gunzip  ${projectDir}/${cacheDir}/*.gz
+  python3 ${projectDir}/bin/ncbi_information_dump.py  ${projectDir}/${cacheDir}
+  rm ${projectDir}/${cacheDir}/*seq ${projectDir}/${cacheDir}/*idx
   """
 
 }

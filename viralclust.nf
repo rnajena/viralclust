@@ -9,6 +9,10 @@ nextflow.enable.dsl=2
 * Author: kevin.lamkiewicz@uni-jena.de
 */
 
+if (params.help) {
+  exit 0, helpMSG()
+}
+
 println " "
 println "\u001B[32mProfile: $workflow.profile\033[0m"
 println " "
@@ -95,7 +99,7 @@ if (params.fasta) {
 
   if (params.ncbi) {
     include { get_ncbi_meta } from './modules/ncbi_meta'
-    ncbi_metainfo_ch = file("${workflow.projectDir}/data/ncbi_metainfo.pkl")
+    ncbi_metainfo_ch = file("${workflow.projectDir}/${params.permanentCacheDir}/ncbi_metainfo.pkl")
     if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
       include { update_ncbi_metainfo } from './modules/update_ncbi_metainfo'
 
@@ -104,7 +108,7 @@ if (params.fasta) {
       Database will be downloaded and stored for this and future runs!
       """.stripIndent()
     } else {
-      ncbiMeta = Channel.fromPath ( workflow.projectDir + '/data/ncbi_metainfo.pkl')
+      ncbiMeta = Channel.fromPath ( workflow.projectDir + params.permanentCacheDir + '/ncbi_metainfo.pkl')
     }
   }
 }
@@ -191,7 +195,7 @@ workflow evaluation {
     if (params.ncbi) {
       if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
         update_metadata()
-        ncbiMeta = Channel.fromPath ( workflow.projectDir + '/data/ncbi_metainfo.pkl')
+        ncbiMeta = ncbiMeta = Channel.fromPath ( workflow.projectDir + params.permanentCacheDir + '/ncbi_metainfo.pkl')
       }
       ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
     }
@@ -217,7 +221,7 @@ workflow evaluation {
 workflow {
 
   if (params.update_ncbi) {
-    update_metadata()
+    update_metadata(params.permanentCacheDir)
   }
 
   if (params.fasta) {
@@ -228,46 +232,90 @@ workflow {
   if (params.eval | implicitEval) {
     evaluation(clustering.out.revCompChannel, clustering.out.clusterEval, preprocessing.out.non_redundant_ch)
   }
-  // sort_sequences(sequences)
-  // remove_redundancy(sort_sequences.out.sort_result)
+}
 
-  // if (params.ncbi) {
-  //   get_ncbi_meta(remove_redundancy.out.nr_result)
-  //   ncbiEval = Channel.from(eval_params).combine(get_ncbi_meta.out.pkl_ncbi)
-  // }
+def helpMSG() {
+    c_reset = "\033[0m";
+    c_red = "\033[1;31m"
+    c_green = "\033[1;32m";
+    c_yellow = "\033[0;33m";
+    c_blue = "\033[0;34m";
+    c_dim = "\033[2m";
+    log.info """
+    ____________________________________________________________________________________________
 
-  // hdbscan(remove_redundancy.out.nr_result, params.hdbscan_params)
-  // cdhit(remove_redundancy.out.nr_result, params.cdhit_params)
-  // sumaclust(remove_redundancy.out.nr_result, params.sumaclust_params)
-  // vclust(remove_redundancy.out.nr_result, params.vclust_params)
-  // mmseqs(remove_redundancy.out.nr_result, params.vclust_params)
+    ${c_green}Welcome to ViralClust - your pipeline to cluster viral genome sequences once and for all!${c_reset}
+    ____________________________________________________________________________________________
 
+    ${c_yellow}Usage example:${c_reset}
+    nextflow run viralclust.nf --update_ncbi
 
-  // hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
-  // cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
-  // sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
-  // vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
-  // mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
-  // revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
-  // reverseComp(revCompChannel)
+    or
 
-  // if (params.eval | implicitEval) {
-  //   mafft(revCompChannel)
-  //   fasttree(mafft.out.mafft_result)
-  //   nwdisplay(fasttree.out.fasttree_result)
+    nextflow run viralclust.nf --fasta "genomes.fasta"
 
-  //   hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
-  //   cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
-  //   sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
-  //   vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
-  //   mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
+    or both
 
-  //   clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
+    nextflow run viralclust.nf --update_ncbi --fasta "genomes.fasta"
 
-  //   evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(remove_redundancy.out.nr_result).combine(ncbiEval)
-  //   evaluate_cluster(evalChannel)
-  //   merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
-  //}
+    ____________________________________________________________________________________________
 
+    ${c_yellow}Mandatory Input:${c_reset}
+    ${c_green}--fasta PATH${c_reset}                      Path to a multiple fasta sequence file, storing all genomes that shall be clustered.
+                                      Usually, this parameter has to be set, unless the parameter ${c_green}--ncbi_update${c_reset} has been set.
 
+    ${c_yellow}Optional Input:${c_reset}
+    ${c_green}--goi PATH${c_reset}                        Path to a (multiple) fasta sequence file with genomes that have to end
+                                      up in the final set of representative genomes, e.g. strains of your lab that are
+                                      of special interest. This parameter is optional.
+    ____________________________________________________________________________________________
+    
+    ${c_yellow}Options:${c_reset}
+    ${c_green}--eval${c_reset}                            After clustering, calculate basic statistics of clustering results. For each
+                                      tool, the minimum, maximum, average and median cluster sizes are calculated,
+                                      as well as the average distance of two representative genomes.
+
+    ${c_green}--ncbi${c_reset}                            Additionally to the evaluation performed by ${c_green}--eval${c_reset}, NCBI metainformation
+                                      is included for all genomes of the input set. Therefore, the identifier of fasta records are
+                                      scanned for GenBank accession IDs, which are then used to retrieve information about the taxonomy,
+                                      accession date and accession country of a sequence. Implicitly calls ${c_green}--eval${c_reset}.
+                                      ${c_red}Attention:${c_reset} If no database is available at ${params.permanentCacheDir}, setting this flag
+                                      implicitly sets ${c_green}--ncbi_update${c_reset}.
+
+    ${c_green}--ncbi_update${c_reset}                     Downloads all current GenBank entries from the NCBI FTP server and processes the data to
+                                      the databank stored at ${params.permanentCacheDir}.
+
+    ${c_yellow}Cluster options:${c_reset}
+    ${c_green}--cdhit_params${c_reset}                    Additional parameters for CD-HIT-EST cluster analysis. [default $params.cdhit_params]
+                                      For more information and options, we refer to the CD-HIT manual.
+
+    ${c_green}--hdbscan_params${c_reset}                  Additional parameters for HDBscan cluster analysis. [default $params.hdbscan_params]
+                                      For more information and options, please use
+                                      ${c_green}nextflow run viralclust.nf --hdbscan_help${c_reset} or ${c_green}python3 bin/hdbscan_virus.py -h${c_reset}.
+
+    ${c_green}--sumaclust_params${c_reset}                Additional parameters for sumaclust cluster analysis. [default $params.sumaclust_params]
+                                      For more information and options, we refer to the sumaclust manual.
+
+    ${c_green}--vclust_params${c_reset}                   Additional parameters for vsearch cluster analysis. [default $params.vclust_params]
+                                      For more information and options, we refer to the vsearch manual.
+
+    ${c_green}--mmseqs_params${c_reset}                   Additional parameters for MMSeqs2 cluster analysis. [default $params.mmseqs_params]
+                                      For more information and options, we refer to the MMSeqs2 manual.
+
+    ${c_yellow}Computing options:${c_reset}
+    ${c_green}--cores INT${c_reset}                       max cores per process for local use [default $params.cores]
+    ${c_green}--max_cores INT${c_reset}                   max cores used on the machine for local use [default $params.max_cores]
+    ${c_green}--memory INT${c_reset}                      max memory in GB for local use [default $params.memory]
+    ${c_green}--output PATH${c_reset}                     name of the result folder [default $params.output]
+    ${c_green}--permanentCacheDir PATH${c_reset}          location for auto-download data like databases [default $params.permanentCacheDir]
+    ${c_green}--condaCacheDir PATH${c_reset}              location for storing the conda environments [default $params.condaCacheDir]
+    ${c_green}--workdir PATH${c_reset}                    working directory for all intermediate results [default $params.workdir]
+
+    ${c_yellow}Nextflow options:${c_reset}
+    ${c_green}-with-report rep.html${c_reset}             cpu / ram usage (may cause errors)
+    ${c_green}-with-dag chart.html${c_reset}              generates a flowchart for the process tree
+    ${c_green}-with-timeline time.html${c_reset}          timeline (may cause errors)
+    ${c_reset}____________________________________________________________________________________________
+
+    """.stripIndent()
 }
