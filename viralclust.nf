@@ -45,7 +45,7 @@ rc_script = Channel.fromPath( workflow.projectDir + '/bin/reverse_complement.py'
 utils = Channel.fromPath( workflow.projectDir + '/bin/utils.py', checkIfExists: true )
 ncbi_script = Channel.fromPath( workflow.projectDir + '/bin/get_ncbi_information.py', checkIfExists: true)
 umap_hdbscan_script = Channel.fromPath( workflow.projectDir + '/bin/hdbscan_virus.py', checkIfExists: true )
-umap_hdbscan_class = Channel.fromPath( workflow.projectDir + '/bin/ClusterViruses.py', checkIfExists: true )
+//umap_hdbscan_class = Channel.fromPath( workflow.projectDir + '/bin/ClusterViruses.py', checkIfExists: true )
 sumaclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/suma2cdhit.py', checkIfExists: true )
 cdhit2cdhit = Channel.fromPath( workflow.projectDir + '/bin/cdhit2goodcdhit.py', checkIfExists: true )
 vclust2cdhit = Channel.fromPath( workflow.projectDir + '/bin/vclust2cdhit.py', checkIfExists: true )
@@ -82,8 +82,15 @@ if (params.fasta) {
 
   sequences = Channel.fromPath(params.fasta)
 
+  if (params.goi) {
+    goi = Channel.fromPath(params.goi)
+    include { sort_sequences as goi_sorter } from './modules/sortsequences'
+    include { concat_goi } from './modules/remove_redundancy'
+  }
+
   include { sort_sequences } from './modules/sortsequences'
-  include { remove_redundancy; cdhit } from './modules/cdhit'
+  include { remove_redundancy } from './modules/remove_redundancy'
+  include { cdhit } from './modules/cdhit'
   include { hdbscan } from './modules/hdbscan'
   include { sumaclust } from './modules/sumaclust'
   include { vclust } from './modules/vclust'
@@ -137,24 +144,33 @@ workflow annotate_metadata {
 workflow preprocessing {
   main:
     sort_sequences(sequences)
+    if (params.goi) {
+      goi_sorter(goi)
+      goiSorted = goi_sorter.out.sort_result
+    } else {
+      goiSorted = 'NO FILE'
+    }
+
     remove_redundancy(sort_sequences.out.sort_result)
     non_redundant_ch = remove_redundancy.out.nr_result
+    if (params.goi) {
+      concat_goi(remove_redundancy.out.nr_result, goiSorted)
+      non_redundant_ch = concat_goi.out.nr_result
+    }
   emit:
     non_redundant_ch
+    goiSorted
 }
 
 workflow clustering {
 
   take:
     non_redundant_ch
+    goiSorted
 
   main:
-    // if (params.ncbi) {
-    //   annotate_metadata(non_redundant_ch)
-    //   ncbiEval = annotate_metadata.out.ncbiEval
-    // }
 
-    hdbscan(non_redundant_ch, params.hdbscan_params)
+    hdbscan(non_redundant_ch, params.hdbscan_params, goiSorted)
     cdhit(non_redundant_ch, params.cdhit_params)
     sumaclust(non_redundant_ch, params.sumaclust_params)
     vclust(non_redundant_ch, params.vclust_params)
@@ -226,7 +242,7 @@ workflow {
 
   if (params.fasta) {
     preprocessing()
-    clustering(preprocessing.out.non_redundant_ch)
+    clustering(preprocessing.out.non_redundant_ch, preprocessing.out.goiSorted)
   }
 
   if (params.eval | implicitEval) {
@@ -269,7 +285,7 @@ def helpMSG() {
                                       up in the final set of representative genomes, e.g. strains of your lab that are
                                       of special interest. This parameter is optional.
     ____________________________________________________________________________________________
-    
+
     ${c_yellow}Options:${c_reset}
     ${c_green}--eval${c_reset}                            After clustering, calculate basic statistics of clustering results. For each
                                       tool, the minimum, maximum, average and median cluster sizes are calculated,

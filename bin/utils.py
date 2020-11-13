@@ -9,7 +9,7 @@ import sys
 import re
 from collections import defaultdict
 
-genbankACCRegex = re.compile(r'[^A-Z]([A-Z]{2}[0-9]{8}|[A-Z]{2}[0-9]{6}|[A-Z][0-9]{5}|NC_[0-9]{6})[^0-9]')
+genbankACCRegex = re.compile(r'[^A-Z]*([A-Z]{2}[0-9]{8}|[A-Z]{2}[0-9]{6}|[A-Z][0-9]{5}|NC_[0-9]{6})[^0-9]')
 
 def reverseComplement(sequence):
   """
