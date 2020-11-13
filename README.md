@@ -117,23 +117,21 @@ And, in case of using any of the results provided by ViralClust in a scientific 
 <details><summary>Click here for all citations</summary>
 
   * CD-HIT:
-  `Weizhong Li & Adam Godzik, "Cd-hit: a fast program for clustering and comparing large sets of protein or nucleotide sequences". Bioinformatics, (2006) 22:1658-9`
-  and
-  `Limin Fu, Beifang Niu, Zhengwei Zhu, Sitao Wu and Weizhong Li, CD-HIT: accelerated for clustering the next generation sequencing data. Bioinformatics, (2012), 28 (23): 3150-3152`
+    * `Weizhong Li & Adam Godzik, "Cd-hit: a fast program for clustering and comparing large sets of protein or nucleotide sequences". Bioinformatics, (2006) 22:1658-9`
+    * `Limin Fu, Beifang Niu, Zhengwei Zhu, Sitao Wu and Weizhong Li, CD-HIT: accelerated for clustering the next generation sequencing data. Bioinformatics, (2012), 28 (23): 3150-3152`
 
   * sumaclust:
-  `Mercier C, Boyer F, Bonin A, Coissac E (2013) SUMATRA and SUMACLUST: fast and exact comparison and clustering of sequences. Available: http://metabarcoding.org/sumatra.`
+    * `Mercier C, Boyer F, Bonin A, Coissac E (2013) SUMATRA and SUMACLUST: fast and exact comparison and clustering of sequences. Available: http://metabarcoding.org/sumatra.`
 
   * vsearch:
-  `Rognes T, Flouri T, Nichols B, Quince C, Mahé F. (2016) VSEARCH: a versatile open source tool for metagenomics. PeerJ 4:e2584`
+    * `Rognes T, Flouri T, Nichols B, Quince C, Mahé F. (2016) VSEARCH: a versatile open source tool for metagenomics. PeerJ 4:e2584`
 
   * MMSeqs2:
-  `Steinegger, M., Söding, J. "MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets". Nat Biotechnol 35, 1026–1028 (2017)`
+    * `Steinegger, M., Söding, J. "MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets". Nat Biotechnol 35, 1026–1028 (2017)`
 
   * UMAP & HDBscan: 
-   `McInnes, L, Healy, J, "UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction", ArXiv e-prints 1802.03426, 2018`
-  and
-   `L. McInnes, J. Healy, S. Astels, "hdbscan: Hierarchical density based clustering" In: Journal of Open Source Software, The Open Journal, volume 2, number 11. 2017`
+    * `McInnes, L, Healy, J, "UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction", ArXiv e-prints 1802.03426, 2018`
+    * `L. McInnes, J. Healy, S. Astels, "hdbscan: Hierarchical density based clustering" In: Journal of Open Source Software, The Open Journal, volume 2, number 11. 2017`
 </details>
 
 ***
