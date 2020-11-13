@@ -14,6 +14,7 @@ process vclust {
   input:
     path(sequences)
     val(addParams)
+    val(goi)
 
   output:
     tuple val("${params.output}/${params.vclust_output}"), path ("${sequences.baseName}_vclust.fasta"), emit: vclust_result
@@ -22,10 +23,18 @@ process vclust {
     path "${sequences.baseName}_vclust_UNCLUSTERED.fasta"
 
   script:
+  def GOI = goi != 'NO FILE' ? "${goi}" : ''
   """
-  vsearch ${addParams} --threads ${task.cpus} --cluster_fast ${sequences} --centroids ${sequences.baseName}_vclust.fasta --uc ${sequences.baseName}_vclust_cluster.uc
-  python3 ${projectDir}/bin/vclust2cdhit.py ${sequences.baseName}_vclust_cluster.uc
-  python3 ${projectDir}/bin/filter_unclustered.py "${sequences.baseName}_vclust.fasta" "${sequences.baseName}_vclust_cluster.uc.clstr"
+    vsearch ${addParams} --threads ${task.cpus} --cluster_fast ${sequences} --centroids ${sequences.baseName}_vclust.fasta --uc ${sequences.baseName}_vclust_cluster.uc
+    if [ "{$GOI}" != 'NO FILE' ]; then
+      for ID in \$(grep '>' ${GOI}); do
+        grep -m "\$ID" "${sequences.baseName}_vclust.fasta" || grep -A1 "\$ID" ${GOI}
+      done  >> "${sequences.baseName}_vclust.fasta"
+    fi
+
+
+    python3 ${projectDir}/bin/vclust2cdhit.py ${sequences.baseName}_vclust_cluster.uc ${GOI}
+    python3 ${projectDir}/bin/filter_unclustered.py "${sequences.baseName}_vclust.fasta" "${sequences.baseName}_vclust_cluster.uc.clstr"
 
   """
 

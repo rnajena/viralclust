@@ -173,7 +173,7 @@ workflow clustering {
     hdbscan(non_redundant_ch, params.hdbscan_params, goiSorted)
     cdhit(non_redundant_ch, params.cdhit_params, goiSorted)
     sumaclust(non_redundant_ch, params.sumaclust_params, goiSorted)
-    vclust(non_redundant_ch, params.vclust_params)
+    vclust(non_redundant_ch, params.vclust_params, goiSorted)
     mmseqs(non_redundant_ch, params.vclust_params)
 
 
