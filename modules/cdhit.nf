@@ -14,6 +14,7 @@ process cdhit {
   input:
     path(sequences)
     val(addParams)
+    val(goi)
 
   output:
     tuple val("${params.output}/${params.cdhit_output}"), path ("${sequences.baseName}_cdhitest.fasta"), emit: cdhit_result
@@ -21,9 +22,17 @@ process cdhit {
     path "${sequences.baseName}_cdhitest_UNCLUSTERED.fasta"
 
   script:
+  def GOI = goi != 'NO FILE' ? "${goi}" : ''
   """
     cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
-    python3 ${baseDir}/bin/cdhit2goodcdhit.py "${sequences.baseName}_cdhitest.fasta.clstr" ${sequences} > tmp.clstr
+    
+    if [ "{$GOI}" != 'NO FILE' ]; then
+      for ID in \$(grep '>' ${GOI}); do
+        grep -m "\$ID" "${sequences.baseName}_cdhitest.fasta" || grep -A1 "\$ID" ${GOI} >> "${sequences.baseName}_cdhitest.fasta"
+      done
+    fi
+
+    python3 ${baseDir}/bin/cdhit2goodcdhit.py "${sequences.baseName}_cdhitest.fasta.clstr" ${sequences} ${GOI} > tmp.clstr
     mv tmp.clstr "${sequences.baseName}_cdhitest.fasta.clstr"
     python3 ${baseDir}/bin/filter_unclustered.py "${sequences.baseName}_cdhitest.fasta" "${sequences.baseName}_cdhitest.fasta.clstr"
   """

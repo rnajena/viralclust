@@ -15,6 +15,10 @@ import utils
 inputFile = sys.argv[1]
 sequenceFile = sys.argv[2]
 
+if len(sys.argv) == 4:
+  goiFile = sys.argv[3]
+  goiHeader = [header for header, _ in utils.parse_fasta(goiFile)]
+
 originalHeader = sorted([ header for header, _ in utils.parse_fasta(sequenceFile) ])
 truncatedHeader = []
 with open(inputFile, 'r') as inputStream:
@@ -28,6 +32,7 @@ assert(len(truncatedHeader) == len(originalHeader))
 headerMapping = {x : y for x,y in zip(truncatedHeader,originalHeader)}
 assert(len(headerMapping) == len(originalHeader))
 
+
 with open(inputFile, 'r') as inputSteam:
   for line in inputSteam:
     if line.startswith('>'):
@@ -35,4 +40,7 @@ with open(inputFile, 'r') as inputSteam:
       continue
     accessionID = line.strip().split('>')[1].split(' ')[0]
     line = line.replace(accessionID, headerMapping[accessionID])
+
+    if len(sys.argv) == 4 and headerMapping[accessionID] in goiHeader:
+      line = line.strip() + '   GOI'
     print(line.strip())

@@ -29,7 +29,7 @@ process hdbscan {
   script:
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
   """
-    python3 ${baseDir}/bin/hdbscan_virus.py -v -p ${task.cpus} ${addParams} ${sequences} ${goi} 2> hdbscan.log
+    python3 ${baseDir}/bin/hdbscan_virus.py -v -p ${task.cpus} ${addParams} ${sequences} ${GOI} 2> hdbscan.log
     mv cluster-1.fasta  "${sequences.baseName}_hdbscan_UNCLUSTERED.fasta"
 
   """
