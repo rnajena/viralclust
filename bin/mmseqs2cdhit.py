@@ -14,6 +14,11 @@ import utils
 
 inputFile = sys.argv[1]
 fastaFile = sys.argv[2]
+
+if len(sys.argv) == 4:
+  goiFile = sys.argv[3]
+  goiHeader = [header for header, _ in utils.parse_fasta(goiFile)]
+
 outputFile = f"{sys.argv[1]}.clstr"
 
 clusterInfo = defaultdict(list)
@@ -35,6 +40,9 @@ with open(outputFile, 'w') as outputStream:
     for seqIdx, seq in enumerate(seqInCluster):
       outputStream.write(f"{seqIdx}\t{len(fastaContent[seq])}nt, >{seq}")
       if seq == centroid:
-        outputStream.write(' *\n')
+        outputStream.write(' *')
       else:
-        outputStream.write(" at +/13.37%\n")
+        outputStream.write(" at +/13.37%")
+      if len(sys.argv) == 4 and seq.strip('>') in goiHeader:
+        outputStream.write("  GOI")
+      outputStream.write("\n")
