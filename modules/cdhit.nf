@@ -25,7 +25,7 @@ process cdhit {
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
   """
     cd-hit-est ${addParams} -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
-    
+
     if [ "{$GOI}" != 'NO FILE' ]; then
       for ID in \$(grep '>' ${GOI}); do
         grep -m "\$ID" "${sequences.baseName}_cdhitest.fasta" || grep -A1 "\$ID" ${GOI} >> "${sequences.baseName}_cdhitest.fasta"

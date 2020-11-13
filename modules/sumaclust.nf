@@ -14,6 +14,7 @@ process sumaclust {
   input:
     path(sequences)
     val(addParams)
+    val(goi)
 
   output:
     tuple val ("${params.output}/${params.sumaclust_output}"), path ("${sequences.baseName}_sumaclust.fasta"), emit: sumaclust_result
@@ -22,14 +23,22 @@ process sumaclust {
 
 
   script:
+  def GOI = goi != 'NO FILE' ? "${goi}" : ''
   """
-  sumaclust ${addParams} ${sequences}  > "${sequences.baseName}_sumaclust.fasta"
-  python3 ${projectDir}/bin/suma2cdhit.py "${sequences.baseName}_sumaclust.fasta"
+    sumaclust ${addParams} ${sequences}  > "${sequences.baseName}_sumaclust.fasta"
 
-  awk '/^>/ {printf("\\n%s\\n",\$0);next; } { printf("%s",\$0);}  END {printf("\\n");}' < "${sequences.baseName}_sumaclust.fasta" | tail -n +2 > tmp.fasta
-  grep 'cluster_center=True' tmp.fasta | grep -v 'cluster_weight=1' | xargs -n1 -I% grep -A1 "%" tmp.fasta  > "${sequences.baseName}_sumaclust.fasta"
-  grep 'cluster_center=True' tmp.fasta | grep 'cluster_weight=1' | xargs -n1 -I% grep -A1 "%" tmp.fasta > "${sequences.baseName}_sumaclust_UNCLUSTERED.fasta"
-  rm tmp.fasta
+    python3 ${projectDir}/bin/suma2cdhit.py "${sequences.baseName}_sumaclust.fasta" ${GOI}
+
+    awk '/^>/ {printf("\\n%s\\n",\$0);next; } { printf("%s",\$0);}  END {printf("\\n");}' < "${sequences.baseName}_sumaclust.fasta" | tail -n +2 > tmp.fasta
+    grep 'cluster_center=True' tmp.fasta | grep -v 'cluster_weight=1' | xargs -n1 -I% grep -A1 "%" tmp.fasta  > "${sequences.baseName}_sumaclust.fasta"
+    grep 'cluster_center=True' tmp.fasta | grep 'cluster_weight=1' | xargs -n1 -I% grep -A1 "%" tmp.fasta > "${sequences.baseName}_sumaclust_UNCLUSTERED.fasta"
+    rm tmp.fasta
+
+    if [ "{$GOI}" != 'NO FILE' ]; then
+      for ID in \$(grep '>' ${GOI}); do
+        grep -m "\$ID" "${sequences.baseName}_sumaclust.fasta" || grep -A1 "\$ID" ${GOI}
+      done  >> "${sequences.baseName}_sumaclust.fasta"
+    fi
 
   """
 
