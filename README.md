@@ -153,15 +153,15 @@ Welcome to ViralClust - your pipeline to cluster viral genome sequences once and
 ____________________________________________________________________________________________
 
 Usage example:
-nextflow run ViralClust.nf --update_ncbi
+nextflow run viralclust.nf --update_ncbi
 
 or
 
-nextflow run ViralClust.nf --fasta "genomes.fasta"
+nextflow run viralclust.nf --fasta "genomes.fasta"
 
 or both
 
-nextflow run ViralClust.nf --update_ncbi --fasta "genomes.fasta"
+nextflow run viralclust.nf --update_ncbi --fasta "genomes.fasta"
 
 ____________________________________________________________________________________________
 
@@ -192,26 +192,30 @@ Options:
 
 Cluster options:
 --cdhit_params                    Additional parameters for CD-HIT-EST cluster analysis. [default -c 0.9]
+                                  You can use nextflow run viralclust.nf --cdhit_help
                                   For more information and options, we refer to the CD-HIT manual.
 
---hdbscan_params                  Additional parameters for HDBscan cluster analysis. [default ]
+--hdbscan_params                  Additional parameters for HDBscan cluster analysis. [default -k 7]
                                   For more information and options, please use
-                                  nextflow run ViralClust.nf --hdbscan_help or python3 bin/hdbscan_virus.py -h.
+                                  nextflow run viralclust.nf --hdbscan_help.
 
---sumaclust_params                Additional parameters for sumaclust cluster analysis. [default ]
+--sumaclust_params                Additional parameters for sumaclust cluster analysis. [default -t 0.9]
+                                  You can use nextflow run viralclust.nf --sumaclust_help.
                                   For more information and options, we refer to the sumaclust manual.
 
 --vclust_params                   Additional parameters for vsearch cluster analysis. [default --id 0.9]
+                                  You can use nextflow run viralclust.nf --vclust_help
                                   For more information and options, we refer to the vsearch manual.
 
---mmseqs_params                   Additional parameters for MMSeqs2 cluster analysis. [default ]
+--mmseqs_params                   Additional parameters for MMSeqs2 cluster analysis. [default --min-seq-id 0.9]
+                                  You can use nextflow run viralclust.nf --mmseqs_help
                                   For more information and options, we refer to the MMSeqs2 manual.
 
 Computing options:
 --cores INT                       max cores per process for local use [default 1]
---max_cores INT                   max cores used on the machine for local use [default ALL]
+--max_cores INT                   max cores used on the machine for local use [default 8]
 --memory INT                      max memory in GB for local use [default 16.GB]
---output PATH                     name of the result folder [default ViralClust_results]
+--output PATH                     name of the result folder [default viralclust_results]
 --permanentCacheDir PATH          location for auto-download data like databases [default data]
 --condaCacheDir PATH              location for storing the conda environments [default conda]
 --workdir PATH                    working directory for all intermediate results [default /tmp/nextflow-work-$USER]
