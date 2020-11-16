@@ -1,0 +1,5 @@
+name: nextflow
+channels:
+  - bioconda
+dependencies:
+  - nextflow

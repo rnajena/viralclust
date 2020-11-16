@@ -51,7 +51,7 @@ Of course, you can install NextFlow on your system how ever you like, but consid
   ```
    </details>
 
-* Clone the github repository for the latest version of <samp>ViralClust</samp>, or download the latest stable release version here.
+* Clone the github repository for the latest version of <samp>ViralClust</samp>, or download the latest stable release version [here](https://github.com/klamkiew/viralClust/releases).
 
   <details><summary>Click here to see how:</summary>
 
