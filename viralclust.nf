@@ -24,7 +24,9 @@ println "  $workflow.workDir"
 println "Launchdir location:"
 println "  $workflow.launchDir"
 println "Configuration files:"
-println "  $workflow.configFiles\u001B[0m"
+println "  $workflow.configFiles"
+println "Path for database:"
+println " $workflow.projectDir/$params.permanentCacheDir\u001B[0m"
 println " "
 
 if (workflow.profile == 'standard' || workflow.profile.contains('local')) {
@@ -115,7 +117,8 @@ if (params.fasta) {
       Database will be downloaded and stored for this and future runs!
       """.stripIndent()
     } else {
-      ncbiMeta = Channel.fromPath ( workflow.projectDir + params.permanentCacheDir + '/ncbi_metainfo.pkl')
+      test = "$workflow.projectDir/$params.permanentCacheDir/ncbi_metainfo.pkl"
+      ncbiMeta = Channel.fromPath ( test )
     }
   }
 }
@@ -211,7 +214,8 @@ workflow evaluation {
     if (params.ncbi) {
       if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
         update_metadata()
-        ncbiMeta = ncbiMeta = Channel.fromPath ( workflow.projectDir + params.permanentCacheDir + '/ncbi_metainfo.pkl')
+        test = "$workflow.projectDir/$params.permanentCacheDir/ncbi_metainfo.pkl"
+        ncbiMeta = Channel.fromPath ( test )
       }
       ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
     }
