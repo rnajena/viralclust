@@ -24,7 +24,7 @@ process mmseqs{
   script:
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
   """
-    mmseqs easy-linclust "${addParams}" --threads "${task.cpus}" "${sequences}" "${sequences.baseName}_mmseqs" tmp
+    mmseqs easy-linclust ${addParams} --threads "${task.cpus}" "${sequences}" "${sequences.baseName}_mmseqs" tmp
     mv ${sequences.baseName}_mmseqs_rep_seq.fasta ${sequences.baseName}_mmseqs.fasta
 
     if [ "{$GOI}" != 'NO FILE' ]; then

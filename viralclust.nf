@@ -92,9 +92,10 @@ log.info """\
     CPUs used:              $params.cores
     ${msg -> if (params.eval | implicitEval) msg << "Tree will be calculated"}
     ${sw -> if (params.cdhit_params != '') sw << "cd-hit-est parameters:  ${params.cdhit_params}"}
-    ${sw -> if (params.hdbscan_params != '') sw << "HDBscan parameters:     ${params.hdbscan_params}"}
+    ${sw -> if (params.hdbscan_params != '') sw << "HDBSCAN parameters:     ${params.hdbscan_params}"}
     ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust_params}"}
     ${sw -> if (params.vclust_params != '') sw << "vclust parameters:     ${params.vclust_params}"}
+    ${sw -> if (params.mmseqs_params != '') sw << "MMSeqs2 parameters:     ${params.mmseqs_params}"}
 
 
     """
@@ -197,7 +198,7 @@ workflow clustering {
     cdhit(non_redundant_ch, params.cdhit_params, goiSorted)
     sumaclust(non_redundant_ch, params.sumaclust_params, goiSorted)
     vclust(non_redundant_ch, params.vclust_params, goiSorted)
-    mmseqs(non_redundant_ch, params.vclust_params, goiSorted)
+    mmseqs(non_redundant_ch, params.mmseqs_params, goiSorted)
 
 
     hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
