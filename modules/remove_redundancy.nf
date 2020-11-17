@@ -18,7 +18,7 @@ process remove_redundancy {
 
   script:
   """
-    mmseqs easy-linclust --min-seq-id 1.0 "${sequences}" "${sequences.baseName}_nr" tmp
+    mmseqs easy-linclust --threads ${task.cpus} --min-seq-id 1.0 "${sequences}" "${sequences.baseName}_nr" tmp
     mv "${sequences.baseName}_nr_rep_seq.fasta" "${sequences.baseName}_nr.fasta"
   """
 }

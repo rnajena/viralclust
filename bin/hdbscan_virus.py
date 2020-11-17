@@ -5,8 +5,6 @@
 # Email: kevin.lamkiewicz@uni-jena.de
 
 """
-viralClust v 0.1
-
 ViralClust is a python program that takes several genome sequences
 from different viruses as an input.
 These will be clustered these sequences into groups (clades) based
@@ -45,8 +43,6 @@ Options:
   --subcluster                            Additionally to the initial cluster step, each cluster gets analyzed for
                                           local structures and relations which results in subcluster for each cluster. [Default: False]
 
-Version:
-  viralClust v0.1 (alpha)
 """
 
 import sys
@@ -130,7 +126,7 @@ class Clusterer(object):
           if header:
             yield (header, seq)
 
-          header = line.rstrip("\n").replace(':','_').replace(' ','_').lstrip(">")
+          header = line.rstrip("\n").replace(':','_').replace(' ','_').strip(">_")
           seq = ''
         else:
           seq += line.rstrip("\n").upper().replace('U','T')
