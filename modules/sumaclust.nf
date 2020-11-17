@@ -25,7 +25,7 @@ process sumaclust {
   script:
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
   """
-    sumaclust ${addParams} ${sequences}  > "${sequences.baseName}_sumaclust.fasta"
+    sumaclust "${addParams}" -p "${task.cpus}" "${sequences}"  > "${sequences.baseName}_sumaclust.fasta"
 
     python3 ${projectDir}/bin/suma2cdhit.py "${sequences.baseName}_sumaclust.fasta" ${GOI}
 
