@@ -67,7 +67,8 @@ cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 
 if not failbob:
   failbob = [cluster for idx,cluster in cluster.items() if len(cluster) == 1]
-realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 and idx != '-1'}
+#realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 and idx != '-1'}
+realCluster = {idx : cluster for idx,cluster in cluster.items() if cluster not in failbob}
 
 tree = dendropy.Tree.get(path=treeFile, schema='newick')
 dm = tree.phylogenetic_distance_matrix()

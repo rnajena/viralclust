@@ -60,7 +60,7 @@ def parse_clusterFile(clusterFile):
         accID = line.split('>')[1].split(' ')[0]
         if clusterNumber == -1:
           failbob.append(accID)
-          #continue
+          continue
         if line.endswith('*'):
           centroids.append(accID)
         cluster[clusterNumber].append(accID)
