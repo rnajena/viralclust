@@ -42,8 +42,8 @@ def retrieve_taxonomy(prefix, accID2desc):
         if acc in accID2desc:
           description = accID2desc[acc]
           if clusterID in realCluster:
-            avgClusterPerSpecies[description[2][1]].add(clusterID)
-            avgClusterPerGenus[description[2][0]].add(clusterID)
+            avgClusterPerSpecies[description[2][2]].add(clusterID)
+            avgClusterPerGenus[description[2][1]].add(clusterID)
           outputStream.write(f"{acc},{','.join(description[2])},{description[0]},{description[1]}\n")
         else:
           outputStream.write(f"{acc},--,--,--,--,--\n")
@@ -83,11 +83,12 @@ if NCBI:
 
   accID2desc = {header : metaInfo for header,metaInfo in accID2desc.items() if header in allSequences}
   (clusterPerSpecies, clusterPerGenus) = retrieve_taxonomy(PREFIX, accID2desc)
+  #print(clusterPerGenus)
+  #print(clusterPerSpecies)
   avgClusterPerSpecies = np.mean([len(x) for x in clusterPerSpecies.values()])
   avgClusterPerSpecies = f"{avgClusterPerSpecies:.2f}"
   avgClusterPerGenus = np.mean([len(x) for x in clusterPerGenus.values()])
   avgClusterPerGenus = f"{avgClusterPerGenus:.2f}"
-
 
   then = datetime.strptime(timestamp, "%a %b %d %H:%M:%S %Y")
   now = datetime.strptime(time.asctime(), "%a %b %d %H:%M:%S %Y")
@@ -95,7 +96,6 @@ if NCBI:
   if difference.days >= 90:
     with open("WARNING.txt", 'w') as outputStream:
       outputStream.write("Warning: Your NCBI meta information database is older than 90 days.\nPlease consider updating the database:\nnextflow run viralclust.nf --update_ncbi\n")
-
 else:
   avgClusterPerSpecies = avgClusterPerGenus = '--'
 print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")
