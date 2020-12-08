@@ -36,8 +36,22 @@ for accession in gb_vrl:
   else:
     accessionDate = '--'
 
-  taxonomy = gb_vrl[accession].annotations['taxonomy'][-2:] + [gb_vrl[accession].annotations['organism']]
+  taxonomy = gb_vrl[accession].annotations['taxonomy'] + [gb_vrl[accession].annotations['organism']]
   taxonomy = list(map(lambda x : x.replace('\n',' ').replace(' ','_'), taxonomy))
+
+  for idx, element in enumerate(taxonomy):
+    if element.endswith("viridae"):
+      family = element
+      familyIDX = idx
+      break
+
+  for element in taxonomy[idx+1:-1]:
+    if element.endswith("virus"):
+      genus = element
+      break
+  organism = taxonomy[-1]
+
+  taxonomy = family, genus, organism
 
 
   d_metaInformation[accession.split('.')[0]] = (country.strip(), accessionDate.strip(), taxonomy)

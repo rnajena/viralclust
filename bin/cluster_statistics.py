@@ -37,7 +37,7 @@ def retrieve_taxonomy(prefix, accID2desc):
 
   with open(f'{prefix}_taxonomy_info.txt', 'w') as outputStream:
     for clusterID, accessionIDs in cluster.items():
-      outputStream.write(f"Cluster: {int(clusterID)+1}\n")
+      outputStream.write(f"## Cluster: {int(clusterID)+1}\n")
       for acc in accessionIDs:
         if acc in accID2desc:
           description = accID2desc[acc]
@@ -47,7 +47,7 @@ def retrieve_taxonomy(prefix, accID2desc):
           outputStream.write(f"{acc},{','.join(description[2])},{description[0]},{description[1]}\n")
         else:
           outputStream.write(f"{acc},--,--,--,--,--\n")
-      outputStream.write(f"####################\n")
+      outputStream.write(f"####################\n\n")
     return(avgClusterPerSpecies, avgClusterPerGenus)
 
 #########################################################################
