@@ -41,6 +41,8 @@ def retrieve_taxonomy(prefix, accID2desc):
       for acc in accessionIDs:
         if acc in accID2desc:
           description = accID2desc[acc]
+          if acc == 'KX148547':
+            print(description)
           if clusterID in realCluster:
             avgClusterPerSpecies[description[2][2]].add(clusterID)
             avgClusterPerGenus[description[2][1]].add(clusterID)
@@ -83,8 +85,8 @@ if NCBI:
 
   accID2desc = {header : metaInfo for header,metaInfo in accID2desc.items() if header in allSequences}
   (clusterPerSpecies, clusterPerGenus) = retrieve_taxonomy(PREFIX, accID2desc)
-  #print(clusterPerGenus)
-  #print(clusterPerSpecies)
+  print(clusterPerGenus)
+  print(clusterPerSpecies)
   avgClusterPerSpecies = np.mean([len(x) for x in clusterPerSpecies.values()])
   avgClusterPerSpecies = f"{avgClusterPerSpecies:.2f}"
   avgClusterPerGenus = np.mean([len(x) for x in clusterPerGenus.values()])
