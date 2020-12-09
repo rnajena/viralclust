@@ -85,8 +85,8 @@ if NCBI:
 
   accID2desc = {header : metaInfo for header,metaInfo in accID2desc.items() if header in allSequences}
   (clusterPerSpecies, clusterPerGenus) = retrieve_taxonomy(PREFIX, accID2desc)
-  print(clusterPerGenus)
-  print(clusterPerSpecies)
+  #print(clusterPerGenus)
+  #print(clusterPerSpecies)
   avgClusterPerSpecies = np.mean([len(x) for x in clusterPerSpecies.values()])
   avgClusterPerSpecies = f"{avgClusterPerSpecies:.2f}"
   avgClusterPerGenus = np.mean([len(x) for x in clusterPerGenus.values()])
