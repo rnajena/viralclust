@@ -26,13 +26,13 @@ for accession in gb_vrl:
 
   country = re.findall(countryRegex, genbankEntry)
   if country:
-    country = country[0].replace('\n',' ').replace(' ','_')
+    country = country[0].replace('\n',' ').replace(' ','_').replace(',','')
   else:
     country = '--'
 
   accessionDate = re.findall(accessionDateRegex, genbankEntry)
   if accessionDate:
-    accessionDate = accessionDate[0].replace('\n',' ').replace(' ','_')
+    accessionDate = accessionDate[0].replace('\n',' ').replace(' ','_').replace(',','')
   else:
     accessionDate = '--'
 
