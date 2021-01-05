@@ -150,7 +150,10 @@ if (params.update_ncbi) {
 }
 
 workflow update_metadata {
-  update_ncbi_metainfo()
+  take:
+    cacheDir
+  main:
+    update_ncbi_metainfo(cacheDir)
 }
 
 workflow annotate_metadata {
@@ -234,7 +237,7 @@ workflow evaluation {
 
     if (params.ncbi) {
       if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
-        update_metadata()
+        update_metadata("$workflow.projectDir/$params.permanentCacheDir")
         test = "$workflow.projectDir/$params.permanentCacheDir/ncbi_metainfo.pkl"
         ncbiMeta = Channel.fromPath ( test )
       }
@@ -262,7 +265,7 @@ workflow evaluation {
 workflow {
 
   if (params.update_ncbi) {
-    update_metadata(params.permanentCacheDir)
+    update_metadata("$workflow.projectDir/$params.permanentCacheDir")
   }
 
   if (params.fasta) {
@@ -323,7 +326,7 @@ def helpMSG() {
                                       ${c_red}Attention:${c_reset} If no database is available at ${params.permanentCacheDir}, setting this flag
                                       implicitly sets ${c_green}--ncbi_update${c_reset}.
 
-    ${c_green}--ncbi_update${c_reset}                     Downloads all current GenBank entries from the NCBI FTP server and processes the data to
+    ${c_green}--update_ncbi${c_reset}                     Downloads all current GenBank entries from the NCBI FTP server and processes the data to
                                       the databank stored at ${params.permanentCacheDir}.
 
     ${c_yellow}Cluster options:${c_reset}
