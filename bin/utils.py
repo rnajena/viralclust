@@ -66,3 +66,25 @@ def parse_clusterFile(clusterFile):
         cluster[clusterNumber].append(accID)
 
   return(cluster, centroids, failbob)
+
+def parse_metaInfo(filePath):
+
+  holyTable = {}
+  cluster = ''
+  content = []
+
+  with open(filePath, 'r') as inputStream:
+    for line in inputStream:
+      line = line.strip()
+      if line.startswith("## C"):
+        if cluster:
+          holyTable[cluster] = content
+          content = []
+        cluster = int(line.lstrip('#').strip().split(' ')[1])
+        continue
+
+      if line.startswith('###') or not line.strip():
+        continue
+      content.append(line.split(','))
+    holyTable[cluster] = content
+  return (holyTable)

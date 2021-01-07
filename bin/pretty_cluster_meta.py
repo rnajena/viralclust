@@ -7,40 +7,22 @@
 
 import sys
 from collections import Counter
-
+import utils
 
 def prettyCounterPrint(l, delim=', '):
   return(delim.join([f"{k}: {v}" for k,v in dict(Counter(l).most_common()).items()]))
 
 inputFile = sys.argv[1]
 
-cluster = ''
-speciesList = []
-locationList = []
-dateList = []
+holyTable = utils.parse_metaInfo(inputFile)
 
-holyTable = {}
-
-with open(inputFile, 'r') as inputStream:
-  for line in inputStream:
-    line = line.strip()
-    if line.startswith("## C"):
-      if cluster:
-        print()
-        print(f'### {cluster} ###')
-        print(prettyCounterPrint(speciesList))
-        print(prettyCounterPrint(locationList))
-        print(prettyCounterPrint(dateList))
-      cluster = line.lstrip('#').strip()
-      speciesList = []
-      locationList = []
-      dateList = []
-      holyTable[cluster] = (speciesList, locationList, dateList)
-      continue
-
-    if line.startswith('###') or not line.strip():
-      continue
+for cluster, elements in holyTable.items():
+  speciesList = [x[3] for x in elements]
+  locationList = [x[4] for x in elements]
+  dateList = [x[5] for x in elements]
+  print()
+  print(f'### Cluster: {cluster} ###')
+  print(prettyCounterPrint(speciesList))
+  print(prettyCounterPrint(locationList))
+  print(prettyCounterPrint(dateList))
   
-    speciesList.append(line.split(',')[3])
-    locationList.append(line.split(',')[4])
-    dateList.append(line.split(',')[5])
