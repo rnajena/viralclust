@@ -10,7 +10,7 @@ from collections import Counter
 import utils
 
 def prettyCounterPrint(l, delim=', '):
-  return(delim.join([f"{k}: {v}" for k,v in dict(Counter(l).most_common()).items()]))
+  return( '_'.join(filter(None, delim.join([f"{k}: {v}" for k,v in dict(Counter(l).most_common()).items()]).split('_'))) )
 
 inputFile = sys.argv[1]
 

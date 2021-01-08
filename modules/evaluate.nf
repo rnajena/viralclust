@@ -22,6 +22,12 @@ process evaluate_cluster {
   """
     output=\$(python3 ${projectDir}/bin/cluster_statistics.py ${flag} ${addParams} --toolName "${name}" "${newick}" "${sequences}" "${clusterFile}")
     echo ${name},\$output > ${name}_stats.out
+
+    if [ -f ${name}_taxonomy_info.txt ]; then
+      python3 ${projectDir}/bin/pretty_cluster_meta.py ${name}_taxonomy_info.txt > tmp
+      mv tmp ${name}_taxonomy_info.txt
+    fi
+
   """
 
 }
