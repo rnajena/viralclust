@@ -7,6 +7,7 @@
 process evaluate_cluster {
   label 'evaluate'
   publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "*_info.txt"
+  publishDir "${params.output}/${params.summary_output}", mode: 'copy', pattern: "*MetaInfo.txt"
 
   input:
     tuple val(name), path(clusterFile), path(newick), path(sequences), val(flag), val(addParams)
@@ -14,6 +15,7 @@ process evaluate_cluster {
   output:
     path "${name}_stats.out", emit: eval_result
     path ("${name}_taxonomy_info.txt") optional true
+    path ("${name}_clusterMetaInfo.txt") optional true
     path "WARNING.txt", optional: true, emit: warning
 
   script:
@@ -24,8 +26,7 @@ process evaluate_cluster {
     echo ${name},\$output > ${name}_stats.out
 
     if [ -f ${name}_taxonomy_info.txt ]; then
-      python3 ${projectDir}/bin/pretty_cluster_meta.py ${name}_taxonomy_info.txt > tmp
-      mv tmp ${name}_taxonomy_info.txt
+      python3 ${projectDir}/bin/pretty_cluster_meta.py ${name}_taxonomy_info.txt > ${name}_clusterMetaInfo.txt
     fi
 
   """
