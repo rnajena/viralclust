@@ -15,10 +15,10 @@ process update_ncbi_metainfo {
 
   script:
   """
-  wget -N -q -P ${projectDir}/${cacheDir}/ ftp://ftp.ncbi.nih.gov/genbank/gbvrl*.seq.gz
-  gunzip  ${projectDir}/${cacheDir}/*.gz
-  python3 ${projectDir}/bin/ncbi_information_dump.py  ${projectDir}/${cacheDir}
-  rm ${projectDir}/${cacheDir}/*seq ${projectDir}/${cacheDir}/*idx
+  wget -N -q -P ${cacheDir}/ ftp://ftp.ncbi.nih.gov/genbank/gbvrl*.seq.gz
+  gunzip  ${cacheDir}/*.gz
+  python3 ${projectDir}/bin/ncbi_information_dump.py  ${cacheDir}
+  rm ${cacheDir}/*seq ${cacheDir}/*idx
   """
 
 }

@@ -25,4 +25,3 @@ for cluster, elements in holyTable.items():
   print(prettyCounterPrint(speciesList))
   print(prettyCounterPrint(locationList))
   print(prettyCounterPrint(dateList))
-  
