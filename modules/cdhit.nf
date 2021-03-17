@@ -17,8 +17,8 @@ process cdhit {
     val(goi)
 
   output:
-    tuple val("${params.output}/${params.cdhit_output}"), path ("${sequences.baseName}_cdhitest.fasta"), emit: cdhit_result
-    path "${sequences.baseName}_cdhitest.fasta.clstr", emit: cdhit_cluster
+    tuple val("${params.output}/${params.cdhit_output}"), path("${sequences.baseName}_cdhitest.fasta"), path("${sequences.baseName}_cdhitest.fasta.clstr")
+    //path "${sequences.baseName}_cdhitest.fasta.clstr", emit: cdhit_cluster
     path "${sequences.baseName}_cdhitest_UNCLUSTERED.fasta"
 
   script:

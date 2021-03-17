@@ -192,6 +192,98 @@ workflow preprocessing {
     goiSorted
 }
 
+
+workflow hdbscan_wf{
+  take:
+    fasta
+    hdbscan_params
+    goiSorted
+
+  main:
+    if (!params.hdbscan_off) {
+      hdbscan(fasta, hdbscan_params, goiSorted)
+      hdbscan_results = hdbscan.out[0]
+    } else {
+      hdbscan_results = Channel.from(['off', 'off', 'off'])
+    }
+  emit:
+    hdbscan_results
+}
+
+workflow cd_hit_est_wf {
+  take:
+    fasta
+    cdhit_params
+    goiSorted
+  
+  main:
+    if (!params.cdhit_off) {
+      cdhit(fasta, cdhit_params, goiSorted)
+    
+      cdhit_results = cdhit.out[0]
+    } else {
+      cdhit_results = Channel.from(['off', 'off', 'off'])
+    }
+
+  emit:
+    cdhit_results
+}
+
+workflow sumaclust_wf {
+  take:
+    fasta
+    sumaclust_params
+    goiSorted
+
+  main: 
+    if (!params.sumaclust_off) {
+      sumaclust(fasta, sumaclust_params, goiSorted)
+      sumaclust_results = sumaclust.out[0]
+      } else {
+        sumaclust_results = Channel.from(['off', 'off', 'off'])
+      }
+  
+  emit:
+    sumaclust_results
+
+}
+
+workflow vclust_wf {
+  take:
+    fasta
+    vclust_params
+    goiSorted
+
+  main:
+    if (!params.vclust_off) {
+      vclust(fasta, vclust_params, goiSorted)
+      vclust_results = vclust.out[0]
+    } else {
+      vclust_results = Channel.from(['off', 'off', 'off'])
+    }
+
+  emit:
+    vclust_results
+}
+
+workflow mmseqs_wf {
+  take:
+    fasta
+    mmseqs_params
+    goiSorted
+
+  main:
+    if (!params.mmseqs_off) {
+      mmseqs(fasta, mmseqs_params, goiSorted)
+      mmseqs_results = mmseqs.out[0]
+    } else {
+      mmseqs_results = Channel.from(['off', 'off', 'off'])
+    }
+  
+  emit:
+    mmseqs_results
+}
+
 workflow clustering {
 
   take:
@@ -200,31 +292,37 @@ workflow clustering {
 
   main:
 
-    hdbscan(non_redundant_ch, params.hdbscan_params, goiSorted)
-    cdhit(non_redundant_ch, params.cdhit_params, goiSorted)
-    sumaclust(non_redundant_ch, params.sumaclust_params, goiSorted)
-    vclust(non_redundant_ch, params.vclust_params, goiSorted)
-    mmseqs(non_redundant_ch, params.mmseqs_params, goiSorted)
+    hdbscan_wf(non_redundant_ch, params.hdbscan_params, goiSorted)
+    cd_hit_est_wf(non_redundant_ch, params.cdhit_params, goiSorted)
+    sumaclust_wf(non_redundant_ch, params.sumaclust_params, goiSorted)
+    vclust_wf(non_redundant_ch, params.vclust_params, goiSorted)
+    mmseqs_wf(non_redundant_ch, params.mmseqs_params, goiSorted)
+
+    // hdbscan(non_redundant_ch, params.hdbscan_params, goiSorted)
+    // cdhit(non_redundant_ch, params.cdhit_params, goiSorted)
+    // sumaclust(non_redundant_ch, params.sumaclust_params, goiSorted)
+    // vclust(non_redundant_ch, params.vclust_params, goiSorted)
+    // mmseqs(non_redundant_ch, params.mmseqs_params, goiSorted)
 
 
-    hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
-    cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
-    sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
-    vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
-    mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
-    revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
-    reverseComp(revCompChannel)
+    // hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
+    // cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
+    // sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
+    // vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
+    // mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
+    // revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
+    // reverseComp(revCompChannel)
 
-    hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
-    cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
-    sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
-    vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
-    mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
-    clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
+    // hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
+    // cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
+    // sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
+    // vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
+    // mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
+    // clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
 
-  emit:
-    revCompChannel
-    clusterEval
+  // emit:
+    // revCompChannel
+    // clusterEval
 }
 
 workflow evaluation {

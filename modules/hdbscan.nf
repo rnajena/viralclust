@@ -21,8 +21,8 @@ process hdbscan {
     val(goi)
 
   output:
-    tuple val("${params.output}/${params.hdbscan_output}"), path("${sequences.baseName}_hdbscan.fasta"), emit: hdbscan_result
-    path "${sequences.baseName}_hdbscan.fasta.clstr", emit: hdbscan_cluster
+    tuple val("${params.output}/${params.hdbscan_output}"), path("${sequences.baseName}_hdbscan.fasta"), path("${sequences.baseName}_hdbscan.fasta.clstr")
+    // path "${sequences.baseName}_hdbscan.fasta.clstr", emit: hdbscan_cluster
     path "${sequences.baseName}_hdbscan_UNCLUSTERED.fasta"
     path "hdbscan.log"
 
