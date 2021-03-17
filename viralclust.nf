@@ -302,6 +302,13 @@ workflow clustering {
     vclust_wf(non_redundant_ch, params.vclust_params, goiSorted)
     mmseqs_wf(non_redundant_ch, params.mmseqs_params, goiSorted)
 
+    revCompChannel = Channel.value('HDBSCAN').combine(hdbscan_wf.out)
+                      .concat(Channel.value('cd-hit-est').combine(cd_hit_est_wf.out))
+                      .concat(Channel.value('sumaclust').combine(sumaclust_wf.out))
+                      .concat(Channel.value('MMseqs2').combine(mmseqs_wf.out))
+                      .concat(Channel.value('vclust').combine(vclust_wf.out))
+                      .filter { it[1] != 'off'}    
+
     // hdbscan(non_redundant_ch, params.hdbscan_params, goiSorted)
     // cdhit(non_redundant_ch, params.cdhit_params, goiSorted)
     // sumaclust(non_redundant_ch, params.sumaclust_params, goiSorted)
