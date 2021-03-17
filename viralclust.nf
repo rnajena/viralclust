@@ -114,25 +114,12 @@ if (params.fasta) {
   include { sort_sequences } from './modules/sortsequences'
   include { remove_redundancy } from './modules/remove_redundancy'
 
-  if (! params.cdhit_off) {
-    include { cdhit } from './modules/cdhit'
-  }
+  include { cdhit } from './modules/cdhit'
+  include { hdbscan } from './modules/hdbscan'
+  include { sumaclust } from './modules/sumaclust'
+  include { vclust } from './modules/vclust'
+  include { mmseqs } from './modules/mmseqs'
   
-  if (! params.hdbscan_off) {
-    include { hdbscan } from './modules/hdbscan'
-  }
-
-  if (! params.sumaclust_off) {
-    include { sumaclust } from './modules/sumaclust'
-  }
-
-  if (! params.vclust_off) {
-    include { vclust } from './modules/vclust'
-  }
-  
-  if (! params.mmseqs_off) {
-    include { mmseqs } from './modules/mmseqs'
-  }
 
   include { reverseComp } from './modules/reverseComp'
 
