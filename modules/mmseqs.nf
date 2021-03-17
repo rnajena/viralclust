@@ -17,8 +17,8 @@ process mmseqs{
     val(goi)
 
   output:
-    tuple val("${params.output}/${params.mmseqs_output}"), path("${sequences.baseName}_mmseqs.fasta"), emit: mmseqs_result
-    path "${sequences.baseName}_mmseqs.fasta.clstr", emit: mmseqs_cluster
+    tuple val("${params.output}/${params.mmseqs_output}"), path("${sequences.baseName}_mmseqs.fasta"), path("${sequences.baseName}_mmseqs.fasta.clstr")
+    // path "${sequences.baseName}_mmseqs.fasta.clstr", emit: mmseqs_cluster
     path "${sequences.baseName}_mmseqs_UNCLUSTERED.fasta"
 
   script:

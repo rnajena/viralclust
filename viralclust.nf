@@ -33,6 +33,10 @@ if (params.vclust_help) {
   exit 0, vclustHelp()
 }
 
+if (params.hdbscan_off && params.cdhit_off && params.mmseqs_off && params.sumaclust_off && params.vclust_off) {
+    exit 1, "ERROR: You switched off ALL cluster tools... Are you sure that makes sense?"
+}
+
 println " "
 println "\u001B[32mProfile: $workflow.profile\033[0m"
 println " "

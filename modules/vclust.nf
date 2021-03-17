@@ -17,9 +17,9 @@ process vclust {
     val(goi)
 
   output:
-    tuple val("${params.output}/${params.vclust_output}"), path ("${sequences.baseName}_vclust.fasta"), emit: vclust_result
+    tuple val("${params.output}/${params.vclust_output}"), path("${sequences.baseName}_vclust.fasta"), path("${sequences.baseName}_vclust_cluster.uc.clstr")
     path "${sequences.baseName}_vclust_cluster.uc"
-    path "${sequences.baseName}_vclust_cluster.uc.clstr", emit: vclust_cluster
+    // path "${sequences.baseName}_vclust_cluster.uc.clstr", emit: vclust_cluster
     path "${sequences.baseName}_vclust_UNCLUSTERED.fasta"
 
   script:
