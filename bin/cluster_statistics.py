@@ -102,4 +102,4 @@ if NCBI:
       outputStream.write("Warning: Your NCBI meta information database is older than 90 days.\nPlease consider updating the database:\nnextflow run viralclust.nf --update_ncbi\n")
 else:
   avgClusterPerSpecies = avgClusterPerGenus = '--'
-print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{allDistances},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")
+print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{len(failbob)},{allDistances},{avgClusterPerSpecies},{avgClusterPerGenus}")
