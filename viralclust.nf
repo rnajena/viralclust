@@ -307,35 +307,12 @@ workflow clustering {
                       .concat(Channel.value('MMseqs2').combine(mmseqs_wf.out))
                       .concat(Channel.value('vclust').combine(vclust_wf.out))
                       .filter { it[1] != 'off'}    
-
-    // hdbscan(non_redundant_ch, params.hdbscan_params, goiSorted)
-    // cdhit(non_redundant_ch, params.cdhit_params, goiSorted)
-    // sumaclust(non_redundant_ch, params.sumaclust_params, goiSorted)
-    // vclust(non_redundant_ch, params.vclust_params, goiSorted)
-    // mmseqs(non_redundant_ch, params.mmseqs_params, goiSorted)
-
-
-    // hdbRC = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_result)
-    // cdhitRC = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_result)
-    // sumaRC = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_result)
-    // vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
-    // mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
-    // revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
     reverseComp(results_channel)
 
-    // hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
-    // cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
-    // sumaEval = Channel.value('sumaclust').combine(sumaclust.out.sumaclust_cluster)
-    // vclustEval = Channel.value('vclust').combine(vclust.out.vclust_cluster)
-    // mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
-    // clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
 
   emit:
     results_channel
-  // emit:
-    // revCompChannel
-    // clusterEval
-}
+
 
 workflow phylo_wf {
   take:
@@ -386,53 +363,23 @@ workflow evaluation {
     eval_channel = cluster_result.combine(non_redundant_ch).
                   combine(phylo_wf.out).
                   combine(ncbi_wf.out)
-                  
+                                      
 
-    //eval_channel.view()
-    //eval_channel = eval_channel.combine(phylo_wf.out)
-    //eval_channel.view()
-    //if (params.phylo) {
-    //phylo_wf.out.view()
-      
-   // }
-    
-    //eval_channel = eval_channel.combine(ncbi_wf.out)
-//    eval_channel.view()                    
-
-                    
-   
     evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
-    //mafft(cluster_result)
-    //fasttree(mafft.out.mafft_result)
-    // nwdisplay(fasttree.out.fasttree_result)
 
-    // if (params.ncbi) {
-    //   if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
-    //     update_metadata("$params.permanentCacheDir")
-    //     test = "$params.permanentCacheDir/ncbi_metainfo.pkl"
-    //     ncbiMeta = Channel.fromPath ( test )
-    //   }
-    //   ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
-    // }
+    evaluate_cluster.out.warning.first().subscribe{
 
-    // evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(non_redundant_ch).combine(ncbiEval)
-    // evaluate_cluster(evalChannel)
-    // merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+      log.warn """\
 
-    //sequences = Channel.fromPath(params.fasta)
-    // evaluate_cluster.out.warning.first().subscribe{
-
-    //   log.warn """\
-
-    //   ##########################################################
-    //   NCBI meta information is older than 90 days.
-    //   Please consider updating using the following command:
-    //     nextflow run viralclust.nf --update_ncbi
-    //   ##########################################################
-    //   """.stripIndent()
-    // }
+      ##########################################################
+      NCBI meta information is older than 90 days.
+      Please consider updating using the following command:
+        nextflow run viralclust.nf --update_ncbi
+      ##########################################################
+      """.stripIndent()
+    }
 }
 
 workflow {
@@ -794,7 +741,7 @@ def vclustHelp() {
 
 def cdhitHelp() {
   log.info """\
-  		====== CD-HIT version 4.6 (built on Aug 29 2016) ======
+        ====== CD-HIT version 4.6 (built on Aug 29 2016) ======
 
 Usage: cd-hit-est [Options]
 
@@ -803,62 +750,62 @@ Options
     -i	input filename in fasta format, required
     -o	output filename, required
     -c	sequence identity threshold, default 0.9
-  	this is the default cd-hit's "global sequence identity" calculated as:
-  	number of identical amino acids in alignment
-  	divided by the full length of the shorter sequence
+    this is the default cd-hit's "global sequence identity" calculated as:
+    number of identical amino acids in alignment
+    divided by the full length of the shorter sequence
     -G	use global sequence identity, default 1
-  	if set to 0, then use local sequence identity, calculated as :
-  	number of identical amino acids in alignment
-  	divided by the length of the alignment
-  	NOTE!!! don't use -G 0 unless you use alignment coverage controls
-  	see options -aL, -AL, -aS, -AS
+    if set to 0, then use local sequence identity, calculated as :
+    number of identical amino acids in alignment
+    divided by the length of the alignment
+    NOTE!!! don't use -G 0 unless you use alignment coverage controls
+    see options -aL, -AL, -aS, -AS
     -b	band_width of alignment, default 20
     -M	memory limit (in MB) for the program, default 800; 0 for unlimitted;
     -T	number of threads, default 1; with 0, all CPUs will be used
     -n	word_length, default 10, see user's guide for choosing it
     -l	length of throw_away_sequences, default 10
     -d	length of description in .clstr file, default 20
-  	if set to 0, it takes the fasta defline and stops at first space
+    if set to 0, it takes the fasta defline and stops at first space
     -s	length difference cutoff, default 0.0
-  	if set to 0.9, the shorter sequences need to be
-  	at least 90% length of the representative of the cluster
+    if set to 0.9, the shorter sequences need to be
+    at least 90% length of the representative of the cluster
     -S	length difference cutoff in amino acid, default 999999
-  	if set to 60, the length difference between the shorter sequences
-  	and the representative of the cluster can not be bigger than 60
+    if set to 60, the length difference between the shorter sequences
+    and the representative of the cluster can not be bigger than 60
     -aL	alignment coverage for the longer sequence, default 0.0
-  	if set to 0.9, the alignment must covers 90% of the sequence
+    if set to 0.9, the alignment must covers 90% of the sequence
     -AL	alignment coverage control for the longer sequence, default 99999999
-  	if set to 60, and the length of the sequence is 400,
-  	then the alignment must be >= 340 (400-60) residues
+    if set to 60, and the length of the sequence is 400,
+    then the alignment must be >= 340 (400-60) residues
     -aS	alignment coverage for the shorter sequence, default 0.0
-  	if set to 0.9, the alignment must covers 90% of the sequence
+    if set to 0.9, the alignment must covers 90% of the sequence
     -AS	alignment coverage control for the shorter sequence, default 99999999
-  	if set to 60, and the length of the sequence is 400,
-  	then the alignment must be >= 340 (400-60) residues
+    if set to 60, and the length of the sequence is 400,
+    then the alignment must be >= 340 (400-60) residues
     -A	minimal alignment coverage control for the both sequences, default 0
-  	alignment must cover >= this value for both sequences
+    alignment must cover >= this value for both sequences
     -uL	maximum unmatched percentage for the longer sequence, default 1.0
-  	if set to 0.1, the unmatched region (excluding leading and tailing gaps)
-  	must not be more than 10% of the sequence
+    if set to 0.1, the unmatched region (excluding leading and tailing gaps)
+    must not be more than 10% of the sequence
     -uS	maximum unmatched percentage for the shorter sequence, default 1.0
-  	if set to 0.1, the unmatched region (excluding leading and tailing gaps)
-  	must not be more than 10% of the sequence
+    if set to 0.1, the unmatched region (excluding leading and tailing gaps)
+    must not be more than 10% of the sequence
     -U	maximum unmatched length, default 99999999
-  	if set to 10, the unmatched region (excluding leading and tailing gaps)
-  	must not be more than 10 bases
+    if set to 10, the unmatched region (excluding leading and tailing gaps)
+    must not be more than 10 bases
     -B	1 or 0, default 0, by default, sequences are stored in RAM
-  	if set to 1, sequence are stored on hard drive
-  	it is recommended to use -B 1 for huge databases
+    if set to 1, sequence are stored on hard drive
+    it is recommended to use -B 1 for huge databases
     -p	1 or 0, default 0
-  	if set to 1, print alignment overlap in .clstr file
+    if set to 1, print alignment overlap in .clstr file
     -g	1 or 0, default 0
-  	by cd-hit's default algorithm, a sequence is clustered to the first
-  	cluster that meet the threshold (fast cluster). If set to 1, the program
-  	will cluster it into the most similar cluster that meet the threshold
-  	(accurate but slow mode)
-  	but either 1 or 0 won't change the representatives of final clusters
+    by cd-hit's default algorithm, a sequence is clustered to the first
+    cluster that meet the threshold (fast cluster). If set to 1, the program
+    will cluster it into the most similar cluster that meet the threshold
+    (accurate but slow mode)
+    but either 1 or 0 won't change the representatives of final clusters
     -r	1 or 0, default 1, by default do both +/+ & +/- alignments
-  	if set to 0, only +/+ strand alignment
+    if set to 0, only +/+ strand alignment
     -mask	masking letters (e.g. -mask NX, to mask out both 'N' and 'X')
     -match	matching score, default 2 (1 for T-U and N-N)
     -mismatch	mismatching score, default -2
