@@ -312,7 +312,7 @@ workflow clustering {
 
   emit:
     results_channel
-
+}
 
 workflow phylo_wf {
   take:
