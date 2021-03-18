@@ -9,7 +9,7 @@ process mafft {
   publishDir "${params.output}/${params.mafft_output}", mode: 'copy', pattern: '*aln'
 
   input:
-    tuple val(name), val(path), path(sequences)
+    tuple val(name), val(path), path(sequences), path(cluster)
 
   output:
     tuple val(name), path("${sequences.baseName}_mafft.aln"), emit: mafft_result

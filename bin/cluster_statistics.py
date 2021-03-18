@@ -6,7 +6,7 @@
 
 """
 Usage:
-  cluster_statistics.py [options] <treeFile> <seqFile> <clusterFile>
+  cluster_statistics.py [options] <seqFile> <clusterFile> [<treeFile>]
 
 Options:
   -h, --help        Prints this help and exits.
@@ -70,9 +70,13 @@ if not failbob:
 #realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 and idx != '-1'}
 realCluster = {idx : cluster for idx,cluster in cluster.items() if cluster not in failbob}
 
-tree = dendropy.Tree.get(path=treeFile, schema='newick')
-dm = tree.phylogenetic_distance_matrix()
-allDistances = dm.distances()
+if treeFile:
+  tree = dendropy.Tree.get(path=treeFile, schema='newick')
+  dm = tree.phylogenetic_distance_matrix()
+  allDistances = f"{np.mean(dm.distances()):.3f}"
+else:
+  allDistances = '--'
+
 
 allCluster = np.array([len(cl) for _,cl in realCluster.items()])
 
@@ -98,4 +102,4 @@ if NCBI:
       outputStream.write("Warning: Your NCBI meta information database is older than 90 days.\nPlease consider updating the database:\nnextflow run viralclust.nf --update_ncbi\n")
 else:
   avgClusterPerSpecies = avgClusterPerGenus = '--'
-print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{np.mean(allDistances):.3f},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")
+print(f"{len(allSequences)},{len(realCluster)},{np.min(allCluster)},{np.max(allCluster)},{np.mean(allCluster):.2f},{np.median(allCluster)},{allDistances},{len(failbob)},{avgClusterPerSpecies},{avgClusterPerGenus}")

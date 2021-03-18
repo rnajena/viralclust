@@ -10,7 +10,7 @@ process reverseComp {
 
 
   input:
-    tuple val(name), val(path), path(sequences)
+    tuple val(name), val(path), path(sequences), path(cluster)
 
 
   output:

@@ -127,12 +127,11 @@ if (params.fasta) {
 
   include { reverseComp } from './modules/reverseComp'
 
-  if (params.eval | implicitEval) {
-    include { mafft } from './modules/mafft'
-    include { fasttree } from './modules/fasttree'
-    include { nwdisplay } from './modules/nwutils'
-    include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
-  }
+  include { mafft } from './modules/mafft'
+  include { fasttree } from './modules/fasttree'
+  include { nwdisplay } from './modules/nwutils'
+  include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
+
 
   if (params.ncbi) {
     include { get_ncbi_meta } from './modules/ncbi_meta'
@@ -145,8 +144,8 @@ if (params.fasta) {
       Database will be downloaded and stored for this and future runs!
       """.stripIndent()
     } else {
-      test = "$params.permanentCacheDir/ncbi_metainfo.pkl"
-      ncbiMeta = Channel.fromPath ( test )
+      p = "$params.permanentCacheDir/ncbi_metainfo.pkl"
+      ncbiMeta = Channel.fromPath ( p )
     }
   }
 }
@@ -302,7 +301,7 @@ workflow clustering {
     vclust_wf(non_redundant_ch, params.vclust_params, goiSorted)
     mmseqs_wf(non_redundant_ch, params.mmseqs_params, goiSorted)
 
-    revCompChannel = Channel.value('HDBSCAN').combine(hdbscan_wf.out)
+    results_channel = Channel.value('HDBSCAN').combine(hdbscan_wf.out)
                       .concat(Channel.value('cd-hit-est').combine(cd_hit_est_wf.out))
                       .concat(Channel.value('sumaclust').combine(sumaclust_wf.out))
                       .concat(Channel.value('MMseqs2').combine(mmseqs_wf.out))
@@ -322,7 +321,7 @@ workflow clustering {
     // vclustRC = Channel.value('vclust').combine(vclust.out.vclust_result)
     // mmseqsRC = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_result)
     // revCompChannel = hdbRC.concat(cdhitRC, sumaRC, vclustRC, mmseqsRC)
-    // reverseComp(revCompChannel)
+    reverseComp(results_channel)
 
     // hdbEval = Channel.value('HDBSCAN').combine(hdbscan.out.hdbscan_cluster)
     // cdhitEval = Channel.value('cd-hit-est').combine(cdhit.out.cdhit_cluster)
@@ -331,47 +330,109 @@ workflow clustering {
     // mmseqsEval = Channel.value('MMseqs2').combine(mmseqs.out.mmseqs_cluster)
     // clusterEval = hdbEval.concat(cdhitEval, sumaEval, vclustEval, mmseqsEval)
 
+  emit:
+    results_channel
   // emit:
     // revCompChannel
     // clusterEval
 }
 
-workflow evaluation {
+workflow phylo_wf {
   take:
-    revCompChannel
-    clusterEval
-    non_redundant_ch
+    cluster_result
 
   main:
-    mafft(revCompChannel)
-    fasttree(mafft.out.mafft_result)
-    nwdisplay(fasttree.out.fasttree_result)
+    if (params.phylo) {
+      mafft(cluster_result)
+      fasttree(mafft.out.mafft_result)
+      nwdisplay(fasttree.out.fasttree_result)
 
+      tree_results = fasttree.out.fasttree_result
+    } else {
+      tree_results = Channel.from(['off']).combine(Channel.from(['off']))
+    }
+
+  emit:
+    tree_results  
+}
+
+workflow ncbi_wf {
+
+  main:
     if (params.ncbi) {
       if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
         update_metadata("$params.permanentCacheDir")
-        test = "$params.permanentCacheDir/ncbi_metainfo.pkl"
-        ncbiMeta = Channel.fromPath ( test )
+        p = "$params.permanentCacheDir/ncbi_metainfo.pkl"
+        ncbiMeta = Channel.fromPath ( p )
       }
       ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
+    } else {
+      ncbiEval = Channel.from(['off']).combine(Channel.from(['off']))
     }
 
-    evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(non_redundant_ch).combine(ncbiEval)
-    evaluate_cluster(evalChannel)
+  emit:
+    ncbiEval
+}
+
+workflow evaluation {
+  take:
+    cluster_result
+    non_redundant_ch
+
+  main:
+    phylo_wf(cluster_result)
+    ncbi_wf()
+    
+    eval_channel = cluster_result.combine(non_redundant_ch).
+                  combine(phylo_wf.out).
+                  combine(ncbi_wf.out)
+                  
+
+    //eval_channel.view()
+    //eval_channel = eval_channel.combine(phylo_wf.out)
+    //eval_channel.view()
+    //if (params.phylo) {
+    //phylo_wf.out.view()
+      
+   // }
+    
+    //eval_channel = eval_channel.combine(ncbi_wf.out)
+//    eval_channel.view()                    
+
+                    
+   
+    evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
+    //mafft(cluster_result)
+    //fasttree(mafft.out.mafft_result)
+    // nwdisplay(fasttree.out.fasttree_result)
+
+    // if (params.ncbi) {
+    //   if (! ncbi_metainfo_ch.exists() & ! params.update_ncbi) {
+    //     update_metadata("$params.permanentCacheDir")
+    //     test = "$params.permanentCacheDir/ncbi_metainfo.pkl"
+    //     ncbiMeta = Channel.fromPath ( test )
+    //   }
+    //   ncbiEval = Channel.from(eval_params).combine(ncbiMeta)
+    // }
+
+    // evalChannel = clusterEval.join(fasttree.out.fasttree_result).combine(non_redundant_ch).combine(ncbiEval)
+    // evaluate_cluster(evalChannel)
+    // merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+
     //sequences = Channel.fromPath(params.fasta)
-    evaluate_cluster.out.warning.first().subscribe{
+    // evaluate_cluster.out.warning.first().subscribe{
 
-      log.warn """\
+    //   log.warn """\
 
-      ##########################################################
-      NCBI meta information is older than 90 days.
-      Please consider updating using the following command:
-        nextflow run viralclust.nf --update_ncbi
-      ##########################################################
-      """.stripIndent()
-    }
+    //   ##########################################################
+    //   NCBI meta information is older than 90 days.
+    //   Please consider updating using the following command:
+    //     nextflow run viralclust.nf --update_ncbi
+    //   ##########################################################
+    //   """.stripIndent()
+    // }
 }
 
 workflow {
@@ -383,11 +444,9 @@ workflow {
   if (params.fasta) {
     preprocessing()
     clustering(preprocessing.out.non_redundant_ch, preprocessing.out.goiSorted)
-  }
-
-  if (params.eval | implicitEval) {
-    evaluation(clustering.out.revCompChannel, clustering.out.clusterEval, preprocessing.out.non_redundant_ch)
-  }
+    evaluation(clustering.out.results_channel, preprocessing.out.non_redundant_ch)
+  }  
+  
 }
 
 def helpMSG() {

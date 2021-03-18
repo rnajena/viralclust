@@ -10,7 +10,7 @@ process evaluate_cluster {
   publishDir "${params.output}/${params.summary_output}", mode: 'copy', pattern: "*MetaInfo.txt"
 
   input:
-    tuple val(name), path(clusterFile), path(newick), path(sequences), val(flag), val(addParams)
+    tuple val(name), val(directory), path(representative), path(clusterFile),  path(sequences), val(nameagain), val(newick), val(flag), val(addParams)
 
   output:
     path "${name}_stats.out", emit: eval_result
@@ -19,10 +19,11 @@ process evaluate_cluster {
     path "WARNING.txt", optional: true, emit: warning
 
   script:
-  def flag = flag == false ? '' : flag
-  def addParams = addParams == false ? '' : addParams
+  def flag = flag == 'off' ? '' : flag
+  def addParams = addParams == 'off' ? '' : addParams
+  def newick = newick == 'off' ? '' : newick
   """
-    output=\$(python3 ${projectDir}/bin/cluster_statistics.py ${flag} ${addParams} --toolName "${name}" "${newick}" "${sequences}" "${clusterFile}")
+    output=\$(python3 ${projectDir}/bin/cluster_statistics.py ${flag} ${addParams} --toolName "${name}" "${sequences}" "${clusterFile}" "${newick}")
     echo ${name},\$output > ${name}_stats.out
 
     if [ -f ${name}_taxonomy_info.txt ]; then
@@ -48,7 +49,7 @@ process merge_evaluation {
 
   script:
   """
-  echo "Algorithm,Number_of_Sequences,Number_of_Cluster,smallest_cluster,largest_cluster,average_cluster_size,median_cluster_size,Average_distance_to_nearest_centroid,number_of_unclustered_sequences,cluster_per_species,cluster_per_genus" > "${sequences.baseName}_summary.csv"
+  echo "Algorithm,Number_of_Sequences,Number_of_Cluster,smallest_cluster,largest_cluster,average_cluster_size,median_cluster_size,number_of_unclustered_sequences,Average_distance_to_nearest_centroid,cluster_per_species,cluster_per_genus" > "${sequences.baseName}_summary.csv"
   cat ${evaluations} >> "${sequences.baseName}_summary.csv"
   """
 }
