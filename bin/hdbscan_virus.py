@@ -71,6 +71,7 @@ import random
 
 import umap.umap_ as umap
 import hdbscan
+from sklearn.preprocessing import normalize
 
 class Clusterer(object):
   """
@@ -228,7 +229,7 @@ class Clusterer(object):
         ).fit_transform(vector)
 
       clusterer = hdbscan.HDBSCAN()
-      clusterer.fit(clusterable_embedding)
+      clusterer.fit(normalize(clusterable_embedding,norm='l2'))
 
       self.clusterlabel = clusterer.labels_
       self.probabilities = clusterer.probabilities_
