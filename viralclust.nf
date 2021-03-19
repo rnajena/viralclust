@@ -326,7 +326,7 @@ workflow phylo_wf {
 
       tree_results = fasttree.out.fasttree_result
     } else {
-      tree_results = Channel.from(['off']).combine(Channel.from(['off']))
+      tree_results = cluster_result.flatten().filter(String).filter(~/[^.]*/).combine(Channel.from(['off']))
     }
 
   emit:
@@ -357,29 +357,34 @@ workflow evaluation {
     non_redundant_ch
 
   main:
+    //test = cluster_result.flatten().filter(String).filter(~/[^.]*/)
+    //test.view()
     phylo_wf(cluster_result)
     ncbi_wf()
     
+    // eval_channel = cluster_result.combine(non_redundant_ch)
+    // eval_channel = eval_channel.combine(phylo_wf.out, by: 0)
+    // eval_channel = eval_channel.combine(ncbi_wf.out)
+    
     eval_channel = cluster_result.combine(non_redundant_ch).
-                  combine(phylo_wf.out).
-                  combine(ncbi_wf.out)
-                                      
+                    combine(phylo_wf.out, by: 0).
+                    combine(ncbi_wf.out)
 
     evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
 
-    evaluate_cluster.out.warning.first().subscribe{
+    // evaluate_cluster.out.warning.first().subscribe{
 
-      log.warn """\
+    //   log.warn """\
 
-      ##########################################################
-      NCBI meta information is older than 90 days.
-      Please consider updating using the following command:
-        nextflow run viralclust.nf --update_ncbi
-      ##########################################################
-      """.stripIndent()
-    }
+    //   ##########################################################
+    //   NCBI meta information is older than 90 days.
+    //   Please consider updating using the following command:
+    //     nextflow run viralclust.nf --update_ncbi
+    //   ##########################################################
+    //   """.stripIndent()
+    // }
 }
 
 workflow {

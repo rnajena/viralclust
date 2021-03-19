@@ -10,7 +10,7 @@ process evaluate_cluster {
   publishDir "${params.output}/${params.summary_output}", mode: 'copy', pattern: "*MetaInfo.txt"
 
   input:
-    tuple val(name), val(directory), path(representative), path(clusterFile),  path(sequences), val(nameagain), val(newick), val(flag), val(addParams)
+    tuple val(name), val(directory), path(representative), path(clusterFile),  path(sequences), val(newick), val(flag), val(addParams)
 
   output:
     path "${name}_stats.out", emit: eval_result
