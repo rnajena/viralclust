@@ -42,7 +42,7 @@ Options:
   --metric METRIC                         Distance metric applied by UMAP and HDBSCAN.
                                           The following are supported:
                                           'euclidean', 'manhatten', 'chebyshev', 'minkwoski',
-                                          'canberra', 'braycurtis', 'haversine',
+                                          'canberra', 'braycurtis',
                                           'mahalanobis', 'wminkowski', 'seuclidean',
                                           'cosine'.
                                           If an invalid metric is set, ViralClust will default back to 
@@ -126,6 +126,19 @@ class Clusterer(object):
   genomeOfInterest = ''
   goiHeader = []
   goi2Cluster = {}
+
+  scipyDistances = {
+      'euclidean' : scipy.spatial.distance.euclidean ,
+      'manhatten' : scipy.spatial.distance.cityblock ,
+      'chebyshev' : scipy.spatial.distance.chebyshev  ,
+      'minkwoski': scipy.spatial.distance.minkowski ,
+      'canberra' : scipy.spatial.distance.canberra ,
+      'braycurtis' : scipy.spatial.distance.braycurtis ,
+      'mahalanobis' : scipy.spatial.distance.mahalanobis ,
+      'wminkowski' : scipy.spatial.distance.wminkowski ,
+      'seuclidean' : scipy.spatial.distance.seuclidean ,
+      'cosine' : scipy.spatial.distance.cosine  
+  }
 
   #def __init__(self, logger, sequenceFile, k, proc, outdir, subCluster=False, goi=""):
   def __init__(self, logger, sequenceFile, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=""):
@@ -251,7 +264,8 @@ class Clusterer(object):
         return None
     seq1, profile1 = seqs[0]
     seq2, profile2 = seqs[1]
-    distance = scipy.spatial.distance.cosine(profile1, profile2)
+    dFunction = scipyDistances[self.metric]
+    distance = dFunction(profile1, profile2)
     return (seq1, seq2, distance)
     #
 
@@ -480,7 +494,7 @@ def parse_arguments(d_args):
   METRICES = [
               'euclidean', 'manhatten', 'chebyshev',
               'minkwoski', 'canberra', 'braycurtis',
-              'haversine', 'mahalanobis', 'wminkowski',
+              'mahalanobis', 'wminkowski',
               'seuclidean', 'cosine'
   ]
   metric = d_args['--metric']
