@@ -36,12 +36,41 @@ Options:
   -v, --verbose                           Get some extra information from viralClust during calculation. [Default: False]
   --version                               Prints the version of viralClust and exits.
   -o DIR, --output DIR                    Specifies the output directory of viralClust. [Default: pwd]
-
-  -k KMER, --kmer KMER                    Length of the considered kmer. [Default: 7]
   -p PROCESSES, --process PROCESSES       Specify the number of CPU cores that are used. [Default: 1]
 
-  --subcluster                            Additionally to the initial cluster step, each cluster gets analyzed for
-                                          local structures and relations which results in subcluster for each cluster. [Default: False]
+  -k KMER, --kmer KMER                    Length of the considered kmer. [Default: 7]
+  --metric METRIC                         Distance metric applied by UMAP and HDBSCAN.
+                                          The following are supported:
+                                          'euclidean', 'manhatten', 'chebyshev', 'minkwoski',
+                                          'canberra', 'braycurtis', 'haversine',
+                                          'mahalanobis', 'wminkowski', 'seuclidean',
+                                          'cosine'.
+                                          If an invalid metric is set, ViralClust will default back to 
+                                          the cosine distance.
+                                          [Default: cosine]
+
+  --neighbors NEIGHBORS                   Number of neighbors considered by UMAP to reduce the dimension space.
+                                          Low numbers here mean focus on local structures within the data, whereas 
+                                          larger numbers may loose fine details. [default: 50]
+  --dThreshold dTHRESHOLD                 Sets the threshold for the minimum distance of two points in the low-dimensional space.
+                                          Smaller thresholds are recommended for clustering and identifying finer topological structures
+                                          in the data. [Default: 0.25]
+  --dimension DIMENSION                   UMAP tries to find an embedding for the input data that can be represented by a low-dimensional space.
+                                          This parameter tells UMAP how many dimensions should be used for the embedding. Lower numbers may result 
+                                          in loss of information, whereas larger numbers will increase the runtime. [Default: 20]
+
+  --clusterSize CLUSTERSIZE               This parameter forces HDBSCAN to form cluster with a size larger-equal to CLUSTERSIZE.
+                                          Be aware that some data points (i.e. genomes) or even whole subcluster are considered as noise, if this parameter is set too high.
+                                          E.g., if a very distinct viral genus has 40 genomes and the parameter is set to anything >40, HDBSCAN will not form
+                                          the genus specific cluster. [Default: 5]
+  --minSample MINSAMPLE                   Intuitively, this parameter declares how conservative clustering is performed. Higher values will lead 
+                                          to more points considered noise, whereas a low value causes "edge-cases" to be grouped into a cluster.
+                                          The default parameter is the same as CLUSTERSIZE. [Default: CLUSTERSIZE]
+  
+  
+  
+
+  
 
 """
 
@@ -98,24 +127,32 @@ class Clusterer(object):
   goiHeader = []
   goi2Cluster = {}
 
-  def __init__(self, logger, sequenceFile, k, proc, outdir, subCluster=False, goi=""):
+  #def __init__(self, logger, sequenceFile, k, proc, outdir, subCluster=False, goi=""):
+  def __init__(self, logger, sequenceFile, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=""):
     """
     """
 
-    self.subCluster = subCluster
+    #self.subCluster = subCluster
     self.sequenceFile = sequenceFile
     self.outdir = outdir
-    if not self.subCluster:
-      self.reducedSequences = f"{self.outdir}/reduced.fasta"
-    else:
+    #if not self.subCluster:
+    #  self.reducedSequences = f"{self.outdir}/reduced.fasta"
+    #else:
 
-      self.reducedSequences = f"{self.outdir}/{os.path.basename(sequenceFile)}"
+    self.reducedSequences = f"{self.outdir}/{os.path.basename(sequenceFile)}"
 
     self.k = k
-
     nucleotides = set(["A","C","G","T"])
     self.allKmers = {''.join(kmer):x for x,kmer in enumerate(itertools.product(nucleotides, repeat=self.k))}
+
     self.proc = proc
+    self.metric = metric
+    self.neighbors = neighbors
+    self.threshold = threshold
+    self.dimension = dimension
+    self.clusterSize = clusterSize
+    self.minSample = minSample
+
     self.d_sequences = {}
     self.centroids = []
     self.allCluster = []
@@ -224,23 +261,21 @@ class Clusterer(object):
     profiles = [(idx,profile) for idx, profile in Clusterer.d_profiles.items() if idx in self.d_sequences]
     vector = [x[1] for x in profiles]
 
-    if self.subCluster:
-      neighbors, dist = 5, 0.0
-    else:
-      neighbors, dist = 50, 0.25
-
-
     try:
       clusterable_embedding = umap.UMAP(
-            n_neighbors=neighbors,
-            min_dist=dist,
+            n_neighbors=self.neighbors,
+            min_dist=self.threshold,
             n_components=20,
             random_state=42,
-            metric='cosine',
+            metric=self.metric,
         ).fit_transform(vector)
 
       clusterer = hdbscan.HDBSCAN()
-      clusterer.fit(normalize(clusterable_embedding,norm='l2'))
+      if self.metric == "cosine":
+        clusterable_embedding = normalize(clusterable_embedding,norm='l2')
+        clusterer.fit(clusterable_embedding)
+      else:
+        clusterer.fit(clusterable_embedding,metric=self.metric)
 
       self.clusterlabel = clusterer.labels_
       self.probabilities = clusterer.probabilities_
@@ -360,8 +395,6 @@ def warn(*args, **kwargs):
 import warnings
 warnings.warn = warn
 
-#from ClusterViruses import Clusterer
-
 
 def create_logger():
     """
@@ -444,9 +477,64 @@ def parse_arguments(d_args):
   #output = f"{output}/viralClust-{now}"
   create_outdir(output)
 
-  subcluster = d_args['--subcluster']
+  METRICES = [
+              'euclidean', 'manhatten', 'chebyshev',
+              'minkwoski', 'canberra', 'braycurtis',
+              'haversine', 'mahalanobis', 'wminkowski',
+              'seuclidean', 'cosine'
+  ]
+  metric = d_args['--metric']
+  if metric not in METRICES:
+    log.warn(f"Invalid metric chosen. Will default back to cosine distance.")
+    metric = 'cosine'
+  
+  try:
+    neighbors = int(d_args['--neighbors'])
+    if neighbors <= 0:
+      raise ValueError
+      
+  except ValueError:
+      log.error("Invalid parameter for --neighbors. Please input a positive integer.")
+      exit(2)
+  
+  try:
+    threshold = float(d_args['--dThreshold'])
+    if not 0.0 <= threshold < 1:
+      raise ValueError
+  except ValueError:
+    log.error("Invalid parameter for --dThreshold. Please input a number between [0,1).")
+    exit(2)
 
-  return (inputSequences, goi, output,  k, proc, subcluster)
+  try:
+    dimension = int(d_args['dimension'])
+    if dimension < 1:
+      raise ValueError
+  except ValueError:
+      log.error("Invalid parameter for --dimension. Please input a positive integer.")
+      exit(2)
+  
+  
+  try:
+    clusterSize = int(d_args['--clusterSize'])
+    if clusterSize < 1:
+      raise ValueError
+  except ValueError:
+      log.error("Invalid parameter for --clusterSize. Please input a positive integer.")
+      exit(2)
+
+  if d_args['--minSample'] == "CLUSTERSIZE":
+    minSample = clusterSize
+  else:
+    try:
+      minSample = int(d_args['--minSample'])
+      if minSample < 1:
+        raise ValueError
+    except ValueError:
+        log.error("Invalid parameter for --minSample. Please input a positive integer.")
+        exit(2)
+
+
+  return (inputSequences, goi, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample)
 
 def __abort_cluster(clusterObject, filename):
     logger.warn(f"Too few sequences for clustering in {os.path.basename(filename)}. No subcluster will be created.")
@@ -455,7 +543,8 @@ def __abort_cluster(clusterObject, filename):
 def perform_clustering():
 
   multiPool = Pool(processes=proc)
-  virusClusterer = Clusterer(logger, inputSequences, k, proc, outdir, goi=goi)
+  # virusClusterer = Clusterer(logger, inputSequences, k, proc, outdir, goi=goi)
+  virusClusterer = Clusterer(logger, inputSequences, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=goi)
 
   #logger.info("Removing 100% identical sequences.")
   #code = virusClusterer.remove_redundancy()
@@ -493,36 +582,36 @@ def perform_clustering():
   profiles = virusClusterer.d_profiles
   del virusClusterer
 
-  if not subcluster:
-    return 0
+  # if not subcluster:
+  return 0
 
-  for file in glob.glob(f"{outdir}/cluster*.fasta"):
-    if file == f"{outdir.rstrip('/')}/cluster-1.fasta":
-      continue
-    virusSubClusterer = Clusterer(logger, file, k, proc, outdir, subCluster=True)
-    code = virusSubClusterer.remove_redundancy()
+  # for file in glob.glob(f"{outdir}/cluster*.fasta"):
+  #   if file == f"{outdir.rstrip('/')}/cluster-1.fasta":
+  #     continue
+  #   virusSubClusterer = Clusterer(logger, file, k, proc, outdir, subCluster=True)
+  #   code = virusSubClusterer.remove_redundancy()
 
-    if code == 1:
-      __abort_cluster(virusSubClusterer, file)
-      #logger.warn(f"Too few sequences for clustering in {os.path.basename(file)}. Alignment will be calculated with all sequences of this cluster.")
-      #del virusSubClusterer
-      continue
+  #   if code == 1:
+  #     __abort_cluster(virusSubClusterer, file)
+  #     #logger.warn(f"Too few sequences for clustering in {os.path.basename(file)}. Alignment will be calculated with all sequences of this cluster.")
+  #     #del virusSubClusterer
+  #     continue
 
-    code = virusSubClusterer.apply_umap()
+  #   code = virusSubClusterer.apply_umap()
 
-    if code == 1:
-      __abort_cluster(virusSubClusterer, file)
-      #logger.warn(f"Too few sequences for clustering in {os.path.basename(file)}. Alignment will be calculated with all sequences of this cluster.")
-      #del virusSubClusterer
-      continue
+  #   if code == 1:
+  #     __abort_cluster(virusSubClusterer, file)
+  #     #logger.warn(f"Too few sequences for clustering in {os.path.basename(file)}. Alignment will be calculated with all sequences of this cluster.")
+  #     #del virusSubClusterer
+  #     continue
 
-    virusSubClusterer.get_centroids(multiPool)
-    virusSubClusterer.output_centroids()
-    del virusSubClusterer
+  #   virusSubClusterer.get_centroids(multiPool)
+  #   virusSubClusterer.output_centroids()
+  #   del virusSubClusterer
 
 if __name__ == "__main__":
   logger = create_logger()
-  (inputSequences, goi, outdir, k, proc, subcluster) = parse_arguments(docopt(__doc__))
+  (inputSequences, goi, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample) = parse_arguments(docopt(__doc__))
 
   logger.info("Starting to cluster you data. Stay tuned.")
   perform_clustering()
