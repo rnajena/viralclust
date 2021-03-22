@@ -45,6 +45,17 @@ Options:
 
 """
 
+
+# Parameter to implement / make variable:
+# metric (and maybe a supported list of distances)
+# n_neighbors (umap)
+# distance_threshold (umap)
+# min_cluster (hdbscan)
+# cluster_size (hdbscan)
+# dimensions (umap)
+# 
+
+
 import sys
 import os
 import logging
