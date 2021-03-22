@@ -141,7 +141,7 @@ class Clusterer(object):
   }
 
   #def __init__(self, logger, sequenceFile, k, proc, outdir, subCluster=False, goi=""):
-  def __init__(self, logger, sequenceFile, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=""):
+  def __init__(self, logger, sequenceFile, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=""):
     """
     """
 
@@ -200,15 +200,15 @@ class Clusterer(object):
     idHead = -1
     fastaContent = {}
     for header, sequence in self.__parse_fasta(self.sequenceFile):
-      if not self.subCluster:
-        idHead += 1
-        Clusterer.id2header[idHead] = header
-        Clusterer.header2id[header] = idHead
-        fastaContent[idHead] = sequence
-      else:
-        fastaContent[Clusterer.header2id[header]] = sequence
+      #if not self.subCluster:
+      idHead += 1
+      Clusterer.id2header[idHead] = header
+      Clusterer.header2id[header] = idHead
+      fastaContent[idHead] = sequence
+      #else:
+       # fastaContent[Clusterer.header2id[header]] = sequence
 
-    if Clusterer.genomeOfInterest and not self.subCluster:
+    if Clusterer.genomeOfInterest:
       for header, sequence in self.__parse_fasta(Clusterer.genomeOfInterest):
           idHead += 1
           Clusterer.goiHeader.append(idHead)
@@ -216,9 +216,9 @@ class Clusterer(object):
           Clusterer.header2id[header] = idHead
           fastaContent[idHead] = sequence
 
-    if not self.subCluster:
-      Clusterer.dim = len(fastaContent)
-      Clusterer.matrix = np.zeros(shape=(Clusterer.dim, Clusterer.dim), dtype=float)
+    # if not self.subCluster:
+    Clusterer.dim = len(fastaContent)
+    Clusterer.matrix = np.zeros(shape=(Clusterer.dim, Clusterer.dim), dtype=float)
 
     if len(fastaContent) < 21:
       return 1
@@ -264,7 +264,7 @@ class Clusterer(object):
         return None
     seq1, profile1 = seqs[0]
     seq2, profile2 = seqs[1]
-    dFunction = scipyDistances[self.metric]
+    dFunction = Clusterer.scipyDistances[self.metric]
     distance = dFunction(profile1, profile2)
     return (seq1, seq2, distance)
     #
@@ -302,18 +302,18 @@ class Clusterer(object):
       return 1
 
     self.allCluster = list(zip([x[0] for x in profiles], self.clusterlabel))
-    if not self.subCluster:
-      with open(f'{self.outdir}/cluster.txt', 'w') as outStream:
-        for i in set(self.clusterlabel):
-          with open(f'{self.outdir}/cluster{i}.fasta', 'w') as fastaOut:
-            outStream.write(f">Cluster {i}\n")
-            for idx, label in self.allCluster:
-              if label == i:
-                if idx in Clusterer.goiHeader:
-                  Clusterer.goi2Cluster[Clusterer.id2header[idx]] = i
-                outStream.write(f"{Clusterer.id2header[idx]}\n")
-                fastaOut.write(f">{Clusterer.id2header[idx]}\n{self.d_sequences[idx].split('X'*10)[0]}\n")
-          outStream.write("\n")
+    #if not self.subCluster:
+    with open(f'{self.outdir}/cluster.txt', 'w') as outStream:
+      for i in set(self.clusterlabel):
+        with open(f'{self.outdir}/cluster{i}.fasta', 'w') as fastaOut:
+          outStream.write(f">Cluster {i}\n")
+          for idx, label in self.allCluster:
+            if label == i:
+              if idx in Clusterer.goiHeader:
+                Clusterer.goi2Cluster[Clusterer.id2header[idx]] = i
+              outStream.write(f"{Clusterer.id2header[idx]}\n")
+              fastaOut.write(f">{Clusterer.id2header[idx]}\n{self.d_sequences[idx].split('X'*10)[0]}\n")
+        outStream.write("\n")
 
 
   def get_centroids(self, proc):
@@ -335,11 +335,11 @@ class Clusterer(object):
 
       subProfiles = {seq : profile for seq, profile in Clusterer.d_profiles.items() if seq in sequences}
 
-      if not self.subCluster:
-        for result in p.map(self.calc_pd, itertools.combinations(subProfiles.items(), 2)):
-          seq1, seq2, dist = result
-          Clusterer.matrix[seq1][seq2] = dist
-          Clusterer.matrix[seq2][seq1] = dist
+      #if not self.subCluster:
+      for result in p.map(self.calc_pd, itertools.combinations(subProfiles.items(), 2)):
+        seq1, seq2, dist = result
+        Clusterer.matrix[seq1][seq2] = dist
+        Clusterer.matrix[seq2][seq1] = dist
 
       tmpMinimum = math.inf
       centroidOfCluster = -1
@@ -520,7 +520,7 @@ def parse_arguments(d_args):
     exit(2)
 
   try:
-    dimension = int(d_args['dimension'])
+    dimension = int(d_args['--dimension'])
     if dimension < 1:
       raise ValueError
   except ValueError:
@@ -558,7 +558,7 @@ def perform_clustering():
 
   multiPool = Pool(processes=proc)
   # virusClusterer = Clusterer(logger, inputSequences, k, proc, outdir, goi=goi)
-  virusClusterer = Clusterer(logger, inputSequences, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=goi)
+  virusClusterer = Clusterer(logger, inputSequences, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=goi)
 
   #logger.info("Removing 100% identical sequences.")
   #code = virusClusterer.remove_redundancy()
@@ -625,7 +625,7 @@ def perform_clustering():
 
 if __name__ == "__main__":
   logger = create_logger()
-  (inputSequences, goi, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample) = parse_arguments(docopt(__doc__))
+  (inputSequences, goi, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample) = parse_arguments(docopt(__doc__))
 
   logger.info("Starting to cluster you data. Stay tuned.")
   perform_clustering()
