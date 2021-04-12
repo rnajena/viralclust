@@ -55,5 +55,5 @@ for header, sequence in utils.parse_fasta(sequenceFile):
       if len(allORFs)/float(len(strand)) > longestCDS:
         longestCDS = len(allORFs)/float(len(strand))
         positiveStrand = strand
-
-  print(f">{header}\n{positiveStrand}")
+  if positiveStrand:
+    print(f">{header}\n{positiveStrand}")

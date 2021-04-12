@@ -236,7 +236,12 @@ class Clusterer(object):
         except KeyError:
           continue
     kmerSum = sum(profile)
-    profile = list(map(lambda x: x/kmerSum, profile))
+    try:
+      profile = list(map(lambda x: x/kmerSum, profile))
+    except ZeroDivisionError:
+      print(header, Clusterer.id2header[header], kmerSum)
+      print(sequence)
+      exit(1)
     return (header, profile)
 
   def determine_profile(self, proc):
