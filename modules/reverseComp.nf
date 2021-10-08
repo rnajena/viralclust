@@ -5,7 +5,7 @@
 ************************************************************************/
 
 process reverseComp {
-  label 'revcomp'
+  label 'revComp'
   publishDir "${path}", mode: 'copy', pattern: '*.fasta'
 
 
