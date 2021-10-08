@@ -35,6 +35,7 @@ process vclust {
 
     python3 ${projectDir}/bin/vclust2cdhit.py ${sequences.baseName}_vclust_cluster.uc ${GOI}
     python3 ${projectDir}/bin/filter_unclustered.py "${sequences.baseName}_vclust.fasta" "${sequences.baseName}_vclust_cluster.uc.clstr"
+    mv "${sequences.baseName}_vclust.fastaTEST" "${sequences.baseName}_vclust.fasta"
 
   """
 
