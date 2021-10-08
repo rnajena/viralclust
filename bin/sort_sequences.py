@@ -36,7 +36,7 @@ codon2aminoacid = {
 
 
 for header, sequence in utils.parse_fasta(sequenceFile):
-  positiveStrand = ""
+  positiveStrand = sequence
   longestCDS = 0
   strands = [sequence, utils.reverseComplement(sequence)]
   for strand in strands:
