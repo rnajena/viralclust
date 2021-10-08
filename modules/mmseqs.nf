@@ -36,7 +36,7 @@ process mmseqs{
     python3 ${projectDir}/bin/mmseqs2cdhit.py ${sequences.baseName}_mmseqs_cluster.tsv "${sequences}" ${GOI}
     mv ${sequences.baseName}_mmseqs_cluster.tsv.clstr "${sequences.baseName}_mmseqs.fasta.clstr"
     python3 ${projectDir}/bin/filter_unclustered.py "${sequences.baseName}_mmseqs.fasta" "${sequences.baseName}_mmseqs.fasta.clstr"
-    mv "${sequences.baseName}_mmseqs.fastaTEST" "${sequences.baseName}_mmseqs.fasta"
+    mv "${sequences.baseName}_mmseqs.fastaTEST" "${sequences.baseName}_mmseqs.fasta"  
 
   """
 }
