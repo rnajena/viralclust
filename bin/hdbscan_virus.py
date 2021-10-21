@@ -29,7 +29,7 @@ Contact:
 
 
 Usage:
-  viralClust.py [options] <inputSequences> [<genomeOfInterest>]
+  hdbscan_virus.py [options] <inputSequences> [<genomeOfInterest>]
 
 Options:
   -h, --help                              Show this help message and exits.
