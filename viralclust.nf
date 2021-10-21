@@ -527,17 +527,42 @@ ________________________________________________________________________________
     hdbscan_virus.py [options] <inputSequences> [<genomeOfInterest>]
 
   Options:
-    -h, --help                              Show this help message and exits.
-    -v, --verbose                           Get some extra information from viralClust during calculation. [Default: False]
-    --version                               Prints the version of viralClust and exits.
-    -o DIR, --output DIR                    Specifies the output directory of viralClust. [Default: pwd]
+  -h, --help                              Show this help message and exits.
+  -v, --verbose                           Get some extra information from viralClust during calculation. [Default: False]
+  --version                               Prints the version of viralClust and exits.
+  -o DIR, --output DIR                    Specifies the output directory of viralClust. [Default: pwd]
+  -p PROCESSES, --process PROCESSES       Specify the number of CPU cores that are used. [Default: 1]
 
-    -k KMER, --kmer KMER                    Length of the considered kmer. [Default: 7]
-    -p PROCESSES, --process PROCESSES       Specify the number of CPU cores that are used. [Default: 1]
+  -k KMER, --kmer KMER                    Length of the considered kmer. [Default: 7]
+  --metric METRIC                         Distance metric applied by UMAP (if applied) and HDBSCAN.
+                                          The following are supported:
+                                          'euclidean', 'manhatten', 'chebyshev', 'minkwoski',
+                                          'canberra', 'braycurtis',
+                                          'mahalanobis', 'wminkowski', 'seuclidean',
+                                          'cosine'.
+                                          If an invalid metric is set, ViralClust will default back to 
+                                          the cosine distance.
+                                          [Default: cosine]
 
-    --subcluster                            Additionally to the initial cluster step, each cluster gets analyzed for
-                                            local structures and relations which results in subcluster for each cluster. [Default: False]
+  --pca                                  Flag that determines whether (instead of UMAP) a PCA is used for dimension reduction. [Default: False]
 
+  --neighbors NEIGHBORS                   Number of neighbors considered by UMAP to reduce the dimension space.
+                                          Low numbers here mean focus on local structures within the data, whereas 
+                                          larger numbers may loose fine details. [default: 50]
+  --dThreshold dTHRESHOLD                 Sets the threshold for the minimum distance of two points in the low-dimensional space.
+                                          Smaller thresholds are recommended for clustering and identifying finer topological structures
+                                          in the data. [Default: 0.25]
+  --dimension DIMENSION                   UMAP tries to find an embedding for the input data that can be represented by a low-dimensional space.
+                                          This parameter tells UMAP how many dimensions should be used for the embedding. Lower numbers may result 
+                                          in loss of information, whereas larger numbers will increase the runtime. [Default: 20]
+
+  --clusterSize CLUSTERSIZE               This parameter forces HDBSCAN to form cluster with a size larger-equal to CLUSTERSIZE.
+                                          Be aware that some data points (i.e. genomes) or even whole subcluster are considered as noise, if this parameter is set too high.
+                                          E.g., if a very distinct viral genus has 40 genomes and the parameter is set to anything >40, HDBSCAN will not form
+                                          the genus specific cluster. [Default: 5]
+  --minSample MINSAMPLE                   Intuitively, this parameter declares how conservative clustering is performed. Higher values will lead 
+                                          to more points considered noise, whereas a low value causes "edge-cases" to be grouped into a cluster.
+                                          The default parameter is the same as CLUSTERSIZE. [Default: CLUSTERSIZE]
   ____________________________________________________________________________________________
   """.stripIndent()
 }

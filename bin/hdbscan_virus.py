@@ -29,7 +29,7 @@ Contact:
 
 
 Usage:
-  viralClust.py [options] <inputSequences> [<genomeOfInterest>]
+  hdbscan_virus.py [options] <inputSequences> [<genomeOfInterest>]
 
 Options:
   -h, --help                              Show this help message and exits.
@@ -39,7 +39,7 @@ Options:
   -p PROCESSES, --process PROCESSES       Specify the number of CPU cores that are used. [Default: 1]
 
   -k KMER, --kmer KMER                    Length of the considered kmer. [Default: 7]
-  --metric METRIC                         Distance metric applied by UMAP and HDBSCAN.
+  --metric METRIC                         Distance metric applied by UMAP (if applied) and HDBSCAN.
                                           The following are supported:
                                           'euclidean', 'manhatten', 'chebyshev', 'minkwoski',
                                           'canberra', 'braycurtis',
@@ -48,6 +48,8 @@ Options:
                                           If an invalid metric is set, ViralClust will default back to 
                                           the cosine distance.
                                           [Default: cosine]
+
+  --pca                                  Flag that determines whether (instead of UMAP) a PCA is used for dimension reduction. [Default: False]
 
   --neighbors NEIGHBORS                   Number of neighbors considered by UMAP to reduce the dimension space.
                                           Low numbers here mean focus on local structures within the data, whereas 
@@ -112,6 +114,7 @@ import random
 import umap.umap_ as umap
 import hdbscan
 from sklearn.preprocessing import normalize
+from sklearn.decomposition import PCA
 
 class Clusterer(object):
   """
@@ -141,7 +144,7 @@ class Clusterer(object):
   }
 
   #def __init__(self, logger, sequenceFile, k, proc, outdir, subCluster=False, goi=""):
-  def __init__(self, logger, sequenceFile, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=""):
+  def __init__(self, logger, sequenceFile, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag, goi=""):
     """
     """
 
@@ -165,12 +168,14 @@ class Clusterer(object):
     self.dimension = dimension
     self.clusterSize = clusterSize
     self.minSample = minSample
+    self.pca_flag = pca_flag
 
     self.d_sequences = {}
     self.centroids = []
     self.allCluster = []
     self.clusterlabel = []
     self.probabilities = []
+    
 
     if goi:
       Clusterer.genomeOfInterest = goi
@@ -281,13 +286,26 @@ class Clusterer(object):
     vector = [x[1] for x in profiles]
 
     try:
-      clusterable_embedding = umap.UMAP(
-            n_neighbors=self.neighbors,
-            min_dist=self.threshold,
-            n_components=20,
-            random_state=42,
-            metric=self.metric,
-        ).fit_transform(vector)
+      
+      if self.pca_flag:
+        pca_model = PCA()
+        pca_model.fit(vector)
+        variances = pca_model.explained_variance_ratio_
+        for i, var in enumerate(variances):
+          if sum(variances[:i]) > 0.7 or i > 50:
+            break
+        #for i in range(len(pca_model.explained_variance_)):
+        #  if sum(pca_model.explained_variance_ratio_)
+        pca_model = PCA(i)
+        clusterable_embedding = pca_model.fit_transform(vector)        
+      else:
+        clusterable_embedding = umap.UMAP(
+              n_neighbors=self.neighbors,
+              min_dist=self.threshold,
+              n_components=50,
+              random_state=42,
+              metric=self.metric,
+          ).fit_transform(vector)
 
       clusterer = hdbscan.HDBSCAN()
       if self.metric == "cosine":
@@ -552,8 +570,9 @@ def parse_arguments(d_args):
         log.error("Invalid parameter for --minSample. Please input a positive integer.")
         exit(2)
 
+  pca_flag = d_args['--pca']
 
-  return (inputSequences, goi, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample)
+  return (inputSequences, goi, output,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag)
 
 def __abort_cluster(clusterObject, filename):
     logger.warn(f"Too few sequences for clustering in {os.path.basename(filename)}. No subcluster will be created.")
@@ -563,7 +582,7 @@ def perform_clustering():
 
   multiPool = Pool(processes=proc)
   # virusClusterer = Clusterer(logger, inputSequences, k, proc, outdir, goi=goi)
-  virusClusterer = Clusterer(logger, inputSequences, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, goi=goi)
+  virusClusterer = Clusterer(logger, inputSequences, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag, goi=goi)
 
   #logger.info("Removing 100% identical sequences.")
   #code = virusClusterer.remove_redundancy()
@@ -630,7 +649,7 @@ def perform_clustering():
 
 if __name__ == "__main__":
   logger = create_logger()
-  (inputSequences, goi, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample) = parse_arguments(docopt(__doc__))
+  (inputSequences, goi, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag) = parse_arguments(docopt(__doc__))
 
   logger.info("Starting to cluster you data. Stay tuned.")
   perform_clustering()
