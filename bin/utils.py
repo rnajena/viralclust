@@ -32,7 +32,8 @@ def parse_fasta(filePath):
       if line.startswith(">"):
         if header:
           # seq = seq
-          yield (header, seq)
+          if seq.count('N') / len(seq) < 0.1:
+            yield (header, seq)
 
         header = line.rstrip("\n ").replace(':','_').replace(' ','_').lstrip(">").rstrip('_')
         accessionID = set(re.findall(genbankACCRegex, header))
@@ -43,7 +44,8 @@ def parse_fasta(filePath):
         seq += line.rstrip("\n").upper().replace('U','T')
 
     #seq = seq
-    yield (header, seq)
+    if seq.count('N') / len(seq) < 0.1:
+      yield (header, seq)
 
 def parse_clusterFile(clusterFile):
   centroids = []

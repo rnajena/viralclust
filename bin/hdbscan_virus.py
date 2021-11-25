@@ -243,11 +243,14 @@ class Clusterer(object):
     kmerSum = sum(profile)
     try:
       profile = list(map(lambda x: x/kmerSum, profile))
+      return (header, profile)
     except ZeroDivisionError:
-      print(header, Clusterer.id2header[header], kmerSum)
-      print(sequence)
-      exit(1)
-    return (header, profile)
+      print(Clusterer.id2header[header] + " skipped, due to too many N's.")
+      return(None, None)
+      #print(header, Clusterer.id2header[header], kmerSum)
+      #print(sequence)
+      #exit(1)
+    
 
   def determine_profile(self, proc):
 
@@ -262,7 +265,8 @@ class Clusterer(object):
     p.close()
     p.join()
     for header, profile in allProfiles:
-      Clusterer.d_profiles[header] = profile
+      if header:
+        Clusterer.d_profiles[header] = profile    
 
   def calc_pd(self, seqs):
     """
