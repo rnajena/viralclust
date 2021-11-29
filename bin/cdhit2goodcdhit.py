@@ -14,6 +14,7 @@ import utils
 
 inputFile = sys.argv[1]
 sequenceFile = sys.argv[2]
+goiHeader = []
 
 if len(sys.argv) == 4:
   goiFile = sys.argv[3]
@@ -21,6 +22,7 @@ if len(sys.argv) == 4:
 
 originalHeader = sorted([ header for header, _ in utils.parse_fasta(sequenceFile) ])
 truncatedHeader = []
+
 with open(inputFile, 'r') as inputStream:
   for line in inputStream:
     if line.startswith('>'):

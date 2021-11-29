@@ -28,8 +28,8 @@ process vclust {
     vsearch ${addParams} --threads ${task.cpus} --cluster_fast ${sequences} --centroids ${sequences.baseName}_vclust.fasta --uc ${sequences.baseName}_vclust_cluster.uc
     if [ "{$GOI}" != 'NO FILE' ]; then
       for ID in \$(grep '>' ${GOI}); do
-        grep -m "\$ID" "${sequences.baseName}_vclust.fasta" || grep -A1 "\$ID" ${GOI}
-      done  >> "${sequences.baseName}_vclust.fasta"
+        grep -m 1 "\$ID" "${sequences.baseName}_vclust.fasta" || grep -A1 "\$ID" ${GOI} >> "${sequences.baseName}_vclust.fasta"
+      done
     fi
 
 

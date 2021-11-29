@@ -28,8 +28,8 @@ process cdhit {
 
     if [ "{$GOI}" != 'NO FILE' ]; then
       for ID in \$(grep '>' ${GOI}); do
-        grep -m "\$ID" "${sequences.baseName}_cdhitest.fasta" || grep -A1 "\$ID" ${GOI}
-      done  >> "${sequences.baseName}_cdhitest.fasta"
+        grep -m 1 "\$ID" "${sequences.baseName}_cdhitest.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_cdhitest.fasta"
+      done 
     fi
 
     python3 ${baseDir}/bin/cdhit2goodcdhit.py "${sequences.baseName}_cdhitest.fasta.clstr" ${sequences} ${GOI} > tmp.clstr

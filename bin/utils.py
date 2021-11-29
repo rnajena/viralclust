@@ -57,13 +57,14 @@ def parse_clusterFile(clusterFile):
       line = line.rstrip()
       if line.startswith('>'):
         clusterNumber = int(line.split(' ')[1])
-        continue
+        #continue
       else:
+        #print(line)
         accID = line.split('>')[1].split(' ')[0]
         if clusterNumber == -1:
           failbob.append(accID)
           continue
-        if line.endswith('*'):
+        if line.endswith('*') or line.endswith("GOI"):
           centroids.append(accID)
         cluster[clusterNumber].append(accID)
 

@@ -36,7 +36,9 @@ process concat_goi {
 
   script:
   """
-    cat "${goi}" "${sequences}" > tmp.fa
-    mv tmp.fa "${sequences}"
+    for ID in \$(grep '>' ${goi}); do
+        grep -m 1 "\$ID" "${sequences}" || grep -A1 "\$ID" ${goi}  >> "${sequences}"
+    done 
+    
   """
 }

@@ -29,8 +29,8 @@ process mmseqs{
 
     if [ "{$GOI}" != 'NO FILE' ]; then
       for ID in \$(grep '>' ${GOI}); do
-        grep -m "\$ID" "${sequences.baseName}_mmseqs.fasta" || grep -A1 "\$ID" ${GOI}
-      done  >> "${sequences.baseName}_mmseqs.fasta"
+        grep -m 1 "\$ID" "${sequences.baseName}_mmseqs.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_mmseqs.fasta"
+      done
     fi
 
     python3 ${projectDir}/bin/mmseqs2cdhit.py ${sequences.baseName}_mmseqs_cluster.tsv "${sequences}" ${GOI}
