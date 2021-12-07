@@ -9,7 +9,7 @@ import sys
 import re
 from collections import defaultdict
 
-genbankACCRegex = re.compile(r'[^A-Z]*([A-Z]{2}[0-9]{8}|[A-Z]{2}[0-9]{6}|[A-Z][0-9]{5}|NC_[0-9]{6})[^0-9]')
+genbankACCRegex = re.compile(r'[^A-Z]*([A-Z]{2}[0-9]{8}|[A-Z]{2}[0-9]{6}|[A-Z][0-9]{5}|NC_[0-9]{6})[^0-9]?')
 
 def reverseComplement(sequence):
   """
@@ -35,10 +35,12 @@ def parse_fasta(filePath):
           if seq.count('N') / len(seq) < 0.1:
             yield (header, seq)
 
-        header = line.rstrip("\n ").replace(':','_').replace(' ','_').lstrip(">").rstrip('_')
-        accessionID = set(re.findall(genbankACCRegex, header))
-        if len(accessionID) == 1:
-          header = accessionID.pop()
+        header = line.rstrip("\n ").replace(':','_').replace(' ','_').replace('|','_').lstrip(">").rstrip('_')
+        accessionID = re.findall(genbankACCRegex, header)
+        if accessionID):
+          header = accessionID[0]
+        else:
+          header = header[:30]
         seq = ''
       else:
         seq += line.rstrip("\n").upper().replace('U','T')

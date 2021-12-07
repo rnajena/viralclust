@@ -23,7 +23,6 @@ outputFile = f"{sys.argv[1]}.clstr"
 
 clusterInfo = defaultdict(list)
 fastaContent = {header : seq for header, seq in utils.parse_fasta(fastaFile)}
-
 with open(inputFile, 'r') as inputStream:
   centroids = set()
   for line in inputStream:
