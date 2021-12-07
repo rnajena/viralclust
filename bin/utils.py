@@ -37,7 +37,7 @@ def parse_fasta(filePath):
 
         header = line.rstrip("\n ").replace(':','_').replace(' ','_').replace('|','_').lstrip(">").rstrip('_')
         accessionID = re.findall(genbankACCRegex, header)
-        if accessionID):
+        if accessionID:
           header = accessionID[0]
         else:
           header = header[:30]
