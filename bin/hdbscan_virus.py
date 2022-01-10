@@ -215,7 +215,10 @@ class Clusterer(object):
 
     if Clusterer.genomeOfInterest:
       for header, sequence in self.__parse_fasta(Clusterer.genomeOfInterest):
-          idHead += 1
+          if header in Clusterer.header2id:
+            idHead = Clusterer.header2id[header]
+          else:
+            idHead += 1
           Clusterer.goiHeader.append(idHead)
           Clusterer.id2header[idHead] = header
           Clusterer.header2id[header] = idHead
@@ -355,9 +358,9 @@ class Clusterer(object):
 
     for cluster, sequences in seqCluster.items():
       if cluster == -1:
-        for sequence in sequences:
-          if sequence in Clusterer.goiHeader:
-            self.centroids.append(sequence)
+        #for sequence in sequences:
+          #if sequence in Clusterer.goiHeader:
+          #  self.centroids.append(sequence)
         continue #print(sequence)
 
       subProfiles = {seq : profile for seq, profile in Clusterer.d_profiles.items() if seq in sequences}
@@ -381,7 +384,7 @@ class Clusterer(object):
 
         if sequence in Clusterer.goiHeader:
           #print(Clusterer.goiHeader)
-          self.centroids.append(sequence)
+          #self.centroids.append(sequence)
           continue
 
         for neighborSequence in sequences:
@@ -414,11 +417,13 @@ class Clusterer(object):
     with open(f'{outputPath}.clstr', 'w') as outStream:
       for i in set(self.clusterlabel):
         outStream.write(f">Cluster {i}\n")
-        seqInCluster = [idx for idx,label in self.allCluster if label == i]
+        seqInCluster = set([idx for idx,label in self.allCluster if label == i])
         for idx, seqIdx in enumerate(seqInCluster):
           outStream.write(f"{idx}\t{len(self.d_sequences[seqIdx])}nt, >{Clusterer.id2header[seqIdx]} ")
           if seqIdx in self.centroids:
             outStream.write('*\n')
+          elif seqIdx in Clusterer.goiHeader:
+            outStream.write("GOI\n")
           else:
             outStream.write("at +/13.37%\n")
 

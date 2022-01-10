@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist,squareform
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from sklearn.decomposition import PCA
 import seaborn as sns
 
@@ -68,20 +69,66 @@ for clusterID, header in cluster.items():
     continue
   averages = np.mean(pairwise_distances, axis=0)
   pairwise_distances['average'] = averages
-  sns.color_palette("mako", as_cmap=True)  
-  ax = sns.heatmap(pairwise_distances) 
+  ax = sns.heatmap(pairwise_distances, cmap="magma_r") 
+
+  
+  col = [i for i,x in enumerate(pairwise_distances.columns=="average") if x][0]
+  row = [i for i,x in enumerate(pairwise_distances.index==pairwise_distances['average'].idxmin()) if x][0]
+  ax.add_patch(Rectangle((col,row),1,1,edgecolor='lime', fill=False, lw=2))
+
+  rows = [i for i,x in enumerate(pairwise_distances.index.isin(centroids)) if x]
+  print(rows)
+
+  #row = [i for i,x in enumerate(pairwise_distances.index in centroids) if x][0]
+  #for i in range(pairwise_distances.shape[0]):
+  #  ax.add_patch(Rectangle((i, row),1,1, edgecolor='cyan', fill=False, lw=3))
+
+  y_ticks = ax.get_yticklabels()
+  x_ticks = ax.get_xticklabels()
+
+  if len(y_ticks) == pairwise_distances.shape[1]-1 and len(x_ticks) == pairwise_distances.shape[0]-1:
+
+    for i in range(pairwise_distances.shape[0]-1):
+      
+      if x_ticks[i].get_text() in goiSequences:
+        x_ticks[i].set_color('orangered')
+        x_ticks[i].set_weight('bold')
+
+      if x_ticks[i].get_text() in centroids:
+        x_ticks[i].set_color('darkgreen')
+        x_ticks[i].set_weight('bold')
+
+    for j in range(pairwise_distances.shape[1]-1):
+      if y_ticks[j].get_text() in goiSequences:
+        y_ticks[j].set_color('orangered')
+        y_ticks[j].set_weight('bold')
+
+      if y_ticks[j].get_text() in centroids:
+        y_ticks[j].set_color('darkgreen')
+        y_ticks[j].set_weight('bold')
+    #§for col in range(pairwise_distances.shape[0]):
+    #     ax.add_patch(Rectangle((col,j-1),1,1, edgecolor='darkgreen', fill=False, lw=2))
+      
+
+        #if x_ticks[i-1].get_text() == "average" or x_ticks[i-1].get_text() in centroids:
+
+         # print(y_ticks[j-1].get_text())
+      
+        
+
   
 
-  for y_lab, x_lab in zip(ax.get_yticklabels(), ax.get_xticklabels()):
-    y_text = y_lab.get_text()
-    x_text = x_lab.get_text()
-    if y_text in centroids and y_text not in goiSequences:
-      y_lab.set_weight('bold')
-      y_lab.set_color('purple')
-      y_lab.set_size(20)
-      x_lab.set_weight('bold')
-      x_lab.set_color('purple')
-      x_lab.set_size(20)
+  # for y_lab, x_lab in zip(ax.get_yticklabels(), ax.get_xticklabels()):
+  #   y_text = y_lab.get_text()
+  #   x_text = x_lab.get_text()
+  #   if y_text in centroids and y_text not in goiSequences:
+  #     y_lab.set_weight('bold')
+  #     y_lab.set_color('purple')
+  #     y_lab.set_size(20)
+  #     x_lab.set_weight('bold')
+  #     x_lab.set_color('purple')
+  #     x_lab.set_size(20)
 
-  plt.savefig(f"test_{clusterID}.png")
+  plt.savefig(f"test_{clusterID}.png", bbox_inches = 'tight')
   plt.clf()
+  
