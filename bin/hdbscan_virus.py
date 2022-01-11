@@ -408,6 +408,7 @@ class Clusterer(object):
     """
     """
     reprSeqs = {centroid : self.d_sequences[centroid] for centroid in self.centroids}
+    reprSeqs.update({goiID : self.d_sequences[goiID] for goiID in Clusterer.goiHeader})
     outputPath = f'{self.outdir}/{os.path.splitext(os.path.basename(self.sequenceFile))[0]}_hdbscan.fasta'
 
     with open(outputPath, 'w') as outStream:
