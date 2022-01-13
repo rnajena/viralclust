@@ -77,18 +77,15 @@ for clusterID, header in cluster.items():
   ax.add_patch(Rectangle((col,row),1,1,edgecolor='lime', fill=False, lw=2))
 
   rows = [i for i,x in enumerate(pairwise_distances.index.isin(centroids)) if x]
-  print(rows)
-
-  #row = [i for i,x in enumerate(pairwise_distances.index in centroids) if x][0]
-  #for i in range(pairwise_distances.shape[0]):
-  #  ax.add_patch(Rectangle((i, row),1,1, edgecolor='cyan', fill=False, lw=3))
+  #print(rows)
 
   y_ticks = ax.get_yticklabels()
   x_ticks = ax.get_xticklabels()
 
-  if len(y_ticks) == pairwise_distances.shape[1]-1 and len(x_ticks) == pairwise_distances.shape[0]-1:
+  print(len(y_ticks), len(x_ticks), pairwise_distances.shape)
 
-    for i in range(pairwise_distances.shape[0]-1):
+  if (len(y_ticks),len(x_ticks)) == pairwise_distances.shape:
+    for i in range(pairwise_distances.shape[1]):
       
       if x_ticks[i].get_text() in goiSequences:
         x_ticks[i].set_color('orangered')
@@ -98,7 +95,8 @@ for clusterID, header in cluster.items():
         x_ticks[i].set_color('darkgreen')
         x_ticks[i].set_weight('bold')
 
-    for j in range(pairwise_distances.shape[1]-1):
+    for j in range(pairwise_distances.shape[0]):
+      print(j, len(y_ticks))
       if y_ticks[j].get_text() in goiSequences:
         y_ticks[j].set_color('orangered')
         y_ticks[j].set_weight('bold')
