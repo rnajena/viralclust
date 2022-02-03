@@ -61,6 +61,7 @@ for header, sequence in allSequences.items():
 
 
 for clusterID, header in cluster.items():
+  #print(f"Cluster {clusterID}, {len(header)} sequences")
   subMatrixProfile = [ profiles[x] for x in header ]
   try:
     pairwise_distances = pd.DataFrame(data=squareform(pdist(subMatrixProfile)), index=header, columns=header)
@@ -69,41 +70,74 @@ for clusterID, header in cluster.items():
     continue
   averages = np.mean(pairwise_distances, axis=0)
   pairwise_distances['average'] = averages
-  ax = sns.heatmap(pairwise_distances, cmap="magma_r") 
+
+  minDistanceSeq = pairwise_distances['average'].idxmin()
+
+  for i,row in pairwise_distances.iterrows():
+    #print(i, row['average'], end=' ')
+    if i == minDistanceSeq:
+      minimum = row['average']
+    if i in centroids:
+      centroid = row['average']
+      centroidSeq = i
+    if i in goiSequences:
+      goi = row['average']
+      goiSeq = i
+
+  # print(f"Average distance in Cluster: {np.mean(pairwise_distances['average'])}")
+  # print(f"Minimum average distance: {minimum}, {minDistanceSeq}")
+  # print(f"Distance of determined centroid: {centroid}, {centroidSeq}")
+  # if minDistanceSeq == centroidSeq:
+  #   print(f"\n!!! Determined centroid has minimum average distance !!!\n")
+  # if goi:
+  #   print(f"Distance of GOI: {goi}, {goiSeq}")
+  print(f"{clusterID},{len(header)},{np.mean(pairwise_distances['average'])},{minimum},{centroid},{minDistanceSeq == centroidSeq}")
+  #print()
+
+  #print(pairwise_distances)
+  #print(pairwise_distances['average'].idxmin())
+  #row = [i for i,x in enumerate(pairwise_distances.index==pairwise_distances['average'].idxmin()) if x][0]
+  #print(pairwise_distances.index==row)
+  #print(pairwise_distances[row])
+  #print(row)
+
+
+
+  # ax = sns.heatmap(pairwise_distances, cmap="magma_r") 
 
   
-  col = [i for i,x in enumerate(pairwise_distances.columns=="average") if x][0]
-  row = [i for i,x in enumerate(pairwise_distances.index==pairwise_distances['average'].idxmin()) if x][0]
-  ax.add_patch(Rectangle((col,row),1,1,edgecolor='lime', fill=False, lw=2))
+  # col = [i for i,x in enumerate(pairwise_distances.columns=="average") if x][0]
+  # row = [i for i,x in enumerate(pairwise_distances.index==pairwise_distances['average'].idxmin()) if x][0]
+  # ax.add_patch(Rectangle((col,row),1,1,edgecolor='lime', fill=False, lw=2))
 
-  rows = [i for i,x in enumerate(pairwise_distances.index.isin(centroids)) if x]
-  #print(rows)
+  # rows = [i for i,x in enumerate(pairwise_distances.index.isin(centroids)) if x]
+  # #print(rows)
 
-  y_ticks = ax.get_yticklabels()
-  x_ticks = ax.get_xticklabels()
+  # y_ticks = ax.get_yticklabels()
+  # x_ticks = ax.get_xticklabels()
 
-  print(len(y_ticks), len(x_ticks), pairwise_distances.shape)
+  # print(len(y_ticks), len(x_ticks), pairwise_distances.shape)
 
-  if (len(y_ticks),len(x_ticks)) == pairwise_distances.shape:
-    for i in range(pairwise_distances.shape[1]):
+  # if (len(y_ticks),len(x_ticks)) == pairwise_distances.shape:
+  #   for i in range(pairwise_distances.shape[1]):
       
-      if x_ticks[i].get_text() in goiSequences:
-        x_ticks[i].set_color('orangered')
-        x_ticks[i].set_weight('bold')
+  #     if x_ticks[i].get_text() in goiSequences:
+  #       x_ticks[i].set_color('orangered')
+  #       x_ticks[i].set_weight('bold')
 
-      if x_ticks[i].get_text() in centroids:
-        x_ticks[i].set_color('darkgreen')
-        x_ticks[i].set_weight('bold')
+  #     if x_ticks[i].get_text() in centroids:
+  #       x_ticks[i].set_color('darkgreen')
+  #       x_ticks[i].set_weight('bold')
 
-    for j in range(pairwise_distances.shape[0]):
-      print(j, len(y_ticks))
-      if y_ticks[j].get_text() in goiSequences:
-        y_ticks[j].set_color('orangered')
-        y_ticks[j].set_weight('bold')
+  #   for j in range(pairwise_distances.shape[0]):
+  #     print(j, len(y_ticks))
+  #     if y_ticks[j].get_text() in goiSequences:
+  #       y_ticks[j].set_color('orangered')
+  #       y_ticks[j].set_weight('bold')
 
-      if y_ticks[j].get_text() in centroids:
-        y_ticks[j].set_color('darkgreen')
-        y_ticks[j].set_weight('bold')
+  #     if y_ticks[j].get_text() in centroids:
+  #       y_ticks[j].set_color('darkgreen')
+  #       y_ticks[j].set_weight('bold')
     #§for col in range(pairwise_distances.shape[0]):
     #     ax.add_patch(Rectangle((col,j-1),1,1, edgecolor='darkgreen', fill=False, lw=2))
       
@@ -127,6 +161,6 @@ for clusterID, header in cluster.items():
   #     x_lab.set_color('purple')
   #     x_lab.set_size(20)
 
-  plt.savefig(f"test_{clusterID}.png", bbox_inches = 'tight')
-  plt.clf()
+  # plt.savefig(f"test_{clusterID}.png", bbox_inches = 'tight')
+  # plt.clf()
   
