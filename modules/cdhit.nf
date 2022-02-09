@@ -26,15 +26,16 @@ process cdhit {
   """
     cd-hit-est ${addParams} -T "${task.cpus}" -i ${sequences} -o "${sequences.baseName}_cdhitest.fasta"
 
+    python3 ${baseDir}/bin/cdhit2goodcdhit.py "${sequences.baseName}_cdhitest.fasta.clstr" ${sequences} ${GOI} > tmp.clstr
+    mv tmp.clstr "${sequences.baseName}_cdhitest.fasta.clstr"
+    python3 ${baseDir}/bin/filter_unclustered.py "${sequences.baseName}_cdhitest.fasta" "${sequences.baseName}_cdhitest.fasta.clstr"
+    mv "${sequences.baseName}_cdhitest.fastaTEST" "${sequences.baseName}_cdhitest.fasta"
+
     if [ "{$GOI}" != 'NO FILE' ]; then
       for ID in \$(grep '>' ${GOI}); do
         grep -m 1 "\$ID" "${sequences.baseName}_cdhitest.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_cdhitest.fasta"
       done 
     fi
 
-    python3 ${baseDir}/bin/cdhit2goodcdhit.py "${sequences.baseName}_cdhitest.fasta.clstr" ${sequences} ${GOI} > tmp.clstr
-    mv tmp.clstr "${sequences.baseName}_cdhitest.fasta.clstr"
-    python3 ${baseDir}/bin/filter_unclustered.py "${sequences.baseName}_cdhitest.fasta" "${sequences.baseName}_cdhitest.fasta.clstr"
-    mv "${sequences.baseName}_cdhitest.fastaTEST" "${sequences.baseName}_cdhitest.fasta"
   """
 }

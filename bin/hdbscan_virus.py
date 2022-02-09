@@ -392,7 +392,6 @@ class Clusterer(object):
             continue
           averagedDistance += Clusterer.matrix[sequence][neighborSequence]
 
-
         averagedDistance /= len(sequences)-1
 
         if averagedDistance < tmpMinimum:
@@ -402,7 +401,6 @@ class Clusterer(object):
       self.centroids.append(centroidOfCluster)
     p.close()
     p.join()
-
 
   def output_centroids(self):
     """
