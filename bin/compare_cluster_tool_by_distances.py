@@ -10,24 +10,17 @@
 import sys
 import itertools
 import math
+import tempfile
 
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist,squareform
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-from sklearn.decomposition import PCA
-import seaborn as sns
+from Bio.Align.Applications import MafftCommandline
+from Bio import AlignIO
+from Bio.Phylo.TreeConstruction import DistanceMatrix, DistanceCalculator
+
 
 import utils
-
-
-def get_cmap(n, name='hsv'):
-    '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
-    RGB color; the keyword argument name must be a standard mpl colormap name.'''
-    return plt.cm.get_cmap(name, n)
-
-
 
 sequenceFile = sys.argv[1]
 clusterInfoFile = sys.argv[2]
@@ -38,42 +31,32 @@ if len(sys.argv) == 4:
   goiSequences = { header : seq for header, seq in utils.parse_fasta(sys.argv[3]) }
   allSequences.update(goiSequences)
 
-
-k = 7
-nucleotides = set(["A","C","G","T"])
-allKmers = {''.join(kmer):x for x,kmer in enumerate(itertools.product(nucleotides, repeat=k))}
-
-profiles = {}
-
-for header, sequence in allSequences.items():
-  profile = [0]*len(allKmers)
-  for kmer in iter([sequence[start : start + k] for start in range(len(sequence) - k)]):
-      try:
-        profile[allKmers[kmer]] += 1
-      except KeyError:
-        continue
-  kmerSum = sum(profile)
-  try:
-    profile = list(map(lambda x: x/kmerSum, profile))          
-    profiles[header] = profile
-  except ZeroDivisionError:
-    print(header + " skipped, due to too many N's.")
-
-
-
 for clusterID, header in cluster.items():
   if(len(header) == 1):
     continue
-  #print(f"Cluster {clusterID}, {len(header)} sequences")
-  subMatrixProfile = [ profiles[x] for x in header ]
-  try:
-    pairwise_distances = pd.DataFrame(data=squareform(pdist(subMatrixProfile, metric='cosine')), index=header, columns=header)
-  except ValueError:
-    print(clusterID, header, len(subMatrixProfile))
-    continue
+  
+  pseudoFasta = ''.join([f">{x}\n{seq}\n" for x,seq in allSequences.items() if x in header])
+  tmpFile = tempfile.NamedTemporaryFile()
+  with open(tmpFile.name, 'w') as outputStream:
+    outputStream.write(pseudoFasta)
+
+  #print("Doing the alignment")
+  mafft_cline = MafftCommandline(input=tmpFile.name, treeout=False, thread=4)
+  stdout, stderr = mafft_cline()
+  tmpAlignment = tempfile.NamedTemporaryFile()
+  with open(tmpAlignment.name, 'w') as outputStream:
+    outputStream.write(stdout)
+
+  align = AlignIO.read(tmpAlignment.name, "fasta")
+  calc = DistanceCalculator()
+  #print("Calculating the distances")
+  dm = calc.get_distance(align)
+
+  pairwise_distances = pd.DataFrame(dm.matrix, index=dm.names, columns=dm.names).fillna(0)
+  pairwise_distances = pairwise_distances + pairwise_distances.T
+
   averages = np.mean(pairwise_distances, axis=0)
   pairwise_distances['average'] = averages
-
   minDistanceSeq = pairwise_distances['average'].idxmin()
 
   for i,row in pairwise_distances.iterrows():
@@ -87,4 +70,4 @@ for clusterID, header in cluster.items():
       goi = row['average']
       goiSeq = i
 
-  print(f"{clusterID},{len(header)},{np.mean(row['average'])},{minimum},{minDistanceSeq==centroidSeq},{np.absolute(minimum-centroid)}")
+  print(f"{clusterID},{len(header)},{np.mean(row['average'])},{minimum},{centroid},{minDistanceSeq==centroidSeq},{np.absolute(minimum-centroid)}")
