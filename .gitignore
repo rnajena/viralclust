@@ -132,3 +132,11 @@ dmypy.json
 .nextflow*
 conda/
 nf_work/
+
+# results
+*results/
+
+# database 
+data/ncbi_metainfo.pkl
+
+*nobackup
