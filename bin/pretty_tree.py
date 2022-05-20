@@ -8,18 +8,24 @@
 """
 
 import sys
-from ete3 import Tree, TreeStyle
+from ete3 import PhyloTree, TreeStyle, NodeStyle
 
 
-t = Tree(sys.argv[1], format=0)
+t = PhyloTree(sys.argv[1], format=0)
 
 ts = TreeStyle()
 ts.mode = "c"
-ts.arc_start = 0 # 0 degrees = 3 o'clock
+ts.arc_start = 180 # 0 degrees = 3 o'clock
 ts.arc_span = 359
 ts.optimal_scale_level = "full"
+ts.root_opening_factor = 0.01
 ts.show_leaf_name = False
-#ts.scale = 5
 
+nstyle = NodeStyle()
+nstyle["size"] = 0
 
+for node in t.traverse():
+  node.set_style(nstyle)
+
+t.unroot()
 t.show(tree_style = ts)

@@ -12,7 +12,7 @@ import glob
 import re
 
 
-files = glob.glob(f"{sys.argv[1]}/gbvrl*.seq")
+files = glob.glob(f"{sys.argv[1]}/gbvrl*.seq") + glob.glob(f"{sys.argv[1]}/viral*.gbff")
 gb_vrl =  SeqIO.index_db(f"{sys.argv[1]}/gbvrl.idx", files, "genbank")
 
 
