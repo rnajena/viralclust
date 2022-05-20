@@ -137,6 +137,6 @@ nf_work/
 *results/
 
 # database 
-data/ncbi_metainfo.pkl
+data/*.pkl
 
 *nobackup
