@@ -138,5 +138,5 @@ nf_work/
 
 # database 
 data/*.pkl
-
+*.gz
 *nobackup
