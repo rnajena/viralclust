@@ -3,8 +3,8 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python>=3.7
-  - biopython>=1.7.8
-  - matplotlib>=3.3.1
-  - dendropy>=4.2.0
-  - docopt>=0.6.2
+  - python==3.7
+  - biopython==1.7.8
+  - matplotlib==3.3.1
+  - dendropy==4.2.0
+  - docopt==0.6.2

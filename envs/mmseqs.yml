@@ -3,5 +3,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python>=3.7
-  - mmseqs2>=12
+  - python==3.7
+  - mmseqs2==12
