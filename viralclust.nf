@@ -319,7 +319,7 @@ workflow phylo_wf {
     cluster_result
 
   main:
-    if (params.phylo) {
+    if (params.eval || implicitEval) {
       mafft(cluster_result)
       fasttree(mafft.out.mafft_result)
       nwdisplay(fasttree.out.fasttree_result)
