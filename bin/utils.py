@@ -9,7 +9,9 @@ import sys
 import re
 from collections import defaultdict
 
-genbankACCRegex = re.compile(r'[^A-Z]*([A-Z]{2}[0-9]{8}|[A-Z]{2}[0-9]{6}|[A-Z][0-9]{5}|NC_[0-9]{6})[^0-9]?')
+genbankACCRegex = re.compile(r'[^A-Z]*([A-Z]{2}_?[0-9]{8}|[A-Z]{2}_?[0-9]{6}|[A-Z]_?[0-9]{5}|NC_[0-9]{6})[^0-9]?')
+
+
 
 def reverseComplement(sequence):
   """
@@ -19,6 +21,12 @@ def reverseComplement(sequence):
   return(''.join([comp.get(x,'N')  for x in sequence.upper()[::-1]]))
 
 
+
+def get_canonical_nt(sequence):
+  """
+
+  """
+  return(sum([sequence.count(x) for x in ["A","C","G","T"]]))
 
 def parse_fasta(filePath):
   """
@@ -32,21 +40,22 @@ def parse_fasta(filePath):
       if line.startswith(">"):
         if header:
           # seq = seq
-          if seq.count('N') / len(seq) < 0.1:
+          if get_canonical_nt(seq) / len(seq) >= 0.9:
             yield (header, seq)
 
         header = line.rstrip("\n ").replace(':','_').replace(' ','_').replace('|','_').lstrip(">").rstrip('_')
+        header = '_'.join(header.split("_"))
         accessionID = re.findall(genbankACCRegex, header)
         if accessionID:
           header = accessionID[0]
         else:
-          header = header[:30]
+          header = header[:30].rstrip('_')
         seq = ''
       else:
         seq += line.rstrip("\n").upper().replace('U','T')
 
     #seq = seq
-    if seq.count('N') / len(seq) < 0.1:
+    if get_canonical_nt(seq) / len(seq) >= 0.9:
       yield (header, seq)
 
 def parse_clusterFile(clusterFile):
