@@ -104,7 +104,6 @@ from Bio import Phylo
 
 from collections import Counter
 import multiprocessing as mp
-from multiprocessing import shared_memory
 import itertools
 import math
 import subprocess
@@ -116,34 +115,6 @@ import umap.umap_ as umap
 import hdbscan
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
-
-
-import linecache
-import os
-import tracemalloc
-
-def display_top(snapshot, key_type='lineno', limit=10):
-    snapshot = snapshot.filter_traces((
-        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-        tracemalloc.Filter(False, "<unknown>"),
-    ))
-    top_stats = snapshot.statistics(key_type)
-
-    print("Top %s lines" % limit)
-    for index, stat in enumerate(top_stats[:limit], 1):
-        frame = stat.traceback[0]
-        print("#%s: %s:%s: %.1f KiB"
-              % (index, frame.filename, frame.lineno, stat.size / 1024))
-        line = linecache.getline(frame.filename, frame.lineno).strip()
-        if line:
-            print('    %s' % line)
-
-    other = top_stats[limit:]
-    if other:
-        size = sum(stat.size for stat in other)
-        print("%s other: %.1f KiB" % (len(other), size / 1024))
-    total = sum(stat.size for stat in top_stats)
-    print("Total allocated size: %.1f KiB" % (total / 1024))
 
 
 class Clusterer(object):
@@ -159,7 +130,6 @@ class Clusterer(object):
   genomeOfInterest = ''
   goiHeader = []
   goi2Cluster = {}
-  shm = None
 
   scipyDistances = {
       'euclidean' : scipy.spatial.distance.euclidean ,
@@ -257,9 +227,7 @@ class Clusterer(object):
 
     # if not self.subCluster:
     Clusterer.dim = len(fastaContent)
-    Clusterer.matrix = np.ones(shape=(Clusterer.dim, Clusterer.dim), dtype=float)
-    Clusterer.shm = shared_memory.SharedMemory(create=True, size=Clusterer.matrix.nbytes)
-    Clusterer.matrix = np.ndarray((Clusterer.dim, Clusterer.dim), dtype=float, buffer=Clusterer.shm.buf)
+    Clusterer.matrix = np.empty(shape=(Clusterer.dim, Clusterer.dim), dtype=float)
 
     if len(fastaContent) < 21:
       return 1
@@ -658,7 +626,6 @@ def perform_clustering():
   sequences = virusClusterer.d_sequences
   distanceMatrix = virusClusterer.matrix
   profiles = virusClusterer.d_profiles
-  virusClusterer.shm.close()
   del virusClusterer
 
   # if not subcluster:
@@ -689,7 +656,6 @@ def perform_clustering():
   #   del virusSubClusterer
 
 if __name__ == "__main__":
-  tracemalloc.start()
   logger = create_logger()
   (inputSequences, goi, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag) = parse_arguments(docopt(__doc__))
 
@@ -699,8 +665,3 @@ if __name__ == "__main__":
     os.remove(f"{os.path.dirname(outdir)}/latest")
   os.system(f"ln -s {outdir} {os.path.dirname(outdir)}/latest")
 
-  snapshot = tracemalloc.take_snapshot()
-  display_top(snapshot)
-  #top_stats = tracemalloc.take_snapshot().statistics('lineno')
-  #for stat in top_stats[:20]:
-  #  print(stat)
