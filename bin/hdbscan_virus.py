@@ -117,6 +117,34 @@ from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 
 
+import linecache
+import os
+import tracemalloc
+
+def display_top(snapshot, key_type='lineno', limit=10):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, frame.filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+
 class Clusterer(object):
   """
   """
@@ -238,18 +266,18 @@ class Clusterer(object):
     """
     """
     header, sequence = entry
-    profile = [0]*len(self.allKmers)
-    #profile = np.empty(shape=(len(self.allKmers)))
+    #profile = [0]*len(self.allKmers)
+    profile = np.zeros(shape=(len(self.allKmers)))
     for k in iter([sequence[start : start + self.k] for start in range(len(sequence) - self.k)]):
         try:
           profile[self.allKmers[k]] += 1
         except KeyError:
           continue
-    kmerSum = sum(profile)
+    #kmerSum = sum(profile)
     #kmerSum = np.sum(profile)
     try:
-      profile = list(map(lambda x: x/kmerSum, profile))
-      #profile = profile / kmerSum
+      #profile = list(map(lambda x: x/kmerSum, profile))
+      profile = profile / np.sum(profile)
       return (header, profile)
     except ZeroDivisionError:
       print(Clusterer.id2header[header] + " skipped, due to too many N's.")
@@ -273,7 +301,8 @@ class Clusterer(object):
     p.join()
     for header, profile in allProfiles:
       if header:
-        Clusterer.d_profiles[header] = profile    
+        Clusterer.d_profiles[header] = profile 
+
 
   def calc_pd(self, seqs):
     """
@@ -659,6 +688,7 @@ def perform_clustering():
   #   del virusSubClusterer
 
 if __name__ == "__main__":
+  # tracemalloc.start()
   logger = create_logger()
   (inputSequences, goi, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag) = parse_arguments(docopt(__doc__))
 
@@ -667,4 +697,8 @@ if __name__ == "__main__":
   if os.path.islink(f"{os.path.dirname(outdir)}/latest"):
     os.remove(f"{os.path.dirname(outdir)}/latest")
   os.system(f"ln -s {outdir} {os.path.dirname(outdir)}/latest")
+  # snapshot = tracemalloc.take_snapshot()
+  # display_top(snapshot)
+    
+
 
