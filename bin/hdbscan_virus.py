@@ -76,17 +76,6 @@ Options:
 
 """
 
-
-# Parameter to implement / make variable:
-# metric (and maybe a supported list of distances)
-# n_neighbors (umap)
-# distance_threshold (umap)
-# min_cluster (hdbscan)
-# cluster_size (hdbscan)
-# dimensions (umap)
-# 
-
-
 import sys
 import os
 import logging
@@ -117,29 +106,34 @@ import hdbscan
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 
-id2header = {}
-d_profiles = {}
-header2id = {}
-dim = 0
-matrix = np.empty(shape=(dim,dim))
 
-genomeOfInterest = ''
-goiHeader = []
-goi2Cluster = {}
-shm = None
+import linecache
+import os
+import tracemalloc
 
-scipyDistances = {
-    'euclidean' : scipy.spatial.distance.euclidean ,
-    'manhatten' : scipy.spatial.distance.cityblock ,
-    'chebyshev' : scipy.spatial.distance.chebyshev  ,
-    'minkwoski': scipy.spatial.distance.minkowski ,
-    'canberra' : scipy.spatial.distance.canberra ,
-    'braycurtis' : scipy.spatial.distance.braycurtis ,
-    'mahalanobis' : scipy.spatial.distance.mahalanobis ,
-    'wminkowski' : scipy.spatial.distance.wminkowski ,
-    'seuclidean' : scipy.spatial.distance.seuclidean ,
-    'cosine' : scipy.spatial.distance.cosine  
-}
+def display_top(snapshot, key_type='lineno', limit=10):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, frame.filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
 
 def __parse_fasta(filePath, goi=False):
   """
@@ -165,6 +159,9 @@ def read_sequences():
   """
   global dim
   global matrix 
+  global d_profiles
+  global shm_name
+
 
   idHead = -1
   fastaContent = {}
@@ -191,6 +188,7 @@ def read_sequences():
   # if not subCluster:
   dim = len(fastaContent)
   matrix = np.ones(shape=(dim, dim), dtype=float)
+
   #shm = shared_memory.SharedMemory(create=True, size=matrix.nbytes)
   #matrix = np.ndarray((dim, dim), dtype=float, buffer=shm.buf)
 
@@ -202,44 +200,49 @@ def read_sequences():
 def profileA(entry):
   """
   """
+  # global shm_name
   header, sequence = entry
+  # existing_shm = shared_memory.SharedMemory(name=shm_name)
+  # allProfiles = np.ndarray((dim, len(allKmers)), buffer=existing_shm.buf)
+  # profile = allProfiles[header]
   profile = [0]*len(allKmers)
+  #profile = np.empty(shape=(len(allKmers)), dtype=np.float64)
   for k in iter([sequence[start : start + KMER] for start in range(len(sequence) - KMER)]):
       try:
         profile[allKmers[k]] += 1
       except KeyError:
         continue
-  kmerSum = sum(profile)
+  kmerSum = np.sum(profile)
   try:
-    profile = list(map(lambda x: x/kmerSum, profile))
+    profile = profile / kmerSum
     return (header, profile)
   except ZeroDivisionError:
     print(id2header[header] + " skipped, due to too many N's.")
     return(None, None)
+  # exisiting_shm.close()
     #print(header, id2header[header], kmerSum)
     #print(sequence)
     #exit(1)
-    
 
 def determine_profile(proc):
 
   global d_sequences
   global d_profiles
-
-  d_sequences = read_sequences()
-  if d_sequences == 1:
-    import shutil
-    shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
-    return 1
-
   p = proc
-  allProfiles = p.map(profileA, d_sequences.items())
-  p.close()
-  p.join()
-  for header, profile in allProfiles:
+  tracemalloc.start()
+  for entry in d_sequences.items():
+    header, profile = profileA(entry)
+  #allProfiles = p.map(profileA, d_sequences.items())
+  #p.close()
+  #p.join()
+  
+  
+  #for header, profile in allProfiles:
     if header:
       d_profiles[header] = profile    
-
+  snapshot = tracemalloc.take_snapshot()
+  display_top(snapshot)
+  
 def calc_pd(seqs):
   """
   """
@@ -570,7 +573,23 @@ def __abort_cluster(clusterObject, filename):
     del clusterObject
 
 def perform_clustering():
+  
   global clusterlabel
+  global d_sequences
+  global shm_name
+
+  d_sequences = read_sequences()
+  if d_sequences == 1:
+    import shutil
+    shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
+    return 1
+
+  d_profiles = {}
+  # d_profiles = np.ones(shape=(dim,len(allKmers)), dtype=np.float64)
+  # shm = shared_memory.SharedMemory(create=True, size=d_profiles.nbytes)
+  # shm_name = shm.name
+  # logger.warn(shm_name)
+  # d_profiles = np.ndarray(d_profiles.shape, dtype=np.float64, buffer=shm.buf)
 
   multiPool = Pool(processes=proc)
   #virusClusterer = Clusterer(logger, inputSequences, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag, goi=goi)
@@ -598,17 +617,19 @@ def perform_clustering():
   centroids = get_centroids(multiPool)
   output_centroids(centroids)
 
-  logger.info(f"Extracting representative sequences for each cluster.")
+  logger.info(f"All done.")
   # sequences = d_sequences
   # distanceMatrix = matrix
   # profiles = d_profiles
   #virusshm.close()
   #del virusClusterer
-
+  # shm.close()
+  # shm.unlink()
   return 0
 
 
 if __name__ == "__main__":
+  
   logger = create_logger()
   (inputSequences, goi, outdir,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag) = parse_arguments(docopt(__doc__))
 
@@ -616,6 +637,29 @@ if __name__ == "__main__":
   nucleotides = set(["A","C","G","T"])
   allKmers = {''.join(kmer):x for x,kmer in enumerate(itertools.product(nucleotides, repeat=KMER))}
 
+  id2header = {}
+  header2id = {}
+  dim = 0
+  matrix = np.empty(shape=(dim,dim))
+
+  genomeOfInterest = ''
+  goiHeader = []
+  goi2Cluster = {}
+  shm_name = ""
+  d_profiles = {}
+
+  scipyDistances = {
+      'euclidean' : scipy.spatial.distance.euclidean ,
+      'manhatten' : scipy.spatial.distance.cityblock ,
+      'chebyshev' : scipy.spatial.distance.chebyshev  ,
+      'minkwoski': scipy.spatial.distance.minkowski ,
+      'canberra' : scipy.spatial.distance.canberra ,
+      'braycurtis' : scipy.spatial.distance.braycurtis ,
+      'mahalanobis' : scipy.spatial.distance.mahalanobis ,
+      'wminkowski' : scipy.spatial.distance.wminkowski ,
+      'seuclidean' : scipy.spatial.distance.seuclidean ,
+      'cosine' : scipy.spatial.distance.cosine  
+  }
 
   #d_sequences = {}
   #centroids = []
@@ -628,6 +672,7 @@ if __name__ == "__main__":
 
   logger.info("Starting to cluster you data. Stay tuned.")
   perform_clustering()
+  logger.info("Linking the latest results.")
   if os.path.islink(f"{os.path.dirname(outdir)}/latest"):
     os.remove(f"{os.path.dirname(outdir)}/latest")
   os.system(f"ln -s {outdir} {os.path.dirname(outdir)}/latest")
