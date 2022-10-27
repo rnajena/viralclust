@@ -163,6 +163,9 @@ def __parse_fasta(filePath, goi=False):
 def read_sequences():
   """
   """
+  global dim
+  global matrix 
+
   idHead = -1
   fastaContent = {}
   for header, sequence in __parse_fasta(inputSequences):
@@ -221,6 +224,8 @@ def profileA(entry):
 def determine_profile(proc):
 
   global d_sequences
+  global d_profiles
+
   d_sequences = read_sequences()
   if d_sequences == 1:
     import shutil
@@ -253,6 +258,11 @@ def calc_pd(seqs):
 def apply_umap():
   """
   """
+  global clusterlabel
+  global probabilities
+  global allCluster
+  global d_profiles
+  
   profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
   vector = [x[1] for x in profiles]
 
@@ -309,17 +319,24 @@ def apply_umap():
             fastaOut.write(f">{id2header[idx]}\n{d_sequences[idx].split('X'*10)[0]}\n")
       outStream.write("\n")
 
-
 def get_centroids(proc):
   """
   """
+
+  global clusterlabel
+  global allCluster
+  global d_profiles
+  global matrix
+
+  centroids = []
+
   seqCluster = { x : [] for x in set(clusterlabel)}
 
   for idx, cluster in allCluster:
     seqCluster[cluster].append(idx)
 
   p = proc
-
+  
   for cluster, sequences in seqCluster.items():
     if cluster == -1:
       #for sequence in sequences:
@@ -365,10 +382,12 @@ def get_centroids(proc):
     centroids.append(centroidOfCluster)
   p.close()
   p.join()
+  return(centroids)
 
-def output_centroids():
+def output_centroids(centroids):
   """
   """
+
   reprSeqs = {centroid : d_sequences[centroid] for centroid in centroids}
   reprSeqs.update({goiID : d_sequences[goiID] for goiID in goiHeader})
   outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
@@ -551,6 +570,7 @@ def __abort_cluster(clusterObject, filename):
     del clusterObject
 
 def perform_clustering():
+  global clusterlabel
 
   multiPool = Pool(processes=proc)
   #virusClusterer = Clusterer(logger, inputSequences, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag, goi=goi)
@@ -574,13 +594,14 @@ def perform_clustering():
       logger.info(f"You find the genome {header} in cluster {cluster}.")
 
   logger.info("Extracting centroid sequences and writing results to file.\n")
-  get_centroids(multiPool)
-  output_centroids()
+  multiPool = Pool(processes=proc)
+  centroids = get_centroids(multiPool)
+  output_centroids(centroids)
 
   logger.info(f"Extracting representative sequences for each cluster.")
-  sequences = d_sequences
-  distanceMatrix = matrix
-  profiles = d_profiles
+  # sequences = d_sequences
+  # distanceMatrix = matrix
+  # profiles = d_profiles
   #virusshm.close()
   #del virusClusterer
 
@@ -595,20 +616,12 @@ if __name__ == "__main__":
   nucleotides = set(["A","C","G","T"])
   allKmers = {''.join(kmer):x for x,kmer in enumerate(itertools.product(nucleotides, repeat=KMER))}
 
-  proc = proc
-  metric = metric
-  neighbors = neighbors
-  threshold = threshold
-  dimension = dimension
-  clusterSize = clusterSize
-  minSample = minSample
-  pca_flag = pca_flag
 
-  d_sequences = {}
-  centroids = []
-  allCluster = []
-  clusterlabel = []
-  probabilities = []
+  #d_sequences = {}
+  #centroids = []
+  #allCluster = []
+  #clusterlabel = []
+  #probabilities = []
   
   if goi:
     genomeOfInterest = goi
