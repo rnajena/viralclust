@@ -239,14 +239,17 @@ class Clusterer(object):
     """
     header, sequence = entry
     profile = [0]*len(self.allKmers)
+    #profile = np.empty(shape=(len(self.allKmers)))
     for k in iter([sequence[start : start + self.k] for start in range(len(sequence) - self.k)]):
         try:
           profile[self.allKmers[k]] += 1
         except KeyError:
           continue
     kmerSum = sum(profile)
+    #kmerSum = np.sum(profile)
     try:
       profile = list(map(lambda x: x/kmerSum, profile))
+      #profile = profile / kmerSum
       return (header, profile)
     except ZeroDivisionError:
       print(Clusterer.id2header[header] + " skipped, due to too many N's.")
