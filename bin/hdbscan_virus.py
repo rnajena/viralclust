@@ -106,7 +106,6 @@ import hdbscan
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 
-
 import linecache
 import os
 import tracemalloc
@@ -187,7 +186,7 @@ def read_sequences():
 
   # if not subCluster:
   dim = len(fastaContent)
-  matrix = np.ones(shape=(dim, dim), dtype=float)
+  matrix = np.ones(shape=(dim, dim), dtype=np.float32)
 
   #shm = shared_memory.SharedMemory(create=True, size=matrix.nbytes)
   #matrix = np.ndarray((dim, dim), dtype=float, buffer=shm.buf)
@@ -205,8 +204,8 @@ def profileA(entry):
   # existing_shm = shared_memory.SharedMemory(name=shm_name)
   # allProfiles = np.ndarray((dim, len(allKmers)), buffer=existing_shm.buf)
   # profile = allProfiles[header]
-  profile = [0]*len(allKmers)
-  #profile = np.empty(shape=(len(allKmers)), dtype=np.float64)
+  #profile = [0]*len(allKmers)
+  profile = np.zeros(shape=(len(allKmers)), dtype=np.float32)
   for k in iter([sequence[start : start + KMER] for start in range(len(sequence) - KMER)]):
       try:
         profile[allKmers[k]] += 1
@@ -214,8 +213,10 @@ def profileA(entry):
         continue
   kmerSum = np.sum(profile)
   try:
+    #print(profile.nbytes)
     profile = profile / kmerSum
-    return (header, profile)
+    #print(profile.nbytes)
+    return(header, profile)
   except ZeroDivisionError:
     print(id2header[header] + " skipped, due to too many N's.")
     return(None, None)
@@ -229,19 +230,18 @@ def determine_profile(proc):
   global d_sequences
   global d_profiles
   p = proc
-  tracemalloc.start()
-  for entry in d_sequences.items():
-    header, profile = profileA(entry)
-  #allProfiles = p.map(profileA, d_sequences.items())
-  #p.close()
-  #p.join()
+  #tracemalloc.start()
+  #for entry in d_sequences.items():
+  #  header, profile = profileA(entry)
+  allProfiles = p.map(profileA, d_sequences.items())
+  p.close()
+  p.join()
   
-  
-  #for header, profile in allProfiles:
+  for header, profile in allProfiles:
     if header:
       d_profiles[header] = profile    
-  snapshot = tracemalloc.take_snapshot()
-  display_top(snapshot)
+  #snapshot = tracemalloc.take_snapshot()
+  #display_top(snapshot)
   
 def calc_pd(seqs):
   """
@@ -577,6 +577,7 @@ def perform_clustering():
   global clusterlabel
   global d_sequences
   global shm_name
+  global dim
 
   d_sequences = read_sequences()
   if d_sequences == 1:
@@ -605,7 +606,7 @@ def perform_clustering():
     __abort_cluster(inputSequences)
     return 0
   clusterInfo = clusterlabel
-  #logger.info(f"Summarized {dim} sequences into {clusterInfo.max()+1} clusters. Filtered {np.count_nonzero(clusterInfo == -1)} sequences due to uncertainty.")
+  logger.info(f"Summarized {dim} sequences into {clusterInfo.max()+1} clusters. Filtered {np.count_nonzero(clusterInfo == -1)} sequences due to uncertainty.")
 
   goiCluster = goi2Cluster
   if goiCluster:
