@@ -267,7 +267,7 @@ class Clusterer(object):
     """
     header, sequence = entry
     #profile = [0]*len(self.allKmers)
-    profile = np.zeros(shape=(len(self.allKmers)))
+    profile = np.zeros(shape=(len(self.allKmers)), dtype=np.float32)
     for k in iter([sequence[start : start + self.k] for start in range(len(sequence) - self.k)]):
         try:
           profile[self.allKmers[k]] += 1
