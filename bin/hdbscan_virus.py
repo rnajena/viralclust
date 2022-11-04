@@ -21,9 +21,6 @@ Python Dependencies:
   umap-learn
   hdbscan
 
-Other Dependencies:
-  cd-hit
-
 Contact:
   kevin.lamkiewicz@uni-jena.de
 
@@ -105,33 +102,6 @@ import hdbscan
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 
-import linecache
-import os
-import tracemalloc
-
-def display_top(snapshot, key_type='lineno', limit=10):
-    snapshot = snapshot.filter_traces((
-        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-        tracemalloc.Filter(False, "<unknown>"),
-    ))
-    top_stats = snapshot.statistics(key_type)
-
-    print("Top %s lines" % limit)
-    for index, stat in enumerate(top_stats[:limit], 1):
-        frame = stat.traceback[0]
-        print("#%s: %s:%s: %.1f KiB"
-              % (index, frame.filename, frame.lineno, stat.size / 1024))
-        line = linecache.getline(frame.filename, frame.lineno).strip()
-        if line:
-            print('    %s' % line)
-
-    other = top_stats[limit:]
-    if other:
-        size = sum(stat.size for stat in other)
-        print("%s other: %.1f KiB" % (len(other), size / 1024))
-    total = sum(stat.size for stat in top_stats)
-    print("Total allocated size: %.1f KiB" % (total / 1024))
-
 
 def __parse_fasta(filePath, goi=False):
   """
@@ -183,12 +153,9 @@ def read_sequences():
         header2id[header] = idHead
         fastaContent[idHead] = sequence
 
-  # if not subCluster:
   dim = len(fastaContent)
   matrix = np.ones(shape=(dim, dim), dtype=np.float32)
 
-  #shm = shared_memory.SharedMemory(create=True, size=matrix.nbytes)
-  #matrix = np.ndarray((dim, dim), dtype=float, buffer=shm.buf)
 
   if len(fastaContent) < 21:
     return 1
@@ -198,40 +165,26 @@ def read_sequences():
 def profileA(entry):
   """
   """
-  # global shm_name
+
   header, sequence = entry
-  # existing_shm = shared_memory.SharedMemory(name=shm_name)
-  # allProfiles = np.ndarray((dim, len(allKmers)), buffer=existing_shm.buf)
-  # profile = allProfiles[header]
-  #profile = [0]*len(allKmers)
   profile = np.zeros(shape=(len(allKmers)), dtype=np.float32)
   for k in iter([sequence[start : start + KMER] for start in range(len(sequence) - KMER)]):
       try:
         profile[allKmers[k]] += 1
       except KeyError:
         continue
-  kmerSum = np.sum(profile)
   try:
-    #print(profile.nbytes)
-    profile = profile / kmerSum
-    #print(profile.nbytes)
+    profile = profile / np.sum(profile)
     return(header, profile)
   except ZeroDivisionError:
     print(id2header[header] + " skipped, due to too many N's.")
     return(None, None)
-  # exisiting_shm.close()
-    #print(header, id2header[header], kmerSum)
-    #print(sequence)
-    #exit(1)
 
 def determine_profile(proc):
 
   global d_sequences
   global d_profiles
   p = proc
-  #tracemalloc.start()
-  #for entry in d_sequences.items():
-  #  header, profile = profileA(entry)
   allProfiles = p.map(profileA, d_sequences.items())
   p.close()
   p.join()
@@ -239,9 +192,7 @@ def determine_profile(proc):
   for header, profile in allProfiles:
     if header:
       d_profiles[header] = profile    
-  #snapshot = tracemalloc.take_snapshot()
-  #display_top(snapshot)
-  
+
 def calc_pd(seqs):
   """
   """
@@ -277,8 +228,6 @@ def apply_umap():
       for i, var in enumerate(variances):
         if sum(variances[:i]) > 0.7 or i > 50:
           break
-      #for i in range(len(pca_model.explained_variance_)):
-      #  if sum(pca_model.explained_variance_ratio_)
       pca_model = PCA(i)
       clusterable_embedding = pca_model.fit_transform(vector)        
     else:
@@ -308,7 +257,6 @@ def apply_umap():
     return 1
 
   allCluster = list(zip([x[0] for x in profiles], clusterlabel))
-  #if not subCluster:
   with open(f'{outdir}/cluster.txt', 'w') as outStream:
     for i in set(clusterlabel):
       with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
@@ -341,14 +289,10 @@ def get_centroids(proc):
   
   for cluster, sequences in seqCluster.items():
     if cluster == -1:
-      #for sequence in sequences:
-        #if sequence in goiHeader:
-        #  centroids.append(sequence)
-      continue #print(sequence)
+      continue
 
     subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
 
-    #if not subCluster:
     for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
       seq1, seq2, dist = result
       matrix[seq1][seq2] = dist
@@ -366,8 +310,6 @@ def get_centroids(proc):
       averagedDistance = 0
 
       if sequence in goiHeader:
-        #print(goiHeader)
-        #centroids.append(sequence)
         continue
 
       for neighborSequence in sequences:
@@ -453,7 +395,6 @@ def create_logger():
 def create_outdir(outdir):
     try:
       os.makedirs(outdir)
-      #os.makedirs(f"{outdir}/tmpSequences")
       logger.info(f"Creating output directory: {outdir}")
     except FileExistsError:
       logger.warning(f"The output directory exists. Files will be overwritten.")
@@ -504,7 +445,6 @@ def parse_arguments(d_args):
   if output == 'pwd':
     output = os.getcwd()
   now = str(datetime.now()).split('.')[0].replace(' ','_').replace(':','-')
-  #output = f"{output}/viralClust-{now}"
   create_outdir(output)
 
   METRICES = [
@@ -585,14 +525,8 @@ def perform_clustering():
     return 1
 
   d_profiles = {}
-  # d_profiles = np.ones(shape=(dim,len(allKmers)), dtype=np.float64)
-  # shm = shared_memory.SharedMemory(create=True, size=d_profiles.nbytes)
-  # shm_name = shm.name
-  # logger.warn(shm_name)
-  # d_profiles = np.ndarray(d_profiles.shape, dtype=np.float64, buffer=shm.buf)
 
   multiPool = Pool(processes=proc)
-  #virusClusterer = Clusterer(logger, inputSequences, outdir,  k, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag, goi=goi)
 
 
   logger.info("Determining k-mer profiles for all sequences.")
@@ -618,13 +552,6 @@ def perform_clustering():
   output_centroids(centroids)
 
   logger.info(f"All done.")
-  # sequences = d_sequences
-  # distanceMatrix = matrix
-  # profiles = d_profiles
-  #virusshm.close()
-  #del virusClusterer
-  # shm.close()
-  # shm.unlink()
   return 0
 
 
@@ -660,12 +587,6 @@ if __name__ == "__main__":
       'seuclidean' : scipy.spatial.distance.seuclidean ,
       'cosine' : scipy.spatial.distance.cosine  
   }
-
-  #d_sequences = {}
-  #centroids = []
-  #allCluster = []
-  #clusterlabel = []
-  #probabilities = []
   
   if goi:
     genomeOfInterest = goi
