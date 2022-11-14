@@ -103,7 +103,7 @@ from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 
 
-def __parse_fasta(filePath, goi=False):
+def __parse_fasta(filePath):
   """
   """
 
@@ -184,14 +184,12 @@ def determine_profile(proc):
 
   global d_sequences
   global d_profiles
-  p = proc
-  allProfiles = p.map(profileA, d_sequences.items())
-  p.close()
-  p.join()
   
-  for header, profile in allProfiles:
+  for header, profile in proc.map(profileA, d_sequences.items()):
     if header:
       d_profiles[header] = profile    
+  proc.close()
+  proc.join()
 
 def calc_pd(seqs):
   """
@@ -218,7 +216,7 @@ def apply_umap():
   
   profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
   vector = [x[1] for x in profiles]
-
+  
   try:
     
     if pca_flag:
