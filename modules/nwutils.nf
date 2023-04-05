@@ -6,6 +6,7 @@
 
 process nwdisplay {
   label 'nwdisplay'
+  errorStrategy{task.exitStatus=1?'ignore':'terminate'}
   publishDir "${params.output}/${params.nwdisplay_output}", mode: 'copy', pattern: "*_nwdisplay*"
   publishDir "${params.output}/${params.eval_output}", mode: 'copy', pattern: "*pdf"
 
