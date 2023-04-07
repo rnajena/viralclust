@@ -532,7 +532,10 @@ def perform_clustering():
   determine_profile(multiPool)
   if goi:
     logger.info(f"Found {len(virusgoiHeader)} genome(s) of interest.")
-  logger.info("Clustering with UMAP and HDBSCAN.")
+  if umap_flag:
+    logger.info("Clustering with UMAP and HDBSCAN.")
+  else:
+    logger.info("Clustering with PCA and HDBSCAN.")
   code = apply_umap()
   if code == 1:
     __abort_cluster(inputSequences)
