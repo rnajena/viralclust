@@ -78,6 +78,7 @@ import os
 import logging
 import glob
 import shutil
+import csv
 
 import numpy as np
 from multiprocessing import Pool
@@ -185,11 +186,19 @@ def determine_profile(proc):
   global d_sequences
   global d_profiles
   
-  for header, profile in proc.map(profileA, d_sequences.items()):
-    if header:
-      d_profiles[header] = profile    
-  proc.close()
-  proc.join()
+  # for header, profile in proc.map(profileA, d_sequences.items()):
+  #   if header:
+  #     d_profiles[header] = profile    
+  # proc.close()
+  # proc.join()
+
+  with open(f"{outdir}/profiles.csv",'w') as outputStream:
+    for header, profile in proc.map(profileA, d_sequences.items()):
+      if header:
+        outputStream.write(str(header)+"\t"+'\t'.join(map(str,profile))+"\n")
+    proc.close()
+    proc.join()
+
 
 def calc_pd(seqs):
   """
@@ -214,7 +223,13 @@ def apply_umap():
   global allCluster
   global d_profiles
   
-  profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
+
+  profiles = []
+  with open(f"{outdir}/profiles.csv") as inputStream:  
+    for row in csv.reader(inputStream, delimiter = "\t"):
+      if int(row[0]) in d_sequences:
+        profiles.append((int(row[0]), np.array(map(float, row[1:]))))
+  #profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
   vector = [x[1] for x in profiles]
   
   try:
@@ -538,7 +553,7 @@ def perform_clustering():
     return 0
   clusterInfo = clusterlabel
   logger.info(f"Summarized {dim} sequences into {clusterInfo.max()+1} clusters. Filtered {np.count_nonzero(clusterInfo == -1)} sequences due to uncertainty.")
-
+  sys.exit(0)
   goiCluster = goi2Cluster
   if goiCluster:
     for header, cluster in goiCluster.items():
