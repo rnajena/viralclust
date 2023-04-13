@@ -129,7 +129,7 @@ def read_sequences():
   global dim
   global matrix 
   global d_profiles
-  global shm_name
+
 
 
   idHead = -1
@@ -221,14 +221,13 @@ def apply_umap():
   global clusterlabel
   global probabilities
   global allCluster
-  global d_profiles
   
 
   profiles = []
   with open(f"{outdir}/profiles.csv") as inputStream:  
     for row in csv.reader(inputStream, delimiter = "\t"):
       if int(row[0]) in d_sequences:
-        profiles.append((int(row[0]), np.array(map(float, row[1:]))))
+        profiles.append((int(row[0]), np.array(list(map(float, row[1:])))))
   #profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
   vector = [x[1] for x in profiles]
   
@@ -252,6 +251,9 @@ def apply_umap():
             metric=metric,
         ).fit_transform(vector)
 
+    del vector
+    gc.collect()
+
     clusterer = hdbscan.HDBSCAN()
     if metric == "cosine":
       clusterable_embedding = normalize(clusterable_embedding,norm='l2')
@@ -266,6 +268,8 @@ def apply_umap():
 
   except TypeError:
     import shutil
+    logger.warning(clusterer.labels_)
+    logger.warning(clusterlabel)
     shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
     return 1
 
@@ -288,7 +292,6 @@ def get_centroids(proc):
 
   global clusterlabel
   global allCluster
-  global d_profiles
   global matrix
 
   centroids = []
@@ -304,7 +307,12 @@ def get_centroids(proc):
     if cluster == -1:
       continue
 
-    subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
+    # subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
+    subProfiles = {}
+    with open(f"{outdir}/profiles.csv") as inputStream:  
+      for row in csv.reader(inputStream, delimiter = "\t"):
+        if int(row[0]) in sequences:
+          subProfiles[int(seq)] = np.array(map(float, row[1:]))
 
     for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
       seq1, seq2, dist = result
@@ -528,8 +536,8 @@ def perform_clustering():
   
   global clusterlabel
   global d_sequences
-  global shm_name
   global dim
+  global inputSequences
 
   d_sequences = read_sequences()
   if d_sequences == 1:
@@ -553,7 +561,7 @@ def perform_clustering():
     return 0
   clusterInfo = clusterlabel
   logger.info(f"Summarized {dim} sequences into {clusterInfo.max()+1} clusters. Filtered {np.count_nonzero(clusterInfo == -1)} sequences due to uncertainty.")
-  sys.exit(0)
+  
   goiCluster = goi2Cluster
   if goiCluster:
     for header, cluster in goiCluster.items():
@@ -585,7 +593,6 @@ if __name__ == "__main__":
   genomeOfInterest = ''
   goiHeader = []
   goi2Cluster = {}
-  shm_name = ""
   d_profiles = {}
 
   scipyDistances = {
