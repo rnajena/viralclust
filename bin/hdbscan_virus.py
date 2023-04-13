@@ -46,7 +46,8 @@ Options:
                                           the cosine distance.
                                           [Default: cosine]
 
-  --pca                                  Flag that determines whether (instead of UMAP) a PCA is used for dimension reduction. [Default: False]
+  --pca                                   Flag that determines whether (instead of UMAP) a PCA is used for dimension reduction. [Default: False]
+  --umap                                  Flag that determines whether (instead of PCA) a UMAP analysis is used for dimension reduction. [Default: False]
 
   --neighbors NEIGHBORS                   Number of neighbors considered by UMAP to reduce the dimension space.
                                           Low numbers here mean focus on local structures within the data, whereas 
@@ -233,7 +234,7 @@ def apply_umap():
   
   try:
     
-    if pca_flag:
+    if not umap_flag:
       pca_model = PCA()
       pca_model.fit(vector)
       variances = pca_model.explained_variance_ratio_
@@ -432,7 +433,7 @@ def parse_arguments(d_args):
   """
 
   if d_args['--version']:
-    print("viralClust version 0.1")
+    print("ViralClust version 0.1")
     exit(0)
 
 
@@ -524,9 +525,9 @@ def parse_arguments(d_args):
         log.error("Invalid parameter for --minSample. Please input a positive integer.")
         exit(2)
 
-  pca_flag = d_args['--pca']
+  umap_flag = d_args['--umap']
 
-  return (inputSequences, goi, output,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag)
+  return (inputSequences, goi, output,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, umap_flag)
 
 def __abort_cluster(clusterObject, filename):
     logger.warn(f"Too few sequences for clustering in {os.path.basename(filename)}. No subcluster will be created.")
@@ -554,7 +555,10 @@ def perform_clustering():
   determine_profile(multiPool)
   if goi:
     logger.info(f"Found {len(virusgoiHeader)} genome(s) of interest.")
-  logger.info("Clustering with UMAP and HDBSCAN.")
+  if umap_flag:
+    logger.info("Clustering with UMAP and HDBSCAN.")
+  else:
+    logger.info("Clustering with PCA and HDBSCAN.")
   code = apply_umap()
   if code == 1:
     __abort_cluster(inputSequences)
@@ -579,7 +583,7 @@ def perform_clustering():
 if __name__ == "__main__":
   
   logger = create_logger()
-  (inputSequences, goi, outdir,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, pca_flag) = parse_arguments(docopt(__doc__))
+  (inputSequences, goi, outdir,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, umap_flag) = parse_arguments(docopt(__doc__))
 
   reducedSequences = f"{outdir}/{os.path.basename(inputSequences)}"
   nucleotides = set(["A","C","G","T"])
