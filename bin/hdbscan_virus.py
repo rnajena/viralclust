@@ -46,7 +46,6 @@ Options:
                                           the cosine distance.
                                           [Default: cosine]
 
-  --pca                                   Flag that determines whether (instead of UMAP) a PCA is used for dimension reduction. [Default: False]
   --umap                                  Flag that determines whether (instead of PCA) a UMAP analysis is used for dimension reduction. [Default: False]
 
   --neighbors NEIGHBORS                   Number of neighbors considered by UMAP to reduce the dimension space.
@@ -382,8 +381,12 @@ def determine_centroids(allCluster, outdir, proc):
       continue
 
     subProfiles = __load_profiles(outdir, sequences)
-
-    matrix = np.ones(shape=(len(id2header)+1,len(id2header)+1), dtype=np.float32)
+    indexForMatrix = {}
+    for idx, profile in enumerate(subProfiles):
+      indexForMatrix[idx] = profile[0]
+      profile[0] = idx 
+    #indexForMatrix = { i : header for enumerate([x[0] for x in subProfiles]) }
+    matrix = np.ones(shape=(len(indexForMatrix)+1,len(indexForMatrix)+1), dtype=np.float32)
     for result in multiPool.map(calc_pd, itertools.combinations(subProfiles, 2)):
       seq1, seq2, dist = result
       matrix[seq1][seq2] = dist
