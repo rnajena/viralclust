@@ -107,13 +107,6 @@ import hdbscan
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 
-# inputSequences = None
-# goi = None
-# outdir = None
-# k = None
-# proc = None
-# OUT = ''
-
 def main():
   """
   """
@@ -151,16 +144,6 @@ def main():
   nucleotides = set(["A","C","G","T"])
   allKmers = {''.join(kmer):x for x,kmer in enumerate(itertools.product(nucleotides, repeat=KMER))}
 
-
-  dim = 0
-  matrix = np.empty(shape=(dim,dim))
-
-  genomeOfInterest = ''
- 
-  d_profiles = {}
-
-  if goi:
-    genomeOfInterest = goi
   logger.info("Starting to cluster you data. Stay tuned.")
 
   logger.info("Determining k-mer profiles for all sequences.")
@@ -177,8 +160,12 @@ def main():
   embedding = dimension_reduction(outdir, neighbors, threshold, metric, umap_flag)
   clusteredSeqs = cluster_with_hdbscan(embedding, metric)
 
+  logger.info(f"The {len(id2header)} sequences were clustered into {len(set([x[1] for x in clusteredSeqs]))} groups.")
   logger.info("Writing down cluster information.")
   write_cluster(outdir, clusteredSeqs, inputSequences, goi)
+  if goi:
+    for header, cluster in goi2Cluster.items():
+      logger.info(f"You'll find {header} (genome of interest) in cluster {cluster}.")
 
   logger.info("Extracting centroid sequences.")
   centroids = determine_centroids(clusteredSeqs, outdir, proc)
@@ -186,6 +173,8 @@ def main():
   logger.info("Generating clustered sequence file.")
   report_centroids(inputSequences, centroids, goi, outdir, clusteredSeqs)
 
+  logger.info("Cleaning temporary files.")
+  clean_up(outdir)
 
   sys.exit(0)
 
@@ -227,23 +216,6 @@ def __find_record_by_header(filePath, goi, headerToFind):
     for header, seq in __parse_fasta(goi):
       if header == headerToFind:
         return(seq)
-  # with open(filePath, 'r') as inputStream:
-  #   header = ''
-  #   seq = ''
-
-  #   for line in inputStream:
-  #     if line.startswith(">"):
-  #       if header:
-  #         return(seq)
-  #       header = line.rstrip("\n").replace(':','_').replace(' ','_').strip(">_")
-  #       if header != headerToFind:
-  #         header = ''
-  #         continue
-  #     else:
-  #       if not header:
-  #         continue
-  #       seq += line.rstrip("\n").upper().replace('U','T')
-  #   return(seq)
 
 def __profileA(sequence, allKmers, KMER):
   """
@@ -266,7 +238,7 @@ def sequences_to_profiles(sequences, outdir, allKmers, KMER, previousID=-1):
   """
   """
   mode = 'wb' if previousID == -1 else 'ab'
-  with open(f"{outdir}/profiles.csv", mode) as outputStream:
+  with open(f"{outdir}/profiles.pkl", mode) as outputStream:
     idHead = previousID
     for header, seq in __parse_fasta(sequences):
       idHead += 1
@@ -283,7 +255,7 @@ def __load_profiles(outdir, header=[]):
   """
   """
   profiles = []
-  with open(f"{outdir}/profiles.csv", "rb") as inputStream:
+  with open(f"{outdir}/profiles.pkl", "rb") as inputStream:
     try:
       while True:
         data = pickle.load(inputStream)
@@ -359,7 +331,6 @@ def write_cluster(outdir, allCluster, inputSequences, goi):
   """
   
   clusterlabel = [x[1] for x in allCluster]
-
   with open(f'{outdir}/cluster.txt', 'w') as outStream:
     for i in set(clusterlabel):
       with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
@@ -450,6 +421,7 @@ def report_centroids(inputSequences, centroids, goi, outdir, allCluster):
   with open(outputPath, 'w') as outputStream:
     for centroidHeader in centroids:
       representativeSequence = __find_record_by_header(inputSequences, goi, id2header[centroidHeader])
+      representativeSequence = representativeSequence.split('X'*10)[0]
       outputStream.write(f">{id2header[centroidHeader]}\n{representativeSequence}\n")
     if goi:
       with open(goi, 'r') as goiStream:
@@ -470,6 +442,12 @@ def report_centroids(inputSequences, centroids, goi, outdir, allCluster):
           outStream.write("GOI\n")
         else:
           outStream.write("at +/13.37%\n")
+
+def clean_up(outdir):
+  """
+  """
+  os.remove(f"{outdir}/profiles.pkl")
+
 
 # def get_centroids(proc):
 #   """
@@ -809,7 +787,6 @@ def warn(*args, **kwargs):
     pass
 import warnings
 warnings.warn = warn
-
 
 def __create_logger():
     """
