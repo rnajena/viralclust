@@ -178,13 +178,13 @@ def main():
   clusteredSeqs = cluster_with_hdbscan(embedding, metric)
 
   logger.info("Writing down cluster information.")
-  write_cluster(outdir, clusteredSeqs, inputSequences)
+  write_cluster(outdir, clusteredSeqs, inputSequences, goi)
 
   logger.info("Extracting centroid sequences.")
   centroids = determine_centroids(clusteredSeqs, outdir, proc)
 
   logger.info("Generating clustered sequence file.")
-  report_centroids(inputSequences, centroids)
+  report_centroids(inputSequences, centroids, goi, outdir)
 
 
   sys.exit(0)
@@ -216,12 +216,17 @@ def __parse_fasta(filePath):
         seq += line.rstrip("\n").upper().replace('U','T')
     yield (header, seq)
 
-def __find_record_by_header(filePath, headerToFind):
+def __find_record_by_header(filePath, goi, headerToFind):
   """
   """
   for header, seq in __parse_fasta(filePath):
     if header == headerToFind:
       return(seq)
+  
+  if goi:
+    for header, seq in __parse_fasta(goi):
+      if header == headerToFind:
+        return(seq)
   # with open(filePath, 'r') as inputStream:
   #   header = ''
   #   seq = ''
@@ -349,7 +354,7 @@ def cluster_with_hdbscan(embedding, metric):
   allCluster = list(zip([x for x in id2header.keys()], clusterlabel))
   return(allCluster)
 
-def write_cluster(outdir, allCluster, inputSequences): 
+def write_cluster(outdir, allCluster, inputSequences, goi): 
   """
   """
   
@@ -364,7 +369,7 @@ def write_cluster(outdir, allCluster, inputSequences):
             if idx in goiHeader:
               goi2Cluster[id2header[idx]] = i
             outStream.write(f"{id2header[idx]}\n")
-            sequence = __find_record_by_header(inputSequences, id2header[idx])
+            sequence = __find_record_by_header(inputSequences, goi, id2header[idx])
             fastaOut.write(f">{id2header[idx]}\n{sequence.split('X'*10)[0]}\n")
       outStream.write("\n")
 
@@ -438,13 +443,18 @@ def determine_centroids(allCluster, outdir, proc):
   multiPool.join()
   return(centroids)
 
-def report_centroids(centroids):
+def report_centroids(inputSequences, centroids, goi, outdir):
   """
   """
-
-  for centroidHeader in centroids:
-    representativeSequence = __find_record_by_header(inputSequences, centroidHeader)
-
+  outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
+  with open(outputPath, 'w') as outputStream:
+    for centroidHeader in centroids:
+      representativeSequence = __find_record_by_header(inputSequences, goi, id2header[centroidHeader])
+      outputStream.write(f">{id2header[centroidHeader]}\n{representativeSequence}\n")
+    if goi:
+      with open(goi, 'r') as goiStream:
+        for line in goiStream:
+          outputStream.write(line)
 
 # def get_centroids(proc):
 #   """
