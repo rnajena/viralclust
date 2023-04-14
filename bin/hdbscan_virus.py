@@ -184,7 +184,7 @@ def main():
   centroids = determine_centroids(clusteredSeqs, outdir, proc)
 
   logger.info("Generating clustered sequence file.")
-  
+  report_centroids(inputSequences, centroids)
 
 
   sys.exit(0)
@@ -219,23 +219,26 @@ def __parse_fasta(filePath):
 def __find_record_by_header(filePath, headerToFind):
   """
   """
-  with open(filePath, 'r') as inputStream:
-    header = ''
-    seq = ''
+  for header, seq in __parse_fasta(filePath):
+    if header == headerToFind:
+      return(seq)
+  # with open(filePath, 'r') as inputStream:
+  #   header = ''
+  #   seq = ''
 
-    for line in inputStream:
-      if line.startswith(">"):
-        if header:
-          return(seq)
-        header = line.rstrip("\n").replace(':','_').replace(' ','_').strip(">_")
-        if header != headerToFind:
-          header = ''
-          continue
-      else:
-        if not header:
-          continue
-        seq += line.rstrip("\n").upper().replace('U','T')
-    return(seq)
+  #   for line in inputStream:
+  #     if line.startswith(">"):
+  #       if header:
+  #         return(seq)
+  #       header = line.rstrip("\n").replace(':','_').replace(' ','_').strip(">_")
+  #       if header != headerToFind:
+  #         header = ''
+  #         continue
+  #     else:
+  #       if not header:
+  #         continue
+  #       seq += line.rstrip("\n").upper().replace('U','T')
+  #   return(seq)
 
 def __profileA(sequence, allKmers, KMER):
   """
@@ -271,7 +274,6 @@ def sequences_to_profiles(sequences, outdir, allKmers, KMER, previousID=-1):
       #outputStream.write(str(idHead)+"\t"+'\t'.join(map(str,__profileA(seq, allKmers, KMER)))+"\n")
   return(idHead if idHead >= 21 else 1)
 
-
 def __load_profiles(outdir, header=[]):
   """
   """
@@ -286,7 +288,7 @@ def __load_profiles(outdir, header=[]):
         profiles.append(data)
     except EOFError:
       return(profiles)
-    
+
 def reduce_with_pca(vector):
   """
   """
@@ -329,7 +331,6 @@ def dimension_reduction(outdir, neighbors, threshold, metric, umap_flag):
   gc.collect()
 
   return(embedding)
-    
 
 def cluster_with_hdbscan(embedding, metric):
   """
@@ -347,7 +348,6 @@ def cluster_with_hdbscan(embedding, metric):
 
   allCluster = list(zip([x for x in id2header.keys()], clusterlabel))
   return(allCluster)
-
 
 def write_cluster(outdir, allCluster, inputSequences): 
   """
@@ -437,70 +437,77 @@ def determine_centroids(allCluster, outdir, proc):
   multiPool.close()
   multiPool.join()
   return(centroids)
-    
 
-def get_centroids(proc):
+def report_centroids(centroids):
   """
   """
 
-  global clusterlabel
-  global allCluster
-  global matrix
+  for centroidHeader in centroids:
+    representativeSequence = __find_record_by_header(inputSequences, centroidHeader)
 
-  centroids = []
 
-  seqCluster = { x : [] for x in set(clusterlabel)}
+# def get_centroids(proc):
+#   """
+#   """
 
-  for idx, cluster in allCluster:
-    seqCluster[cluster].append(idx)
+#   global clusterlabel
+#   global allCluster
+#   global matrix
 
-  p = proc
+#   centroids = []
+
+#   seqCluster = { x : [] for x in set(clusterlabel)}
+
+#   for idx, cluster in allCluster:
+#     seqCluster[cluster].append(idx)
+
+#   p = proc
   
-  for cluster, sequences in seqCluster.items():
-    if cluster == -1:
-      continue
+#   for cluster, sequences in seqCluster.items():
+#     if cluster == -1:
+#       continue
 
-    # subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
-    subProfiles = {}
-    with open(f"{outdir}/profiles.csv") as inputStream:  
-      for row in csv.reader(inputStream, delimiter = "\t"):
-        if int(row[0]) in sequences:
-          subProfiles[int(row[0])] = np.array(list(map(float, row[1:])))
+#     # subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
+#     subProfiles = {}
+#     with open(f"{outdir}/profiles.csv") as inputStream:  
+#       for row in csv.reader(inputStream, delimiter = "\t"):
+#         if int(row[0]) in sequences:
+#           subProfiles[int(row[0])] = np.array(list(map(float, row[1:])))
 
-    for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
-      seq1, seq2, dist = result
-      matrix[seq1][seq2] = dist
-      matrix[seq2][seq1] = dist
+#     for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
+#       seq1, seq2, dist = result
+#       matrix[seq1][seq2] = dist
+#       matrix[seq2][seq1] = dist
 
-    tmpMinimum = math.inf
-    centroidOfCluster = -1
+#     tmpMinimum = math.inf
+#     centroidOfCluster = -1
 
-    if len(sequences) == 1:
-      centroidOfCluster = cluster[0]
-      centroids.append(centroidOfCluster)
-      continue
+#     if len(sequences) == 1:
+#       centroidOfCluster = cluster[0]
+#       centroids.append(centroidOfCluster)
+#       continue
 
-    for sequence in sequences:
-      averagedDistance = 0
+#     for sequence in sequences:
+#       averagedDistance = 0
 
-      if sequence in goiHeader:
-        continue
+#       if sequence in goiHeader:
+#         continue
 
-      for neighborSequence in sequences:
-        if sequence == neighborSequence:
-          continue
-        averagedDistance += matrix[sequence][neighborSequence]
+#       for neighborSequence in sequences:
+#         if sequence == neighborSequence:
+#           continue
+#         averagedDistance += matrix[sequence][neighborSequence]
 
-      averagedDistance /= len(sequences)-1
+#       averagedDistance /= len(sequences)-1
 
-      if averagedDistance < tmpMinimum:
-        tmpMinimum = averagedDistance
-        centroidOfCluster = sequence
+#       if averagedDistance < tmpMinimum:
+#         tmpMinimum = averagedDistance
+#         centroidOfCluster = sequence
 
-    centroids.append(centroidOfCluster)
-  p.close()
-  p.join()
-  return(centroids)
+#     centroids.append(centroidOfCluster)
+#   p.close()
+#   p.join()
+#   return(centroids)
 
 def output_centroids(centroids):
   """
@@ -610,139 +617,139 @@ def output_centroids(centroids):
 #   return (seq1, seq2, distance)
 #   #
 
-def apply_umap():
-  """
-  """
-  global clusterlabel
-  global probabilities
-  global allCluster
+# def apply_umap():
+#   """
+#   """
+#   global clusterlabel
+#   global probabilities
+#   global allCluster
   
 
-  profiles = []
-  with open(f"{outdir}/profiles.csv") as inputStream:  
-    for row in csv.reader(inputStream, delimiter = "\t"):
-      if int(row[0]) in d_sequences:
-        profiles.append((int(row[0]), np.array(list(map(float, row[1:])))))
-  #profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
-  vector = [x[1] for x in profiles]
+#   profiles = []
+#   with open(f"{outdir}/profiles.csv") as inputStream:  
+#     for row in csv.reader(inputStream, delimiter = "\t"):
+#       if int(row[0]) in d_sequences:
+#         profiles.append((int(row[0]), np.array(list(map(float, row[1:])))))
+#   #profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
+#   vector = [x[1] for x in profiles]
   
-  try:
+#   try:
     
-    if not umap_flag:
-      pca_model = PCA()
-      pca_model.fit(vector)
-      variances = pca_model.explained_variance_ratio_
-      for i, var in enumerate(variances):
-        if sum(variances[:i]) > 0.7 or i > 50:
-          break
-      pca_model = PCA(i)
-      clusterable_embedding = pca_model.fit_transform(vector)        
-    else:
-      clusterable_embedding = umap.UMAP(
-            n_neighbors=neighbors,
-            min_dist=threshold,
-            n_components=50,
-            random_state=42,
-            metric=metric,
-        ).fit_transform(vector)
+#     if not umap_flag:
+#       pca_model = PCA()
+#       pca_model.fit(vector)
+#       variances = pca_model.explained_variance_ratio_
+#       for i, var in enumerate(variances):
+#         if sum(variances[:i]) > 0.7 or i > 50:
+#           break
+#       pca_model = PCA(i)
+#       clusterable_embedding = pca_model.fit_transform(vector)        
+#     else:
+#       clusterable_embedding = umap.UMAP(
+#             n_neighbors=neighbors,
+#             min_dist=threshold,
+#             n_components=50,
+#             random_state=42,
+#             metric=metric,
+#         ).fit_transform(vector)
 
-    del vector
-    gc.collect()
+#     del vector
+#     gc.collect()
 
-    clusterer = hdbscan.HDBSCAN()
-    if metric == "cosine":
-      clusterable_embedding = normalize(clusterable_embedding,norm='l2')
-      clusterer.fit(clusterable_embedding)
-    else:
-      clusterer.fit(clusterable_embedding,metric=metric)
+#     clusterer = hdbscan.HDBSCAN()
+#     if metric == "cosine":
+#       clusterable_embedding = normalize(clusterable_embedding,norm='l2')
+#       clusterer.fit(clusterable_embedding)
+#     else:
+#       clusterer.fit(clusterable_embedding,metric=metric)
 
-    clusterlabel = clusterer.labels_
-    probabilities = clusterer.probabilities_
-    if len(set(clusterlabel)) == 1:
-      raise TypeError
+#     clusterlabel = clusterer.labels_
+#     probabilities = clusterer.probabilities_
+#     if len(set(clusterlabel)) == 1:
+#       raise TypeError
 
-  except TypeError:
-    import shutil
-    logger.warning(clusterer.labels_)
-    logger.warning(clusterlabel)
-    shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
-    return 1
+#   except TypeError:
+#     import shutil
+#     logger.warning(clusterer.labels_)
+#     logger.warning(clusterlabel)
+#     shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
+#     return 1
 
-  allCluster = list(zip([x[0] for x in profiles], clusterlabel))
-  with open(f'{outdir}/cluster.txt', 'w') as outStream:
-    for i in set(clusterlabel):
-      with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
-        outStream.write(f">Cluster {i}\n")
-        for idx, label in allCluster:
-          if label == i:
-            if idx in goiHeader:
-              goi2Cluster[id2header[idx]] = i
-            outStream.write(f"{id2header[idx]}\n")
-            fastaOut.write(f">{id2header[idx]}\n{d_sequences[idx].split('X'*10)[0]}\n")
-      outStream.write("\n")
+#   allCluster = list(zip([x[0] for x in profiles], clusterlabel))
+#   with open(f'{outdir}/cluster.txt', 'w') as outStream:
+#     for i in set(clusterlabel):
+#       with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
+#         outStream.write(f">Cluster {i}\n")
+#         for idx, label in allCluster:
+#           if label == i:
+#             if idx in goiHeader:
+#               goi2Cluster[id2header[idx]] = i
+#             outStream.write(f"{id2header[idx]}\n")
+#             fastaOut.write(f">{id2header[idx]}\n{d_sequences[idx].split('X'*10)[0]}\n")
+#       outStream.write("\n")
 
-def get_centroids(proc):
-  """
-  """
+# def get_centroids(proc):
+#   """
+#   """
 
-  global clusterlabel
-  global allCluster
-  global matrix
+#   global clusterlabel
+#   global allCluster
+#   global matrix
 
-  centroids = []
+#   centroids = []
 
-  seqCluster = { x : [] for x in set(clusterlabel)}
+#   seqCluster = { x : [] for x in set(clusterlabel)}
 
-  for idx, cluster in allCluster:
-    seqCluster[cluster].append(idx)
+#   for idx, cluster in allCluster:
+#     seqCluster[cluster].append(idx)
 
-  p = proc
+#   p = proc
   
-  for cluster, sequences in seqCluster.items():
-    if cluster == -1:
-      continue
+#   for cluster, sequences in seqCluster.items():
+#     if cluster == -1:
+#       continue
 
-    # subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
-    subProfiles = {}
-    with open(f"{outdir}/profiles.csv") as inputStream:  
-      for row in csv.reader(inputStream, delimiter = "\t"):
-        if int(row[0]) in sequences:
-          subProfiles[int(row[0])] = np.array(list(map(float, row[1:])))
+#     # subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
+#     subProfiles = {}
+#     with open(f"{outdir}/profiles.csv") as inputStream:  
+#       for row in csv.reader(inputStream, delimiter = "\t"):
+#         if int(row[0]) in sequences:
+#           subProfiles[int(row[0])] = np.array(list(map(float, row[1:])))
 
-    for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
-      seq1, seq2, dist = result
-      matrix[seq1][seq2] = dist
-      matrix[seq2][seq1] = dist
+#     for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
+#       seq1, seq2, dist = result
+#       matrix[seq1][seq2] = dist
+#       matrix[seq2][seq1] = dist
 
-    tmpMinimum = math.inf
-    centroidOfCluster = -1
+#     tmpMinimum = math.inf
+#     centroidOfCluster = -1
 
-    if len(sequences) == 1:
-      centroidOfCluster = cluster[0]
-      centroids.append(centroidOfCluster)
-      continue
+#     if len(sequences) == 1:
+#       centroidOfCluster = cluster[0]
+#       centroids.append(centroidOfCluster)
+#       continue
 
-    for sequence in sequences:
-      averagedDistance = 0
+#     for sequence in sequences:
+#       averagedDistance = 0
 
-      if sequence in goiHeader:
-        continue
+#       if sequence in goiHeader:
+#         continue
 
-      for neighborSequence in sequences:
-        if sequence == neighborSequence:
-          continue
-        averagedDistance += matrix[sequence][neighborSequence]
+#       for neighborSequence in sequences:
+#         if sequence == neighborSequence:
+#           continue
+#         averagedDistance += matrix[sequence][neighborSequence]
 
-      averagedDistance /= len(sequences)-1
+#       averagedDistance /= len(sequences)-1
 
-      if averagedDistance < tmpMinimum:
-        tmpMinimum = averagedDistance
-        centroidOfCluster = sequence
+#       if averagedDistance < tmpMinimum:
+#         tmpMinimum = averagedDistance
+#         centroidOfCluster = sequence
 
-    centroids.append(centroidOfCluster)
-  p.close()
-  p.join()
-  return(centroids)
+#     centroids.append(centroidOfCluster)
+#   p.close()
+#   p.join()
+#   return(centroids)
 
 def output_centroids(centroids):
   """
@@ -922,58 +929,58 @@ def __abort_cluster(clusterObject, filename):
     logger.warn(f"Too few sequences for clustering in {os.path.basename(filename)}. No subcluster will be created.")
     del clusterObject
 
-def perform_clustering(inputSequences):
-  """
+# def perform_clustering(inputSequences):
+#   """
 
-  """
-  # global clusterlabel
-  # global d_sequences
-  # global dim
-  # global inputSequences
-
-
-
-  d_sequences = read_sequences()
-  if d_sequences == 1:
-    import shutil
-    shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
-    return 1
-
-  d_profiles = {}
-
-  multiPool = Pool(processes=proc)
-
-
-  logger.info("Determining k-mer profiles for all sequences.")
-  determine_profile(multiPool)
+#   """
+#   # global clusterlabel
+#   # global d_sequences
+#   # global dim
+#   # global inputSequences
 
 
 
-  if goi:
-    logger.info(f"Found {len(virusgoiHeader)} genome(s) of interest.")
-  if umap_flag:
-    logger.info("Clustering with UMAP and HDBSCAN.")
-  else:
-    logger.info("Clustering with PCA and HDBSCAN.")
-  code = apply_umap()
-  if code == 1:
-    __abort_cluster(inputSequences)
-    return 0
-  clusterInfo = clusterlabel
-  logger.info(f"Summarized {dim} sequences into {clusterInfo.max()+1} clusters. Filtered {np.count_nonzero(clusterInfo == -1)} sequences due to uncertainty.")
+#   d_sequences = read_sequences()
+#   if d_sequences == 1:
+#     import shutil
+#     shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
+#     return 1
+
+#   d_profiles = {}
+
+#   multiPool = Pool(processes=proc)
+
+
+#   logger.info("Determining k-mer profiles for all sequences.")
+#   determine_profile(multiPool)
+
+
+
+#   if goi:
+#     logger.info(f"Found {len(virusgoiHeader)} genome(s) of interest.")
+#   if umap_flag:
+#     logger.info("Clustering with UMAP and HDBSCAN.")
+#   else:
+#     logger.info("Clustering with PCA and HDBSCAN.")
+#   code = apply_umap()
+#   if code == 1:
+#     __abort_cluster(inputSequences)
+#     return 0
+#   clusterInfo = clusterlabel
+#   logger.info(f"Summarized {dim} sequences into {clusterInfo.max()+1} clusters. Filtered {np.count_nonzero(clusterInfo == -1)} sequences due to uncertainty.")
   
-  goiCluster = goi2Cluster
-  if goiCluster:
-    for header, cluster in goiCluster.items():
-      logger.info(f"You find the genome {header} in cluster {cluster}.")
+#   goiCluster = goi2Cluster
+#   if goiCluster:
+#     for header, cluster in goiCluster.items():
+#       logger.info(f"You find the genome {header} in cluster {cluster}.")
 
-  logger.info("Extracting centroid sequences and writing results to file.\n")
-  multiPool = Pool(processes=proc)
-  centroids = get_centroids(multiPool)
-  output_centroids(centroids)
+#   logger.info("Extracting centroid sequences and writing results to file.\n")
+#   multiPool = Pool(processes=proc)
+#   centroids = get_centroids(multiPool)
+#   output_centroids(centroids)
 
-  logger.info(f"All done.")
-  return 0
+#   logger.info(f"All done.")
+#   return 0
 
 
 if __name__ == "__main__":
