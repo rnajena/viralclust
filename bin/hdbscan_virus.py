@@ -181,7 +181,10 @@ def main():
   write_cluster(outdir, clusteredSeqs, inputSequences)
 
   logger.info("Extracting centroid sequences.")
-  print(determine_centroids(clusteredSeqs, outdir, proc))
+  centroids = determine_centroids(clusteredSeqs, outdir, proc)
+
+  logger.info("Generating clustered sequence file.")
+  
 
 
   sys.exit(0)
@@ -377,7 +380,6 @@ def calc_pd(seqs):
   seq2, *profile2 = seqs[1]
   dFunction = scipyDistances[metric]
   distance = dFunction(profile1, profile2)
-  print(seq1, seq2)
   return (seq1, seq2, distance)
 
 def determine_centroids(allCluster, outdir, proc):
@@ -397,9 +399,10 @@ def determine_centroids(allCluster, outdir, proc):
   for cluster, sequences in seqCluster.items():
     if cluster == -1:
       continue
+
     subProfiles = __load_profiles(outdir, sequences)
 
-    matrix = np.ones(shape=(len(sequences)+1,len(sequences)+1), dtype=np.float32)
+    matrix = np.ones(shape=(len(id2header)+1,len(id2header)+1), dtype=np.float32)
     for result in multiPool.map(calc_pd, itertools.combinations(subProfiles, 2)):
       seq1, seq2, dist = result
       matrix[seq1][seq2] = dist
