@@ -80,6 +80,8 @@ import logging
 import glob
 import shutil
 import csv
+import time
+import gc
 
 import numpy as np
 from multiprocessing import Pool
@@ -199,7 +201,15 @@ def determine_profile(proc):
         outputStream.write(str(header)+"\t"+'\t'.join(map(str,profile))+"\n")
     proc.close()
     proc.join()
-
+  
+  del d_sequences
+  gc.collect()
+  time.sleep(20)
+  sys.exit(0)
+  #for seq in d_sequences:
+  #  d_sequences[seq] = ""
+  
+    
 
 def calc_pd(seqs):
   """
@@ -313,7 +323,7 @@ def get_centroids(proc):
     with open(f"{outdir}/profiles.csv") as inputStream:  
       for row in csv.reader(inputStream, delimiter = "\t"):
         if int(row[0]) in sequences:
-          subProfiles[int(seq)] = np.array(map(float, row[1:]))
+          subProfiles[int(row[0])] = np.array(list(map(float, row[1:])))
 
     for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
       seq1, seq2, dist = result
