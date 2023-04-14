@@ -106,6 +106,21 @@ import hdbscan
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 
+inputSequences = None
+goi = None
+outdir = None
+k = None
+proc = None
+OUT = ''
+
+def main():
+  """
+  """
+
+  global logger
+  logger = create_logger()
+  (inputSequences, goi, outdir,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, umap_flag) = parse_arguments(docopt(__doc__), logger)
+
 
 def __parse_fasta(filePath):
   """
@@ -387,12 +402,7 @@ def output_centroids(centroids):
 
 ###################################################################################################
 
-inputSequences = None
-goi = None
-outdir = None
-k = None
-proc = None
-OUT = ''
+
 
 def warn(*args, **kwargs):
     pass
@@ -431,7 +441,7 @@ def create_outdir(outdir):
     except FileExistsError:
       logger.warning(f"The output directory exists. Files will be overwritten.")
 
-def parse_arguments(d_args):
+def parse_arguments(d_args, logger):
   """
   Parse all given arguments and check for error (e.g. file names).
 
@@ -591,7 +601,8 @@ def perform_clustering():
 
 
 if __name__ == "__main__":
-  
+  main()
+  sys.exit(0)
   logger = create_logger()
   (inputSequences, goi, outdir,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, umap_flag) = parse_arguments(docopt(__doc__))
 
