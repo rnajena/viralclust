@@ -184,7 +184,7 @@ def main():
   centroids = determine_centroids(clusteredSeqs, outdir, proc)
 
   logger.info("Generating clustered sequence file.")
-  report_centroids(inputSequences, centroids, goi, outdir)
+  report_centroids(inputSequences, centroids, goi, outdir, clusteredSeqs)
 
 
   sys.exit(0)
@@ -272,7 +272,7 @@ def sequences_to_profiles(sequences, outdir, allKmers, KMER, previousID=-1):
       idHead += 1
       id2header[idHead] = header
       header2id[header] = idHead
-      if mode == 'a':
+      if mode == 'ab':
         goiHeader.append(idHead)
 
       pickle.dump((idHead,__profileA(seq, allKmers, KMER)), outputStream)
@@ -443,7 +443,7 @@ def determine_centroids(allCluster, outdir, proc):
   multiPool.join()
   return(centroids)
 
-def report_centroids(inputSequences, centroids, goi, outdir):
+def report_centroids(inputSequences, centroids, goi, outdir, allCluster):
   """
   """
   outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
@@ -455,6 +455,21 @@ def report_centroids(inputSequences, centroids, goi, outdir):
       with open(goi, 'r') as goiStream:
         for line in goiStream:
           outputStream.write(line)
+  
+  clusterlabel = [x[1] for x in allCluster]
+  with open(f'{outputPath}.clstr', 'w') as outStream:
+    for i in set(clusterlabel):
+      outStream.write(f">Cluster {i}\n")
+      seqInCluster = set([idx for idx,label in allCluster if label == i])
+      for idx, seqIdx in enumerate(seqInCluster):
+        sequence = __find_record_by_header(inputSequences, goi, id2header[seqIdx])
+        outStream.write(f"{idx}\t{len(sequence)}nt, >{id2header[seqIdx]} ")
+        if seqIdx in centroids:
+          outStream.write('*\n')
+        elif seqIdx in goiHeader:
+          outStream.write("GOI\n")
+        else:
+          outStream.write("at +/13.37%\n")
 
 # def get_centroids(proc):
 #   """
@@ -519,30 +534,30 @@ def report_centroids(inputSequences, centroids, goi, outdir):
 #   p.join()
 #   return(centroids)
 
-def output_centroids(centroids):
-  """
-  """
+# def output_centroids(centroids):
+#   """
+#   """
 
-  reprSeqs = {centroid : d_sequences[centroid] for centroid in centroids}
-  reprSeqs.update({goiID : d_sequences[goiID] for goiID in goiHeader})
-  outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
+#   reprSeqs = {centroid : d_sequences[centroid] for centroid in centroids}
+#   reprSeqs.update({goiID : d_sequences[goiID] for goiID in goiHeader})
+#   outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
 
-  with open(outputPath, 'w') as outStream:
-    for centroidID, sequence in reprSeqs.items():
-      outStream.write(f">{id2header[centroidID]}\n{sequence}\n")
+#   with open(outputPath, 'w') as outStream:
+#     for centroidID, sequence in reprSeqs.items():
+#       outStream.write(f">{id2header[centroidID]}\n{sequence}\n")
 
-  with open(f'{outputPath}.clstr', 'w') as outStream:
-    for i in set(clusterlabel):
-      outStream.write(f">Cluster {i}\n")
-      seqInCluster = set([idx for idx,label in allCluster if label == i])
-      for idx, seqIdx in enumerate(seqInCluster):
-        outStream.write(f"{idx}\t{len(d_sequences[seqIdx])}nt, >{id2header[seqIdx]} ")
-        if seqIdx in centroids:
-          outStream.write('*\n')
-        elif seqIdx in goiHeader:
-          outStream.write("GOI\n")
-        else:
-          outStream.write("at +/13.37%\n")
+#   with open(f'{outputPath}.clstr', 'w') as outStream:
+#     for i in set(clusterlabel):
+#       outStream.write(f">Cluster {i}\n")
+#       seqInCluster = set([idx for idx,label in allCluster if label == i])
+#       for idx, seqIdx in enumerate(seqInCluster):
+#         outStream.write(f"{idx}\t{len(d_sequences[seqIdx])}nt, >{id2header[seqIdx]} ")
+#         if seqIdx in centroids:
+#           outStream.write('*\n')
+#         elif seqIdx in goiHeader:
+#           outStream.write("GOI\n")
+#         else:
+#           outStream.write("at +/13.37%\n")
 
 
 # def read_sequences():
@@ -761,30 +776,30 @@ def output_centroids(centroids):
 #   p.join()
 #   return(centroids)
 
-def output_centroids(centroids):
-  """
-  """
+# def output_centroids(centroids):
+#   """
+#   """
 
-  reprSeqs = {centroid : d_sequences[centroid] for centroid in centroids}
-  reprSeqs.update({goiID : d_sequences[goiID] for goiID in goiHeader})
-  outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
+#   reprSeqs = {centroid : d_sequences[centroid] for centroid in centroids}
+#   reprSeqs.update({goiID : d_sequences[goiID] for goiID in goiHeader})
+#   outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
 
-  with open(outputPath, 'w') as outStream:
-    for centroidID, sequence in reprSeqs.items():
-      outStream.write(f">{id2header[centroidID]}\n{sequence}\n")
+#   with open(outputPath, 'w') as outStream:
+#     for centroidID, sequence in reprSeqs.items():
+#       outStream.write(f">{id2header[centroidID]}\n{sequence}\n")
 
-  with open(f'{outputPath}.clstr', 'w') as outStream:
-    for i in set(clusterlabel):
-      outStream.write(f">Cluster {i}\n")
-      seqInCluster = set([idx for idx,label in allCluster if label == i])
-      for idx, seqIdx in enumerate(seqInCluster):
-        outStream.write(f"{idx}\t{len(d_sequences[seqIdx])}nt, >{id2header[seqIdx]} ")
-        if seqIdx in centroids:
-          outStream.write('*\n')
-        elif seqIdx in goiHeader:
-          outStream.write("GOI\n")
-        else:
-          outStream.write("at +/13.37%\n")
+#   with open(f'{outputPath}.clstr', 'w') as outStream:
+#     for i in set(clusterlabel):
+#       outStream.write(f">Cluster {i}\n")
+#       seqInCluster = set([idx for idx,label in allCluster if label == i])
+#       for idx, seqIdx in enumerate(seqInCluster):
+#         outStream.write(f"{idx}\t{len(d_sequences[seqIdx])}nt, >{id2header[seqIdx]} ")
+#         if seqIdx in centroids:
+#           outStream.write('*\n')
+#         elif seqIdx in goiHeader:
+#           outStream.write("GOI\n")
+#         else:
+#           outStream.write("at +/13.37%\n")
 
 ###################################################################################################
 
