@@ -177,13 +177,153 @@ def main():
 
   sys.exit(0)
 
-  # perform_clustering()
-  # sys.exit(0)
-  # logger.info("Linking the latest results.")
-  # if os.path.islink(f"{os.path.dirname(outdir)}/latest"):
-  #   os.remove(f"{os.path.dirname(outdir)}/latest")
-  # os.system(f"ln -s {outdir} {os.path.dirname(outdir)}/latest")
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
 
+def __create_logger():
+    """
+    doc string.
+    """
+
+    logger = logging.getLogger()
+    #logger.setLevel(logging.WARNING)
+
+    handle = logging.StreamHandler()
+    #handle.setLevel(logging.WARNING)
+
+    formatter = ColoredFormatter("%(log_color)sViralClust %(levelname)s -- %(asctime)s -- %(message)s", "%Y-%m-%d %H:%M:%S",
+                                    log_colors={
+                                            'DEBUG':    'bold_cyan',
+                                            'INFO':     'bold_white',
+                                            'WARNING':  'bold_yellow',
+                                            'ERROR':    'bold_red',
+                                            'CRITICAL': 'bold_red'}
+                                )
+
+    handle.setFormatter(formatter)
+    logger.addHandler(handle)
+    return logger
+
+def create_outdir(outdir):
+    try:
+      os.makedirs(outdir)
+      logger.info(f"Creating output directory: {outdir}")
+    except FileExistsError:
+      logger.warning(f"The output directory exists. Files will be overwritten.")
+
+def __parse_arguments(d_args):
+  """
+  Parse all given arguments and check for error (e.g. file names).
+
+  Arguments:
+  d_args -- dict with input parameters and their values
+
+  Returns:
+  parsed and checked parameter list
+  """
+
+  if d_args['--version']:
+    print("ViralClust version 0.1")
+    exit(0)
+
+
+  verbose = d_args['--verbose']
+  if verbose:
+    logger.setLevel(logging.INFO)
+
+  inputSequences = d_args['<inputSequences>']
+  if not os.path.isfile(inputSequences):
+    logger.error("Couldn't find input sequences. Check your file")
+    exit(1)
+
+  goi = d_args['<genomeOfInterest>']
+  if goi and not os.path.isfile(goi):
+    logger.error("Couldn't find genome of interest. Check your file")
+    exit(1)
+
+  try:
+    KMER = int(d_args['--kmer'])
+  except ValueError:
+    logger.error("Invalid parameter for k-mer size. Please input a number.")
+    exit(2)
+
+  try:
+    proc = int(d_args['--process'])
+  except ValueError:
+    logger.error("Invalid number for CPU cores. Please input a number.")
+    exit(2)
+
+  output = d_args['--output']
+  if output == 'pwd':
+    output = os.getcwd()
+  now = str(datetime.now()).split('.')[0].replace(' ','_').replace(':','-')
+  create_outdir(output)
+
+  METRICES = [
+              'euclidean', 'manhatten', 'chebyshev',
+              'minkwoski', 'canberra', 'braycurtis',
+              'mahalanobis', 'wminkowski',
+              'seuclidean', 'cosine'
+  ]
+  metric = d_args['--metric']
+  if metric not in METRICES:
+    log.warn(f"Invalid metric chosen. Will default back to cosine distance.")
+    metric = 'cosine'
+  
+  try:
+    neighbors = int(d_args['--neighbors'])
+    if neighbors <= 0:
+      raise ValueError
+      
+  except ValueError:
+      log.error("Invalid parameter for --neighbors. Please input a positive integer.")
+      exit(2)
+  
+  try:
+    threshold = float(d_args['--dThreshold'])
+    if not 0.0 <= threshold < 1:
+      raise ValueError
+  except ValueError:
+    log.error("Invalid parameter for --dThreshold. Please input a number between [0,1).")
+    exit(2)
+
+  try:
+    dimension = int(d_args['--dimension'])
+    if dimension < 1:
+      raise ValueError
+  except ValueError:
+      log.error("Invalid parameter for --dimension. Please input a positive integer.")
+      exit(2)
+  
+  
+  try:
+    clusterSize = int(d_args['--clusterSize'])
+    if clusterSize < 1:
+      raise ValueError
+  except ValueError:
+      log.error("Invalid parameter for --clusterSize. Please input a positive integer.")
+      exit(2)
+
+  if d_args['--minSample'] == "CLUSTERSIZE":
+    minSample = clusterSize
+  else:
+    try:
+      minSample = int(d_args['--minSample'])
+      if minSample < 1:
+        raise ValueError
+    except ValueError:
+        log.error("Invalid parameter for --minSample. Please input a positive integer.")
+        exit(2)
+
+  umap_flag = d_args['--umap']
+
+  return (inputSequences, goi, output,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, umap_flag)
+
+def __abort_cluster(clusterObject, filename):
+    logger.warn(f"Too few sequences for clustering in {os.path.basename(filename)}. No subcluster will be created.")
+    del clusterObject
 
 def __parse_fasta(filePath):
   """
@@ -469,581 +609,6 @@ def clean_up(outdir):
   os.remove(f"{outdir}/profiles.pkl")
 
 
-# def get_centroids(proc):
-#   """
-#   """
-
-#   global clusterlabel
-#   global allCluster
-#   global matrix
-
-#   centroids = []
-
-#   seqCluster = { x : [] for x in set(clusterlabel)}
-
-#   for idx, cluster in allCluster:
-#     seqCluster[cluster].append(idx)
-
-#   p = proc
-  
-#   for cluster, sequences in seqCluster.items():
-#     if cluster == -1:
-#       continue
-
-#     # subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
-#     subProfiles = {}
-#     with open(f"{outdir}/profiles.csv") as inputStream:  
-#       for row in csv.reader(inputStream, delimiter = "\t"):
-#         if int(row[0]) in sequences:
-#           subProfiles[int(row[0])] = np.array(list(map(float, row[1:])))
-
-#     for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
-#       seq1, seq2, dist = result
-#       matrix[seq1][seq2] = dist
-#       matrix[seq2][seq1] = dist
-
-#     tmpMinimum = math.inf
-#     centroidOfCluster = -1
-
-#     if len(sequences) == 1:
-#       centroidOfCluster = cluster[0]
-#       centroids.append(centroidOfCluster)
-#       continue
-
-#     for sequence in sequences:
-#       averagedDistance = 0
-
-#       if sequence in goiHeader:
-#         continue
-
-#       for neighborSequence in sequences:
-#         if sequence == neighborSequence:
-#           continue
-#         averagedDistance += matrix[sequence][neighborSequence]
-
-#       averagedDistance /= len(sequences)-1
-
-#       if averagedDistance < tmpMinimum:
-#         tmpMinimum = averagedDistance
-#         centroidOfCluster = sequence
-
-#     centroids.append(centroidOfCluster)
-#   p.close()
-#   p.join()
-#   return(centroids)
-
-# def output_centroids(centroids):
-#   """
-#   """
-
-#   reprSeqs = {centroid : d_sequences[centroid] for centroid in centroids}
-#   reprSeqs.update({goiID : d_sequences[goiID] for goiID in goiHeader})
-#   outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
-
-#   with open(outputPath, 'w') as outStream:
-#     for centroidID, sequence in reprSeqs.items():
-#       outStream.write(f">{id2header[centroidID]}\n{sequence}\n")
-
-#   with open(f'{outputPath}.clstr', 'w') as outStream:
-#     for i in set(clusterlabel):
-#       outStream.write(f">Cluster {i}\n")
-#       seqInCluster = set([idx for idx,label in allCluster if label == i])
-#       for idx, seqIdx in enumerate(seqInCluster):
-#         outStream.write(f"{idx}\t{len(d_sequences[seqIdx])}nt, >{id2header[seqIdx]} ")
-#         if seqIdx in centroids:
-#           outStream.write('*\n')
-#         elif seqIdx in goiHeader:
-#           outStream.write("GOI\n")
-#         else:
-#           outStream.write("at +/13.37%\n")
-
-
-# def read_sequences():
-#   """
-#   """
-#   global dim
-#   global matrix 
-#   global d_profiles
-
-
-
-#   idHead = -1
-#   fastaContent = {}
-#   for header, sequence in __parse_fasta(inputSequences):
-#     #if not subCluster:
-#     idHead += 1
-#     id2header[idHead] = header
-#     header2id[header] = idHead
-#     fastaContent[idHead] = sequence
-#     #else:
-#       # fastaContent[header2id[header]] = sequence
-
-#   if genomeOfInterest:
-#     for header, sequence in __parse_fasta(genomeOfInterest):
-#         if header in header2id:
-#           idHead = header2id[header]
-#         else:
-#           idHead += 1
-#         goiHeader.append(idHead)
-#         id2header[idHead] = header
-#         header2id[header] = idHead
-#         fastaContent[idHead] = sequence
-
-#   dim = len(fastaContent)
-#   matrix = np.ones(shape=(dim, dim), dtype=np.float32)
-
-
-#   if len(fastaContent) < 21:
-#     return 1
-#   return fastaContent
-
-
-# def determine_profile(proc):
-
-#   global d_sequences
-#   global d_profiles
-  
-#   # for header, profile in proc.map(profileA, d_sequences.items()):
-#   #   if header:
-#   #     d_profiles[header] = profile    
-#   # proc.close()
-#   # proc.join()
-
-#   with open(f"{outdir}/profiles.csv",'w') as outputStream:
-#     for header, profile in proc.map(profileA, d_sequences.items()):
-#       if header:
-#         outputStream.write(str(header)+"\t"+'\t'.join(map(str,profile))+"\n")
-#     proc.close()
-#     proc.join()
-  
-#   del d_sequences
-#   gc.collect()
-#   time.sleep(20)
-#   sys.exit(0)
-#   #for seq in d_sequences:
-#   #  d_sequences[seq] = ""
-  
-    
-
-# def calc_pd(seqs):
-#   """
-#   """
-#   for element in seqs:
-#     try:
-#       stuff = (element[0], element[1])
-#     except TypeError:
-#       return None
-#   seq1, profile1 = seqs[0]
-#   seq2, profile2 = seqs[1]
-#   dFunction = scipyDistances[metric]
-#   distance = dFunction(profile1, profile2)
-#   return (seq1, seq2, distance)
-#   #
-
-# def apply_umap():
-#   """
-#   """
-#   global clusterlabel
-#   global probabilities
-#   global allCluster
-  
-
-#   profiles = []
-#   with open(f"{outdir}/profiles.csv") as inputStream:  
-#     for row in csv.reader(inputStream, delimiter = "\t"):
-#       if int(row[0]) in d_sequences:
-#         profiles.append((int(row[0]), np.array(list(map(float, row[1:])))))
-#   #profiles = [(idx,profile) for idx, profile in d_profiles.items() if idx in d_sequences]
-#   vector = [x[1] for x in profiles]
-  
-#   try:
-    
-#     if not umap_flag:
-#       pca_model = PCA()
-#       pca_model.fit(vector)
-#       variances = pca_model.explained_variance_ratio_
-#       for i, var in enumerate(variances):
-#         if sum(variances[:i]) > 0.7 or i > 50:
-#           break
-#       pca_model = PCA(i)
-#       clusterable_embedding = pca_model.fit_transform(vector)        
-#     else:
-#       clusterable_embedding = umap.UMAP(
-#             n_neighbors=neighbors,
-#             min_dist=threshold,
-#             n_components=50,
-#             random_state=42,
-#             metric=metric,
-#         ).fit_transform(vector)
-
-#     del vector
-#     gc.collect()
-
-#     clusterer = hdbscan.HDBSCAN()
-#     if metric == "cosine":
-#       clusterable_embedding = normalize(clusterable_embedding,norm='l2')
-#       clusterer.fit(clusterable_embedding)
-#     else:
-#       clusterer.fit(clusterable_embedding,metric=metric)
-
-#     clusterlabel = clusterer.labels_
-#     probabilities = clusterer.probabilities_
-#     if len(set(clusterlabel)) == 1:
-#       raise TypeError
-
-#   except TypeError:
-#     import shutil
-#     logger.warning(clusterer.labels_)
-#     logger.warning(clusterlabel)
-#     shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
-#     return 1
-
-#   allCluster = list(zip([x[0] for x in profiles], clusterlabel))
-#   with open(f'{outdir}/cluster.txt', 'w') as outStream:
-#     for i in set(clusterlabel):
-#       with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
-#         outStream.write(f">Cluster {i}\n")
-#         for idx, label in allCluster:
-#           if label == i:
-#             if idx in goiHeader:
-#               goi2Cluster[id2header[idx]] = i
-#             outStream.write(f"{id2header[idx]}\n")
-#             fastaOut.write(f">{id2header[idx]}\n{d_sequences[idx].split('X'*10)[0]}\n")
-#       outStream.write("\n")
-
-# def get_centroids(proc):
-#   """
-#   """
-
-#   global clusterlabel
-#   global allCluster
-#   global matrix
-
-#   centroids = []
-
-#   seqCluster = { x : [] for x in set(clusterlabel)}
-
-#   for idx, cluster in allCluster:
-#     seqCluster[cluster].append(idx)
-
-#   p = proc
-  
-#   for cluster, sequences in seqCluster.items():
-#     if cluster == -1:
-#       continue
-
-#     # subProfiles = {seq : profile for seq, profile in d_profiles.items() if seq in sequences}
-#     subProfiles = {}
-#     with open(f"{outdir}/profiles.csv") as inputStream:  
-#       for row in csv.reader(inputStream, delimiter = "\t"):
-#         if int(row[0]) in sequences:
-#           subProfiles[int(row[0])] = np.array(list(map(float, row[1:])))
-
-#     for result in p.map(calc_pd, itertools.combinations(subProfiles.items(), 2)):
-#       seq1, seq2, dist = result
-#       matrix[seq1][seq2] = dist
-#       matrix[seq2][seq1] = dist
-
-#     tmpMinimum = math.inf
-#     centroidOfCluster = -1
-
-#     if len(sequences) == 1:
-#       centroidOfCluster = cluster[0]
-#       centroids.append(centroidOfCluster)
-#       continue
-
-#     for sequence in sequences:
-#       averagedDistance = 0
-
-#       if sequence in goiHeader:
-#         continue
-
-#       for neighborSequence in sequences:
-#         if sequence == neighborSequence:
-#           continue
-#         averagedDistance += matrix[sequence][neighborSequence]
-
-#       averagedDistance /= len(sequences)-1
-
-#       if averagedDistance < tmpMinimum:
-#         tmpMinimum = averagedDistance
-#         centroidOfCluster = sequence
-
-#     centroids.append(centroidOfCluster)
-#   p.close()
-#   p.join()
-#   return(centroids)
-
-# def output_centroids(centroids):
-#   """
-#   """
-
-#   reprSeqs = {centroid : d_sequences[centroid] for centroid in centroids}
-#   reprSeqs.update({goiID : d_sequences[goiID] for goiID in goiHeader})
-#   outputPath = f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta'
-
-#   with open(outputPath, 'w') as outStream:
-#     for centroidID, sequence in reprSeqs.items():
-#       outStream.write(f">{id2header[centroidID]}\n{sequence}\n")
-
-#   with open(f'{outputPath}.clstr', 'w') as outStream:
-#     for i in set(clusterlabel):
-#       outStream.write(f">Cluster {i}\n")
-#       seqInCluster = set([idx for idx,label in allCluster if label == i])
-#       for idx, seqIdx in enumerate(seqInCluster):
-#         outStream.write(f"{idx}\t{len(d_sequences[seqIdx])}nt, >{id2header[seqIdx]} ")
-#         if seqIdx in centroids:
-#           outStream.write('*\n')
-#         elif seqIdx in goiHeader:
-#           outStream.write("GOI\n")
-#         else:
-#           outStream.write("at +/13.37%\n")
-
-###################################################################################################
-
-
-
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
-
-def __create_logger():
-    """
-    doc string.
-    """
-
-    logger = logging.getLogger()
-    #logger.setLevel(logging.WARNING)
-
-    handle = logging.StreamHandler()
-    #handle.setLevel(logging.WARNING)
-
-    formatter = ColoredFormatter("%(log_color)sViralClust %(levelname)s -- %(asctime)s -- %(message)s", "%Y-%m-%d %H:%M:%S",
-                                    log_colors={
-                                            'DEBUG':    'bold_cyan',
-                                            'INFO':     'bold_white',
-                                            'WARNING':  'bold_yellow',
-                                            'ERROR':    'bold_red',
-                                            'CRITICAL': 'bold_red'}
-                                )
-
-    handle.setFormatter(formatter)
-    logger.addHandler(handle)
-    return logger
-
-def create_outdir(outdir):
-    try:
-      os.makedirs(outdir)
-      logger.info(f"Creating output directory: {outdir}")
-    except FileExistsError:
-      logger.warning(f"The output directory exists. Files will be overwritten.")
-
-def __parse_arguments(d_args):
-  """
-  Parse all given arguments and check for error (e.g. file names).
-
-  Arguments:
-  d_args -- dict with input parameters and their values
-
-  Returns:
-  parsed and checked parameter list
-  """
-
-  if d_args['--version']:
-    print("ViralClust version 0.1")
-    exit(0)
-
-
-  verbose = d_args['--verbose']
-  if verbose:
-    logger.setLevel(logging.INFO)
-
-  inputSequences = d_args['<inputSequences>']
-  if not os.path.isfile(inputSequences):
-    logger.error("Couldn't find input sequences. Check your file")
-    exit(1)
-
-  goi = d_args['<genomeOfInterest>']
-  if goi and not os.path.isfile(goi):
-    logger.error("Couldn't find genome of interest. Check your file")
-    exit(1)
-
-  try:
-    KMER = int(d_args['--kmer'])
-  except ValueError:
-    logger.error("Invalid parameter for k-mer size. Please input a number.")
-    exit(2)
-
-  try:
-    proc = int(d_args['--process'])
-  except ValueError:
-    logger.error("Invalid number for CPU cores. Please input a number.")
-    exit(2)
-
-  output = d_args['--output']
-  if output == 'pwd':
-    output = os.getcwd()
-  now = str(datetime.now()).split('.')[0].replace(' ','_').replace(':','-')
-  create_outdir(output)
-
-  METRICES = [
-              'euclidean', 'manhatten', 'chebyshev',
-              'minkwoski', 'canberra', 'braycurtis',
-              'mahalanobis', 'wminkowski',
-              'seuclidean', 'cosine'
-  ]
-  metric = d_args['--metric']
-  if metric not in METRICES:
-    log.warn(f"Invalid metric chosen. Will default back to cosine distance.")
-    metric = 'cosine'
-  
-  try:
-    neighbors = int(d_args['--neighbors'])
-    if neighbors <= 0:
-      raise ValueError
-      
-  except ValueError:
-      log.error("Invalid parameter for --neighbors. Please input a positive integer.")
-      exit(2)
-  
-  try:
-    threshold = float(d_args['--dThreshold'])
-    if not 0.0 <= threshold < 1:
-      raise ValueError
-  except ValueError:
-    log.error("Invalid parameter for --dThreshold. Please input a number between [0,1).")
-    exit(2)
-
-  try:
-    dimension = int(d_args['--dimension'])
-    if dimension < 1:
-      raise ValueError
-  except ValueError:
-      log.error("Invalid parameter for --dimension. Please input a positive integer.")
-      exit(2)
-  
-  
-  try:
-    clusterSize = int(d_args['--clusterSize'])
-    if clusterSize < 1:
-      raise ValueError
-  except ValueError:
-      log.error("Invalid parameter for --clusterSize. Please input a positive integer.")
-      exit(2)
-
-  if d_args['--minSample'] == "CLUSTERSIZE":
-    minSample = clusterSize
-  else:
-    try:
-      minSample = int(d_args['--minSample'])
-      if minSample < 1:
-        raise ValueError
-    except ValueError:
-        log.error("Invalid parameter for --minSample. Please input a positive integer.")
-        exit(2)
-
-  umap_flag = d_args['--umap']
-
-  return (inputSequences, goi, output,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, umap_flag)
-
-def __abort_cluster(clusterObject, filename):
-    logger.warn(f"Too few sequences for clustering in {os.path.basename(filename)}. No subcluster will be created.")
-    del clusterObject
-
-# def perform_clustering(inputSequences):
-#   """
-
-#   """
-#   # global clusterlabel
-#   # global d_sequences
-#   # global dim
-#   # global inputSequences
-
-
-
-#   d_sequences = read_sequences()
-#   if d_sequences == 1:
-#     import shutil
-#     shutil.copyfile(inputSequences, f'{outdir}/{os.path.splitext(os.path.basename(inputSequences))[0]}_hdbscan.fasta')
-#     return 1
-
-#   d_profiles = {}
-
-#   multiPool = Pool(processes=proc)
-
-
-#   logger.info("Determining k-mer profiles for all sequences.")
-#   determine_profile(multiPool)
-
-
-
-#   if goi:
-#     logger.info(f"Found {len(virusgoiHeader)} genome(s) of interest.")
-#   if umap_flag:
-#     logger.info("Clustering with UMAP and HDBSCAN.")
-#   else:
-#     logger.info("Clustering with PCA and HDBSCAN.")
-#   code = apply_umap()
-#   if code == 1:
-#     __abort_cluster(inputSequences)
-#     return 0
-#   clusterInfo = clusterlabel
-#   logger.info(f"Summarized {dim} sequences into {clusterInfo.max()+1} clusters. Filtered {np.count_nonzero(clusterInfo == -1)} sequences due to uncertainty.")
-  
-#   goiCluster = goi2Cluster
-#   if goiCluster:
-#     for header, cluster in goiCluster.items():
-#       logger.info(f"You find the genome {header} in cluster {cluster}.")
-
-#   logger.info("Extracting centroid sequences and writing results to file.\n")
-#   multiPool = Pool(processes=proc)
-#   centroids = get_centroids(multiPool)
-#   output_centroids(centroids)
-
-#   logger.info(f"All done.")
-#   return 0
-
-
 if __name__ == "__main__":
   main()
-  # sys.exit(0)
-  # logger = __create_logger()
-  # (inputSequences, goi, outdir,  KMER, proc, metric, neighbors, threshold, dimension, clusterSize, minSample, umap_flag) = __parse_arguments(docopt(__doc__))
 
-  # reducedSequences = f"{outdir}/{os.path.basename(inputSequences)}"
-  # nucleotides = set(["A","C","G","T"])
-  # allKmers = {''.join(kmer):x for x,kmer in enumerate(itertools.product(nucleotides, repeat=KMER))}
-
-  # id2header = {}
-  # header2id = {}
-  # dim = 0
-  # matrix = np.empty(shape=(dim,dim))
-
-  # genomeOfInterest = ''
-  # goiHeader = []
-  # goi2Cluster = {}
-  # d_profiles = {}
-
-  # scipyDistances = {
-  #     'euclidean' : scipy.spatial.distance.euclidean ,
-  #     'manhatten' : scipy.spatial.distance.cityblock ,
-  #     'chebyshev' : scipy.spatial.distance.chebyshev  ,
-  #     'minkwoski': scipy.spatial.distance.minkowski ,
-  #     'canberra' : scipy.spatial.distance.canberra ,
-  #     'braycurtis' : scipy.spatial.distance.braycurtis ,
-  #     'mahalanobis' : scipy.spatial.distance.mahalanobis ,
-  #     'wminkowski' : scipy.spatial.distance.wminkowski ,
-  #     'seuclidean' : scipy.spatial.distance.seuclidean ,
-  #     'cosine' : scipy.spatial.distance.cosine  
-  # }
-  
-  # if goi:
-  #   genomeOfInterest = goi
-
-  # logger.info("Starting to cluster you data. Stay tuned.")
-  # perform_clustering()
-  # logger.info("Linking the latest results.")
-  # if os.path.islink(f"{os.path.dirname(outdir)}/latest"):
-  #   os.remove(f"{os.path.dirname(outdir)}/latest")
-  # os.system(f"ln -s {outdir} {os.path.dirname(outdir)}/latest")
