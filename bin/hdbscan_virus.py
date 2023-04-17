@@ -384,7 +384,8 @@ def determine_centroids(allCluster, outdir, proc):
     indexForMatrix = {}
     for idx, profile in enumerate(subProfiles):
       indexForMatrix[idx] = profile[0]
-      profile[0] = idx 
+      profile = (idx,) + profile[1:]
+      
     #indexForMatrix = { i : header for enumerate([x[0] for x in subProfiles]) }
     matrix = np.ones(shape=(len(indexForMatrix)+1,len(indexForMatrix)+1), dtype=np.float32)
     for result in multiPool.map(calc_pd, itertools.combinations(subProfiles, 2)):
