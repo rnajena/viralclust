@@ -382,16 +382,27 @@ def determine_centroids(allCluster, outdir, proc):
 
     subProfiles = __load_profiles(outdir, sequences)
     indexForMatrix = {}
+    seqHeader2Index = {}
+    tmp = []
     for idx, profile in enumerate(subProfiles):
       indexForMatrix[idx] = profile[0]
+      seqHeader2Index[profile[0]] = idx
       profile = (idx,) + profile[1:]
+      tmp.append(profile)
+    subProfiles = tmp[:]
+    del tmp
       
     #indexForMatrix = { i : header for enumerate([x[0] for x in subProfiles]) }
     matrix = np.ones(shape=(len(indexForMatrix)+1,len(indexForMatrix)+1), dtype=np.float32)
-    for result in multiPool.map(calc_pd, itertools.combinations(subProfiles, 2)):
-      seq1, seq2, dist = result
-      matrix[seq1][seq2] = dist
-      matrix[seq2][seq1] = dist
+    try:
+      for result in multiPool.map(calc_pd, itertools.combinations(subProfiles, 2)):
+        seq1, seq2, dist = result
+        matrix[seq1][seq2] = dist
+        matrix[seq2][seq1] = dist
+    except IndexError:
+      print(seq1, seq2, len(indexForMatrix),)
+      print(len(matrix))
+      exit(0)
 
     tmpMinimum = math.inf
     centroidOfCluster = -1
@@ -410,7 +421,7 @@ def determine_centroids(allCluster, outdir, proc):
       for neighborSequence in sequences:
         if sequence == neighborSequence:
           continue
-        averagedDistance += matrix[sequence][neighborSequence]
+        averagedDistance += matrix[seqHeader2Index[sequence]][seqHeader2Index[neighborSequence]]
 
       averagedDistance /= len(sequences)-1
 
