@@ -478,7 +478,7 @@ def write_cluster(outdir, allCluster, inputSequences, goi):
   with open(f'{outdir}/cluster.txt', 'w') as outStream:
     for i in set(clusterlabel):
       #with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
-       # outStream.write(f">Cluster {i}\n")
+        # outStream.write(f">Cluster {i}\n")
       for idx, label in allCluster:
         if label == i:
           if idx in goiHeader:
