@@ -6,6 +6,7 @@
 
 process mafft {
   label 'mafft'
+  errorStrategy{task.exitStatus=1?'ignore':'terminate'}
   publishDir "${params.output}/${params.mafft_output}", mode: 'copy', pattern: '*aln'
 
   input:
