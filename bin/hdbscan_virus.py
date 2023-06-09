@@ -160,8 +160,9 @@ def main():
   clusteredSeqs = cluster_with_hdbscan(embedding, metric)
 
   logger.info(f"The {len(id2header)} sequences were clustered into {len(set([x[1] for x in clusteredSeqs]))} groups.")
+  logger.info(f"There are {sum([1 for x in clusteredSeqs if x[1] == -1])} sequences unclustered.")
   #logger.info("Writing down cluster information.")
-  #write_cluster(outdir, clusteredSeqs, inputSequences, goi)
+  write_cluster(outdir, clusteredSeqs, inputSequences, goi)
   if goi:
     for header, cluster in goi2Cluster.items():
       logger.info(f"You'll find {header} (genome of interest) in cluster {cluster}.")
@@ -475,18 +476,19 @@ def write_cluster(outdir, allCluster, inputSequences, goi):
   """
   
   clusterlabel = [x[1] for x in allCluster]
-  with open(f'{outdir}/cluster.txt', 'w') as outStream:
-    for i in set(clusterlabel):
-      #with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
-        # outStream.write(f">Cluster {i}\n")
+  #with open(f'{outdir}/cluster.txt', 'w') as outStream:
+  for i in set(clusterlabel):
+    if not i == -1: continue
+    with open(f'{outdir}/cluster{i}.fasta', 'w') as fastaOut:
+      #  outStream.write(f">Cluster {i}\n")
       for idx, label in allCluster:
         if label == i:
           if idx in goiHeader:
             goi2Cluster[id2header[idx]] = i
-          outStream.write(f"{id2header[idx]}\n")
-        #    sequence = __find_record_by_header(inputSequences, goi, id2header[idx])
-        #    fastaOut.write(f">{id2header[idx]}\n{sequence.split('X'*10)[0]}\n")
-      outStream.write("\n")
+        #  outStream.write(f"{id2header[idx]}\n")
+          sequence = __find_record_by_header(inputSequences, goi, id2header[idx])
+          fastaOut.write(f">{id2header[idx]}\n{sequence.split('X'*10)[0]}\n")
+      # outStream.write("\n")
 
 def calc_pd(seqs):
   """
