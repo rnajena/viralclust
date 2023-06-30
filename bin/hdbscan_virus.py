@@ -40,7 +40,7 @@ Options:
                                           The following are supported:
                                           'euclidean', 'manhatten', 'chebyshev', 'minkwoski',
                                           'canberra', 'braycurtis',
-                                          'mahalanobis', 'wminkowski', 'seuclidean',
+                                          'mahalanobis', 'seuclidean',
                                           'cosine'.
                                           If an invalid metric is set, ViralClust will default back to 
                                           the cosine distance.
@@ -134,7 +134,6 @@ def main():
     'canberra' : scipy.spatial.distance.canberra ,
     'braycurtis' : scipy.spatial.distance.braycurtis ,
     'mahalanobis' : scipy.spatial.distance.mahalanobis ,
-    'wminkowski' : scipy.spatial.distance.wminkowski ,
     'seuclidean' : scipy.spatial.distance.seuclidean ,
     'cosine' : scipy.spatial.distance.cosine  
   }
