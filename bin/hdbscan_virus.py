@@ -453,7 +453,7 @@ def cluster_with_hdbscan(embedding, metric):
   """
   """
 
-  clusterer = hdbscan.HDBSCAN()
+  clusterer = hdbscan.HDBSCAN(core_dist_n_jobs=1)
   if metric == "cosine":
     embedding = normalize(embedding,norm='l2')
     clusterer.fit(embedding)
