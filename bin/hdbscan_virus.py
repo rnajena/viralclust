@@ -587,6 +587,10 @@ def report_centroids(inputSequences, centroids, goi, outdir, allCluster):
     if goi:
       with open(goi, 'r') as goiStream:
         for line in goiStream:
+          if line.startswith(">"):
+            header = line.rstrip().lstrip(">")
+            if header2id[header] in goiHeader:
+              continue
           outputStream.write(line)
   
   clusterlabel = [x[1] for x in allCluster]
