@@ -27,16 +27,17 @@ process mmseqs{
     mmseqs easy-linclust ${addParams} --threads "${task.cpus}" "${sequences}" "${sequences.baseName}_mmseqs" tmp
     mv ${sequences.baseName}_mmseqs_rep_seq.fasta ${sequences.baseName}_mmseqs.fasta
 
-    if [ "{$GOI}" != 'NO FILE' ]; then
-      for ID in \$(grep '>' ${GOI}); do
-        grep -m 1 "\$ID" "${sequences.baseName}_mmseqs.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_mmseqs.fasta"
-      done
-    fi
 
     python3 ${projectDir}/bin/mmseqs2cdhit.py ${sequences.baseName}_mmseqs_cluster.tsv "${sequences}" ${GOI}
     mv ${sequences.baseName}_mmseqs_cluster.tsv.clstr "${sequences.baseName}_mmseqs.fasta.clstr"
     python3 ${projectDir}/bin/filter_unclustered.py "${sequences.baseName}_mmseqs.fasta" "${sequences.baseName}_mmseqs.fasta.clstr"
     mv "${sequences.baseName}_mmseqs.fastaTEST" "${sequences.baseName}_mmseqs.fasta"  
+
+    if [ "{$GOI}" != 'NO FILE' ]; then
+      for ID in \$(grep '>' ${GOI}); do
+        grep -m 1 "\$ID" "${sequences.baseName}_mmseqs.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_mmseqs.fasta"
+      done
+    fi
 
   """
 }
