@@ -33,6 +33,12 @@ process hdbscan {
     touch cluster-1.fasta
     mv cluster-1.fasta  "${sequences.baseName}_hdbscan_UNCLUSTERED.fasta"
 
+    if [ "{$GOI}" != 'NO FILE' ]; then
+      for ID in \$(grep '>' ${GOI}); do
+        grep -m 1 "\$ID" "${sequences.baseName}_hdbscan.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_hdbscan.fasta"
+      done
+    fi
+
   """
 
 }

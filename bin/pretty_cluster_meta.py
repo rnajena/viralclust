@@ -16,7 +16,11 @@ inputFile = sys.argv[1]
 
 holyTable = utils.parse_metaInfo(inputFile)
 
-for cluster, elements in holyTable.items():
+cluster = 0
+for _, elements in holyTable.items():
+  if len(elements) == 1:
+    continue
+  cluster += 1
   speciesList = [x[3] for x in elements]
   locationList = [x[4] for x in elements]
   dateList = [x[5] for x in elements]

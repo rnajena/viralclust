@@ -38,7 +38,7 @@ Options:
   -k KMER, --kmer KMER                    Length of the considered kmer. [Default: 7]
   --metric METRIC                         Distance metric applied by UMAP (if applied) and HDBSCAN.
                                           The following are supported:
-                                          'euclidean', 'manhatten', 'chebyshev', 'minkwoski',
+                                          'euclidean', 'manhattan', 'chebyshev', 'minkwoski',
                                           'canberra', 'braycurtis',
                                           'mahalanobis', 'seuclidean',
                                           'cosine'.
@@ -128,7 +128,7 @@ def main():
 
   scipyDistances = {
     'euclidean' : scipy.spatial.distance.euclidean ,
-    'manhatten' : scipy.spatial.distance.cityblock ,
+    'manhattan' : scipy.spatial.distance.cityblock ,
     'chebyshev' : scipy.spatial.distance.chebyshev  ,
     'minkwoski': scipy.spatial.distance.minkowski ,
     'canberra' : scipy.spatial.distance.canberra ,
@@ -262,7 +262,7 @@ def __parse_arguments(d_args):
   create_outdir(output)
 
   METRICES = [
-              'euclidean', 'manhatten', 'chebyshev',
+              'euclidean', 'manhattan', 'chebyshev',
               'minkwoski', 'canberra', 'braycurtis',
               'mahalanobis', 'wminkowski',
               'seuclidean', 'cosine'
@@ -584,14 +584,14 @@ def report_centroids(inputSequences, centroids, goi, outdir, allCluster):
       representativeSequence = __find_record_by_header(inputSequences, goi, id2header[centroidHeader])
       representativeSequence = representativeSequence.split('X'*10)[0]
       outputStream.write(f">{id2header[centroidHeader]}\n{representativeSequence}\n")
-    if goi:
-      with open(goi, 'r') as goiStream:
-        for line in goiStream:
-          if line.startswith(">"):
-            header = line.rstrip("\n").replace(':','_').replace(' ','_').strip(">_")
-            if header2id[header] in centroids:
-              continue
-            outputStream.write(f">{header}\n{__find_record_by_header(inputSequences, goi, header)}\n")
+    # if goi:
+    #   with open(goi, 'r') as goiStream:
+    #     for line in goiStream:
+    #       if line.startswith(">"):
+    #         header = line.rstrip("\n").replace(':','_').replace(' ','_').strip(">_")
+    #         if header2id[header] in centroids:
+    #           continue
+    #         outputStream.write(f">{header}\n{__find_record_by_header(inputSequences, goi, header)}\n")
   
   clusterlabel = [x[1] for x in allCluster]
   with open(f'{outputPath}.clstr', 'w') as outStream:

@@ -36,8 +36,10 @@ def retrieve_taxonomy(prefix, accID2desc):
   avgClusterPerGenus = defaultdict(set)
 
   with open(f'{prefix}_taxonomy_info.txt', 'w') as outputStream:
-    for clusterID, accessionIDs in cluster.items():
-      outputStream.write(f"## Cluster: {int(clusterID)+1}\n")
+    clusterID = 0
+    for _, accessionIDs in realCluster.items():
+      clusterID += 1
+      outputStream.write(f"## Cluster: {int(clusterID)}\n")
       for acc in accessionIDs:
         if acc in accID2desc:
           description = accID2desc[acc]
