@@ -37,7 +37,16 @@ def retrieve_taxonomy(prefix, accID2desc):
 
   with open(f'{prefix}_taxonomy_info.txt', 'w') as outputStream:
     clusterID = 0
-    for _, accessionIDs in realCluster.items():
+    outputStream.write(f"## Cluster: -1\n")
+    for acc in failbob:
+      if acc in accID2desc:
+        description = accID2desc[acc]
+        outputStream.write(f"{acc},{','.join(description[2])},{description[0]},{description[1]}\n")
+      else:
+        outputStream.write(f"{acc},--,--,--,--,--\n")
+    outputStream.write(f"####################\n\n")
+
+    for idx, accessionIDs in realCluster.items():
       clusterID += 1
       outputStream.write(f"## Cluster: {int(clusterID)}\n")
       for acc in accessionIDs:
@@ -70,7 +79,12 @@ cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)
 if not failbob:
   failbob = [cluster for idx,cluster in cluster.items() if len(cluster) == 1]
 #realCluster = {idx : cluster for idx,cluster in cluster.items() if len(cluster) != 1 and idx != '-1'}
-realCluster = {idx : cluster for idx,cluster in cluster.items() if cluster not in failbob}
+realCluster = {idx : cluster for idx,cluster in cluster.items() if not (cluster in failbob or len(cluster) == 1 )}
+# for idx, cluster in cluster.items():
+#   if not (cluster in failbob or len(cluster) == 1 ):
+#     print(cluster)
+# realCluster = {idx : cluster for idx,cluster in cluster.items()}# if cluster not in failbob}
+# sys.exit(0)
 
 if treeFile:
   tree = dendropy.Tree.get(path=treeFile, schema='newick')

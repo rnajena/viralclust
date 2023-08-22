@@ -79,6 +79,12 @@ def parse_clusterFile(clusterFile):
           centroids.append(accID)
         cluster[clusterNumber].append(accID)
 
+  # ! First test to include all unclustered sequences into one -1 cluster
+
+  for clusterNumber, accessions in cluster.items():
+    if len(accessions) == 1:
+      failbob.extend(accessions)
+  # cluster[-1] = failbob
   return(cluster, centroids, failbob)
 
 def parse_metaInfo(filePath):
