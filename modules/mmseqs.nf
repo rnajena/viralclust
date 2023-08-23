@@ -10,6 +10,7 @@ process mmseqs{
   publishDir "${params.output}/${params.mmseqs_output}", mode: 'copy', pattern: "*UNCLUSTERED*"
   publishDir "${params.output}/${params.summary_output}/unclustered_sequences", mode: 'copy', pattern: '*UNCLUSTERED.fasta'
   publishDir "${params.output}/${params.summary_output}/clustered_sequences", mode: 'copy', pattern: '*_mmseqs.fasta'
+  publishDir "${params.output}/${params.summary_output}/combined", mode: 'copy', pattern: '*_combined.fasta'
 
   input:
     path(sequences)
@@ -20,6 +21,7 @@ process mmseqs{
     tuple val("${params.output}/${params.mmseqs_output}"), path("${sequences.baseName}_mmseqs.fasta"), path("${sequences.baseName}_mmseqs.fasta.clstr")
     // path "${sequences.baseName}_mmseqs.fasta.clstr", emit: mmseqs_cluster
     path "${sequences.baseName}_mmseqs_UNCLUSTERED.fasta"
+    path "${sequences.baseName}_mmseqs_representative_singleton_combined.fasta"
 
   script:
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
@@ -38,6 +40,8 @@ process mmseqs{
         grep -m 1 "\$ID" "${sequences.baseName}_mmseqs.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_mmseqs.fasta"
       done
     fi
+
+    cat "${sequences.baseName}_mmseqs.fasta" "${sequences.baseName}_mmseqs_UNCLUSTERED.fasta" >> "${sequences.baseName}_mmseqs_representative_singleton_combined.fasta"
 
   """
 }

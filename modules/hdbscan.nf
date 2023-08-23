@@ -13,6 +13,7 @@ process hdbscan {
   publishDir "${params.output}/${params.hdbscan_output}", mode: 'copy', pattern: "*_hdbscan_UNCLUSTERED.fasta"
   publishDir "${params.output}/${params.summary_output}/unclustered_sequences", mode: 'copy', pattern: '*UNCLUSTERED.fasta'
   publishDir "${params.output}/${params.summary_output}/clustered_sequences", mode: 'copy', pattern: '*_hdbscan.fasta'
+  publishDir "${params.output}/${params.summary_output}/combined", mode: 'copy', pattern: '*_combined.fasta'
 
 
   input:
@@ -25,6 +26,7 @@ process hdbscan {
     // path "${sequences.baseName}_hdbscan.fasta.clstr", emit: hdbscan_cluster
     path "${sequences.baseName}_hdbscan_UNCLUSTERED.fasta"
     path "hdbscan.log"
+    path "${sequences.baseName}_hdbscan_representative_singleton_combined.fasta"
 
   script:
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
@@ -38,6 +40,8 @@ process hdbscan {
         grep -m 1 "\$ID" "${sequences.baseName}_hdbscan.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_hdbscan.fasta"
       done
     fi
+
+    cat "${sequences.baseName}_hdbscan.fasta" "${sequences.baseName}_hdbscan_UNCLUSTERED.fasta" >> "${sequences.baseName}_hdbscan_representative_singleton_combined.fasta"
 
   """
 

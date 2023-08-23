@@ -10,6 +10,7 @@ process cdhit {
   publishDir "${params.output}/${params.cdhit_output}", mode: 'copy', pattern: '*UNCLUSTERED*'
   publishDir "${params.output}/${params.summary_output}/unclustered_sequences", mode: 'copy', pattern: '*UNCLUSTERED.fasta'
   publishDir "${params.output}/${params.summary_output}/clustered_sequences", mode: 'copy', pattern: '*_cdhitest.fasta'
+  publishDir "${params.output}/${params.summary_output}/combined", mode: 'copy', pattern: '*_combined.fasta'
 
   input:
     path(sequences)
@@ -20,6 +21,7 @@ process cdhit {
     tuple val("${params.output}/${params.cdhit_output}"), path("${sequences.baseName}_cdhitest.fasta"), path("${sequences.baseName}_cdhitest.fasta.clstr")
     //path "${sequences.baseName}_cdhitest.fasta.clstr", emit: cdhit_cluster
     path "${sequences.baseName}_cdhitest_UNCLUSTERED.fasta"
+    path "${sequences.baseName}_cdhitest_representative_singleton_combined.fasta"
 
   script:
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
@@ -36,6 +38,8 @@ process cdhit {
         grep -m 1 "\$ID" "${sequences.baseName}_cdhitest.fasta" || grep -A1 "\$ID" ${GOI}  >> "${sequences.baseName}_cdhitest.fasta"
       done 
     fi
+
+    cat "${sequences.baseName}_cdhitest.fasta" "${sequences.baseName}_cdhitest_UNCLUSTERED.fasta" >> "${sequences.baseName}_cdhitest_representative_singleton_combined.fasta"
 
   """
 }

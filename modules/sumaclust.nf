@@ -9,6 +9,7 @@ process sumaclust {
   publishDir "${params.output}/${params.sumaclust_output}", mode: 'copy', pattern: '*.fasta*'
   publishDir "${params.output}/${params.summary_output}/unclustered_sequences", mode: 'copy', pattern: '*UNCLUSTERED.fasta'
   publishDir "${params.output}/${params.summary_output}/clustered_sequences", mode: 'copy', pattern: '*_sumaclust.fasta'
+  publishDir "${params.output}/${params.summary_output}/combined", mode: 'copy', pattern: '*_combined.fasta'
 
 
   input:
@@ -20,6 +21,7 @@ process sumaclust {
     tuple val ("${params.output}/${params.sumaclust_output}"), path ("${sequences.baseName}_sumaclust.fasta"), path("${sequences.baseName}_sumaclust.fasta.clstr")
     // path "${sequences.baseName}_sumaclust.fasta.clstr", emit: sumaclust_cluster
     path "${sequences.baseName}_sumaclust_UNCLUSTERED.fasta"
+    path "${sequences.baseName}_sumaclust_representative_singleton_combined.fasta"
 
 
   script:
@@ -39,6 +41,8 @@ process sumaclust {
         grep -m 1 "\$ID" "${sequences.baseName}_sumaclust.fasta" || grep -A1 "\$ID" ${GOI}   >> "${sequences.baseName}_sumaclust.fasta"
       done
     fi
+
+    cat "${sequences.baseName}_sumaclust.fasta" "${sequences.baseName}_sumaclust_UNCLUSTERED.fasta" >> "${sequences.baseName}_sumaclust_representative_singleton_combined.fasta"
 
   """
 

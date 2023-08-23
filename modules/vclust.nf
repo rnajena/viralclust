@@ -10,6 +10,7 @@ process vclust {
   publishDir "${params.output}/${params.vclust_output}", mode: 'copy', pattern: '*UNCLUSTERED*'
   publishDir "${params.output}/${params.summary_output}/unclustered_sequences", mode: 'copy', pattern: '*UNCLUSTERED.fasta'
   publishDir "${params.output}/${params.summary_output}/clustered_sequences", mode: 'copy', pattern: '*_vclust.fasta'
+  publishDir "${params.output}/${params.summary_output}/combined", mode: 'copy', pattern: '*_combined.fasta'
 
   input:
     path(sequences)
@@ -21,6 +22,7 @@ process vclust {
     path "${sequences.baseName}_vclust_cluster.uc"
     // path "${sequences.baseName}_vclust_cluster.uc.clstr", emit: vclust_cluster
     path "${sequences.baseName}_vclust_UNCLUSTERED.fasta"
+    path "${sequences.baseName}_vclust_representative_singleton_combined.fasta"
 
   script:
   def GOI = goi != 'NO FILE' ? "${goi}" : ''
@@ -37,6 +39,8 @@ process vclust {
         grep -m 1 "\$ID" "${sequences.baseName}_vclust.fasta" || grep -A1 "\$ID" ${GOI} >> "${sequences.baseName}_vclust.fasta"
       done
     fi
+
+    cat "${sequences.baseName}_vclust.fasta" "${sequences.baseName}_vclust_UNCLUSTERED.fasta" >> "${sequences.baseName}_vclust_representative_singleton_combined.fasta"
 
   """
 
