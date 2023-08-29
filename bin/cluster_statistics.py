@@ -12,7 +12,7 @@ Options:
   -h, --help        Prints this help and exits.
   --ncbi NCBI       Connects to the NCBI nuccore and taxonomy database to get taxonomic information based of the
                     header line of each fasta record. Note: Recommended, if a GenBank ID is part of the header.
-  --toolName NAME   Used as prefix for NCBI taxonomy summary.
+  --toolname NAME   Used as prefix for NCBI taxonomy summary.
 
 """
 
@@ -70,7 +70,7 @@ treeFile = args['<treeFile>']
 seqFile = args['<seqFile>']
 clusterFile = args['<clusterFile>']
 NCBI = bool(args['--ncbi'])
-PREFIX = args['--toolName']
+PREFIX = args['--toolname']
 
 allSequences = {header : seq for header,seq in utils.parse_fasta(seqFile)}
 cluster, centroids, failbob = utils.parse_clusterFile(clusterFile)

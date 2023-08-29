@@ -23,7 +23,7 @@ process evaluate_cluster {
   def addParams = addParams == 'off' ? '' : addParams
   def newick = newick == 'off' ? '' : newick
   """
-    output=\$(python3 ${projectDir}/bin/cluster_statistics.py ${flag} ${addParams} --toolName "${name}" "${sequences}" "${clusterFile}" "${newick}")
+    output=\$(python3 ${projectDir}/bin/cluster_statistics.py ${flag} ${addParams} --toolname "${name}" "${sequences}" "${clusterFile}" "${newick}")
     echo ${name},\$output > ${name}_stats.out
 
     if [ -f ${name}_taxonomy_info.txt ]; then
