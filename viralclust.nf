@@ -115,7 +115,7 @@ if (params.fasta) {
     include { concat_goi } from './modules/remove_redundancy'
   }
 
-  if (params.sort) {
+  if (!params.sort_off) {
     include { sort_sequences } from './modules/sortsequences'
   }
   include { remove_redundancy } from './modules/remove_redundancy'
@@ -178,7 +178,7 @@ workflow annotate_metadata {
 
 workflow preprocessing {
   main:
-    if (params.sort) {
+    if (!params.sort_off) {
         sort_sequences(sequences)
       if (params.goi) {
         goi_sorter(goi)
