@@ -186,8 +186,11 @@ workflow preprocessing {
       } else {
         goiSorted = 'NO FILE'
       }
+      remove_redundancy(sort_sequences.out.sort_result)
+    } else {
+      remove_redundancy(sequences)
     }
-    remove_redundancy(sort_sequences.out.sort_result)
+    
     non_redundant_ch = remove_redundancy.out.nr_result
     if (params.goi) {
       concat_goi(remove_redundancy.out.nr_result, goiSorted)
