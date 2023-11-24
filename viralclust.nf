@@ -126,9 +126,9 @@ if (params.fasta) {
   include { vclust } from './modules/vclust'
   include { mmseqs } from './modules/mmseqs'
   
-
-  include { reverseComp } from './modules/reverseComp'
-
+  if (!params.sort_off) {
+    include { reverseComp } from './modules/reverseComp'
+  }
   include { mafft } from './modules/mafft'
   include { fasttree } from './modules/fasttree'
   include { nwdisplay } from './modules/nwutils'
@@ -313,8 +313,11 @@ workflow clustering {
                       .concat(Channel.value('sumaclust').combine(sumaclust_wf.out))
                       .concat(Channel.value('MMseqs2').combine(mmseqs_wf.out))
                       .concat(Channel.value('vclust').combine(vclust_wf.out))
-                      .filter { it[1] != 'off'}    
-    reverseComp(results_channel)
+                      .filter { it[1] != 'off'}   
+    if (!params.sort_off) {
+      reverseComp(results_channel)
+    } 
+    
 
 
   emit:
