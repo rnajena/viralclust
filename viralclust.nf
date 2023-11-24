@@ -115,7 +115,9 @@ if (params.fasta) {
     include { concat_goi } from './modules/remove_redundancy'
   }
 
-  include { sort_sequences } from './modules/sortsequences'
+  if (params.sort) {
+    include { sort_sequences } from './modules/sortsequences'
+  }
   include { remove_redundancy } from './modules/remove_redundancy'
 
   include { cdhit } from './modules/cdhit'
@@ -176,14 +178,15 @@ workflow annotate_metadata {
 
 workflow preprocessing {
   main:
-    sort_sequences(sequences)
-    if (params.goi) {
-      goi_sorter(goi)
-      goiSorted = goi_sorter.out.sort_result
-    } else {
-      goiSorted = 'NO FILE'
+    if (params.sort) {
+        sort_sequences(sequences)
+      if (params.goi) {
+        goi_sorter(goi)
+        goiSorted = goi_sorter.out.sort_result
+      } else {
+        goiSorted = 'NO FILE'
+      }
     }
-
     remove_redundancy(sort_sequences.out.sort_result)
     non_redundant_ch = remove_redundancy.out.nr_result
     if (params.goi) {
