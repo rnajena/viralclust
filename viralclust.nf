@@ -189,6 +189,7 @@ workflow preprocessing {
       remove_redundancy(sort_sequences.out.sort_result)
     } else {
       remove_redundancy(sequences)
+      goiSorted = 'NO FILE'
     }
     
     non_redundant_ch = remove_redundancy.out.nr_result
