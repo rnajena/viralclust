@@ -133,7 +133,7 @@ if (params.fasta) {
   include { fasttree } from './modules/fasttree'
   include { nwdisplay } from './modules/nwutils'
   include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
-
+  include { generate_html } from './modules/generate_html'
 
   if (params.ncbi) {
     include { get_ncbi_meta } from './modules/ncbi_meta'
@@ -378,10 +378,15 @@ workflow evaluation {
     
     eval_channel = cluster_result.combine(non_redundant_ch).
                     combine(phylo_wf.out, by: 0).
-                    combine(ncbi_wf.out)
+                    combine(ncbi_wf.out).view() // add view to debug by printing
 
     evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
+
+    html_channel = eval_channel.
+                    map{ it -> it[3] }.
+                    collect().view()
+    generate_html(html_channel)
 
 
     // evaluate_cluster.out.warning.first().subscribe{
