@@ -1,5 +1,7 @@
 
 ## <samp>ViralClust</samp> - Find representative viruses for your dataset
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10277100.svg)](https://doi.org/10.5281/zenodo.10277100)
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-teal.svg)](https://www.gnu.org/licenses/gpl-3.0)![Python3.8](https://img.shields.io/badge/Language-Python_3.8-darkred.svg)![NextFlow](https://img.shields.io/badge/Nextflow-22.10.06-blue.svg)![conda](https://img.shields.io/badge/Uses-conda-green.svg)
 
 [![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/klamkiewicz?label=%40klamkiewicz&style=social)](https://twitter.com/klamkiewicz)
