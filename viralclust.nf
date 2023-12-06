@@ -378,14 +378,14 @@ workflow evaluation {
     
     eval_channel = cluster_result.combine(non_redundant_ch).
                     combine(phylo_wf.out, by: 0).
-                    combine(ncbi_wf.out).view() // add view to debug by printing
+                    combine(ncbi_wf.out)
 
     evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
     html_channel = eval_channel.
                     map{ it -> it[3] }.
-                    collect().view()
+                    collect()
     generate_html(html_channel)
 
 
