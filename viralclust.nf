@@ -368,22 +368,17 @@ workflow evaluation {
 
   main:
     //test = cluster_result.flatten().filter(String).filter(~/[^.]*/)
-    //test.view()
     phylo_wf(cluster_result)
     ncbi_wf()
     
-    // eval_channel = cluster_result.combine(non_redundant_ch)
-    // eval_channel = eval_channel.combine(phylo_wf.out, by: 0)
-    // eval_channel = eval_channel.combine(ncbi_wf.out)
-    
     eval_channel = cluster_result.combine(non_redundant_ch).
-                    combine(phylo_wf.out, by: 0).
+                    join(phylo_wf.out, remainder: true).
                     combine(ncbi_wf.out)
 
     evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
-    html_channel = eval_channel.
+    html_channel = cluster_result.
                     map{ it -> it[3] }.
                     collect()
     generate_html(html_channel)
