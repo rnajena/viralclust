@@ -56,7 +56,7 @@ Options:
                                           in the data. [Default: 0.25]
   --dimension DIMENSION                   UMAP tries to find an embedding for the input data that can be represented by a low-dimensional space.
                                           This parameter tells UMAP how many dimensions should be used for the embedding. Lower numbers may result 
-                                          in loss of information, whereas larger numbers will increase the runtime. [Default: 20]
+                                          in loss of information, whereas larger numbers will increase the runtime. [Default: 50]
 
   --clusterSize CLUSTERSIZE               This parameter forces HDBSCAN to form cluster with a size larger-equal to CLUSTERSIZE.
                                           Be aware that some data points (i.e. genomes) or even whole subcluster are considered as noise, if this parameter is set too high.
@@ -155,7 +155,7 @@ def main():
     logger.info("Clustering with UMAP and HDBSCAN.")
   else:
     logger.info("Clustering with PCA and HDBSCAN.")
-  embedding = dimension_reduction(outdir, neighbors, threshold, metric, umap_flag)
+  embedding = dimension_reduction(outdir, neighbors, dimension, threshold, metric, umap_flag)
   clusteredSeqs = cluster_with_hdbscan(embedding, metric)
 
   logger.info(f"The {len(id2header)} sequences were clustered into {len(set([x[1] for x in clusteredSeqs]))} groups.")
@@ -405,32 +405,32 @@ def __load_profiles(outdir, header=[]):
     except EOFError:
       return(profiles)
 
-def reduce_with_pca(vector):
+def reduce_with_pca(vector, dimension):
   """
   """
   pca_model = PCA()
   pca_model.fit(vector)
   variances = pca_model.explained_variance_ratio_
   for i, var in enumerate(variances):
-    if sum(variances[:i]) > 0.7 or i > 50:
+    if sum(variances[:i]) > 0.7 or i > dimension:
       break
   pca_model = PCA(i)
   clusterable_embedding = pca_model.fit_transform(vector)  
   return(clusterable_embedding)
 
-def reduce_with_umap(vector, neighbors, threshold, metric):
+def reduce_with_umap(vector, neighbors, dimension, threshold, metric):
   """
   """
   clusterable_embedding = umap.UMAP(
           n_neighbors=neighbors,
           min_dist=threshold,
-          n_components=50,
+          n_components=dimension,
           random_state=42,
           metric=metric,
       ).fit_transform(vector)
   return(clusterable_embedding)
 
-def dimension_reduction(outdir, neighbors, threshold, metric, umap_flag):
+def dimension_reduction(outdir, neighbors, dimension, threshold, metric, umap_flag):
   """
   """
   profiles = __load_profiles(outdir)
@@ -438,9 +438,9 @@ def dimension_reduction(outdir, neighbors, threshold, metric, umap_flag):
 
   
   if not umap_flag:
-    embedding = reduce_with_pca(vector)
+    embedding = reduce_with_pca(vector, dimension)
   else:
-    embedding = reduce_with_umap(vector, neighbors, threshold, metric)
+    embedding = reduce_with_umap(vector, neighbors, dimension, threshold, metric)
 
   del vector
   del profiles
