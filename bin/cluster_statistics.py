@@ -86,7 +86,7 @@ realCluster = {idx : cluster for idx,cluster in cluster.items() if not (cluster 
 # realCluster = {idx : cluster for idx,cluster in cluster.items()}# if cluster not in failbob}
 # sys.exit(0)
 
-if treeFile != 'null':
+if treeFile not in ['null', ""]: #!= 'null'
   tree = dendropy.Tree.get(path=treeFile, schema='newick')
   dm = tree.phylogenetic_distance_matrix()
   allDistances = f"{np.mean(dm.distances()):.3f}"

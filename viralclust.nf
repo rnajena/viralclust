@@ -132,6 +132,7 @@ if (params.fasta) {
   include { mafft } from './modules/mafft'
   include { fasttree } from './modules/fasttree'
   include { nwdisplay } from './modules/nwutils'
+
   include { evaluate_cluster; merge_evaluation } from './modules/evaluate'
   include { generate_html } from './modules/generate_html'
 
@@ -316,9 +317,7 @@ workflow clustering {
                       .filter { it[1] != 'off'}   
     if (!params.sort_off) {
       reverseComp(results_channel)
-    } 
-    
-
+    }
 
   emit:
     results_channel
@@ -372,16 +371,18 @@ workflow evaluation {
     ncbi_wf()
     
     eval_channel = cluster_result.combine(non_redundant_ch).
-                    join(phylo_wf.out, remainder: true).
-                    combine(ncbi_wf.out)
+                    join(phylo_wf.out).
+                    combine(ncbi_wf.out).view()
 
     evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
 
+    if (params.eval) {
     html_channel = cluster_result.
                     map{ it -> it[3] }.
                     collect()
     generate_html(html_channel)
+    }
 
 
     // evaluate_cluster.out.warning.first().subscribe{
