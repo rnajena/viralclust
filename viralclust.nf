@@ -372,7 +372,7 @@ workflow evaluation {
     
     eval_channel = cluster_result.combine(non_redundant_ch).
                     join(phylo_wf.out).
-                    combine(ncbi_wf.out).view()
+                    combine(ncbi_wf.out)
 
     evaluate_cluster(eval_channel)
     merge_evaluation(evaluate_cluster.out.eval_result.collect(), sequences)
