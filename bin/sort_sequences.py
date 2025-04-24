@@ -40,6 +40,7 @@ for header, sequence in utils.parse_fasta(sequenceFile):
   longestCDS = 0
   strands = [sequence, utils.reverseComplement(sequence)]
   for strand in strands:
+    combined_cds_len = 0.
     for frame in range(3):
       proteinSequence = ""
       for fragment in range(frame, len(strand), 3):
@@ -52,8 +53,9 @@ for header, sequence in utils.parse_fasta(sequenceFile):
           proteinSequence += 'X'
       matches = regex_orf.findall(proteinSequence)
       allORFs = "".join([x for x in matches if x])
-      if len(allORFs)/float(len(strand)) > longestCDS:
-        longestCDS = len(allORFs)/float(len(strand))
-        positiveStrand = strand
+      combined_cds_len += len(allORFs)/float(len(strand))
+    if combined_cds_len > longestCDS:
+      longestCDS = combined_cds_len
+      positiveStrand = strand
   if positiveStrand:
     print(f">{header}\n{positiveStrand}")
