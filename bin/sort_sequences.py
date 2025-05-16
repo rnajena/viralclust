@@ -12,7 +12,7 @@ import utils
 
 sequenceFile = sys.argv[1]
 
-regex_orf = re.compile(r'M[^*]{25,}?\*')
+regex_orf = re.compile(r'[^*]{200,}')
 
 codon2aminoacid = {
     'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M',
