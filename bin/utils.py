@@ -9,7 +9,7 @@ import sys
 import re
 from collections import defaultdict
 
-genbankACCRegex = re.compile(r'[^A-Z]*([A-Z]{2}_?[0-9]{8}|[A-Z]{2}_?[0-9]{6}|[A-Z]_?[0-9]{5}|NC_[0-9]{6})[^0-9]?')
+genbankACCRegex = re.compile(r'>[_]*[^A-Z]*([A-Z]{2}_?[0-9]{8}|[A-Z]{2}_?[0-9]{6}|[A-Z]_?[0-9]{5}|NC_[0-9]{6})[^0-9]?_')
 
 
 
@@ -43,13 +43,13 @@ def parse_fasta(filePath):
           if get_canonical_nt(seq) / len(seq) >= 0.9:
             yield (header, seq)
 
-        header = line.rstrip("\n ").replace(':','_').replace(' ','_').replace('|','_').lstrip(">").rstrip('_')
+        header = line.rstrip("\n ").replace(':','_').replace(' ','_').replace('|','_').replace('.','_').rstrip('_')
         header = '_'.join(header.split("_"))
         accessionID = re.findall(genbankACCRegex, header)
         if accessionID:
           header = accessionID[0]
         else:
-          header = header[:30].rstrip('_')
+          header = header[1:]
         seq = ''
       else:
         seq += line.rstrip("\n").upper().replace('U','T')
