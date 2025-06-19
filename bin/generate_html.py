@@ -44,6 +44,11 @@ def main():
   prepare_html_document()
 
   tools = ["cdhitest", "sumaclust", "vclust", "mmseqs", "hdbscan"]
+  # for tool in tools:
+  #   file = f"{clusterInfoDir}/*{tool}*.clstr"
+  #   if not os.path.exists(file):
+  #     tools.remove(tool)
+
   toolClusterInformation, toolCentroids, toolUnclustered, acc2toolCluster = fill_informations(tools, clusterInfoDir)
 
   maxNumberCluster = max([len(x) for x in toolCentroids.values()])
@@ -166,7 +171,10 @@ def fill_informations(tools, clusterInfoDir):
   acc2toolCluster = defaultdict(dict)
 
   for tool in tools:
-    clusterInfoFile = glob.glob(f"{clusterInfoDir}/*{tool}*.clstr")[0]
+    try:
+      clusterInfoFile = glob.glob(f"{clusterInfoDir}/*{tool}*.clstr")[0]
+    except IndexError:
+      continue
     acc2cluster, centroids, failbob, cluster, gois = html_parser.parse_clusterFile(clusterInfoFile)
     toolClusterInformation[tool] = acc2cluster
     toolCentroids[tool] = centroids
