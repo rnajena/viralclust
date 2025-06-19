@@ -11,12 +11,13 @@ process sort_sequences {
 
   input:
   path(sequences)
+  val sort_off
 
   output:
   path "${sequences.baseName}_positive.fasta", emit: sort_result
 
   script:
   """
-  python3 ${projectDir}/bin/sort_sequences.py "${sequences}" > "${sequences.baseName}_positive.fasta"
+  python3 ${projectDir}/bin/sort_sequences.py "${sequences}" "${sort_off}" > "${sequences.baseName}_positive.fasta"
   """
 }

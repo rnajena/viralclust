@@ -11,6 +11,8 @@ import re
 import utils
 
 sequenceFile = sys.argv[1]
+sort_off = sys.argv[2]
+print(sort_off)
 
 regex_orf = re.compile(r'[^*]{200,}')
 
@@ -39,23 +41,26 @@ for header, sequence in utils.parse_fasta(sequenceFile):
   positiveStrand = sequence
   longestCDS = 0
   strands = [sequence, utils.reverseComplement(sequence)]
-  for strand in strands:
-    combined_cds_len = 0.
-    for frame in range(3):
-      proteinSequence = ""
-      for fragment in range(frame, len(strand), 3):
-        codon = strand[fragment:fragment+3]
-        if len(codon) != 3:
-          continue
-        try:
-          proteinSequence += codon2aminoacid[codon]
-        except KeyError:
-          proteinSequence += 'X'
-      matches = regex_orf.findall(proteinSequence)
-      allORFs = "".join([x for x in matches if x])
-      combined_cds_len += len(allORFs)/float(len(strand))
-    if combined_cds_len > longestCDS:
-      longestCDS = combined_cds_len
-      positiveStrand = strand
-  if positiveStrand:
+  if sort_off:
     print(f">{header}\n{positiveStrand}")
+  else:
+    for strand in strands:
+      combined_cds_len = 0.
+      for frame in range(3):
+        proteinSequence = ""
+        for fragment in range(frame, len(strand), 3):
+          codon = strand[fragment:fragment+3]
+          if len(codon) != 3:
+            continue
+          try:
+            proteinSequence += codon2aminoacid[codon]
+          except KeyError:
+            proteinSequence += 'X'
+        matches = regex_orf.findall(proteinSequence)
+        allORFs = "".join([x for x in matches if x])
+        combined_cds_len += len(allORFs)/float(len(strand))
+      if combined_cds_len > longestCDS:
+        longestCDS = combined_cds_len
+        positiveStrand = strand
+    if positiveStrand:
+      print(f">{header}\n{positiveStrand}")
