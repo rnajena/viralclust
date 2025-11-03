@@ -14,8 +14,8 @@ process evaluate_cluster {
 
   output:
     path "${name}_stats.out", emit: eval_result
-    path ("${name}_taxonomy_info.txt") optional true
-    path ("${name}_clusterMetaInfo.txt") optional true
+    path "${name}_taxonomy_info.txt", optional: true
+    path "${name}_clusterMetaInfo.txt", optional: true
     path "WARNING.txt", optional: true, emit: warning
 
   script:

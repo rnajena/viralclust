@@ -2,7 +2,6 @@
 
 nextflow.enable.dsl=2
 
-
 /*
 * Clustering of viral genomes based on different algorithms and metrices
 *
