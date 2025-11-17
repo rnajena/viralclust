@@ -12,7 +12,9 @@ import utils
 
 sequenceFile = sys.argv[1]
 sort_off = sys.argv[2]
-print(sort_off)
+
+if sort_off == 'true': sort_off = True
+elif sort_off == 'false': sort_off = False
 
 regex_orf = re.compile(r'[^*]{200,}')
 
