@@ -39,7 +39,7 @@ Of course, you can install NextFlow on your system how ever you like, but consid
   <details><summary>Click here to see how:</summary>
 
   ```bash
-  conda create -n nextflow -c bioconda nextflow
+  conda create -n nextflow -c bioconda "nextflow<26.04"
   conda activate nextflow
   ```
   </details>

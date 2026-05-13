@@ -2,4 +2,4 @@ name: nextflow
 channels:
   - bioconda
 dependencies:
-  - nextflow
+  - "nextflow<26.04"
