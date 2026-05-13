@@ -99,8 +99,7 @@ log.info """\
     ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust_params}"}
     ${sw -> if (params.vclust_params != '') sw << "vclust parameters:     ${params.vclust_params}"}
     ${sw -> if (params.mmseqs_params != '') sw << "MMSeqs2 parameters:     ${params.mmseqs_params}"}
-
-
+    ${sw -> if (params.max_ambiguous != '') sw << "Max ambiguous characters:     ${params.max_ambiguous}"}
     """
     .stripIndent()
 
@@ -124,7 +123,7 @@ if (params.fasta) {
   include { sumaclust } from './modules/sumaclust'
   include { vclust } from './modules/vclust'
   include { mmseqs } from './modules/mmseqs'
-  
+
   if (!params.sort_off) {
     include { reverseComp } from './modules/reverseComp'
   }
@@ -178,13 +177,9 @@ workflow annotate_metadata {
 
 workflow preprocessing {
   main:
-    if (!params.sort_off) {
-      sort_sequences(sequences, false)
-    } else{
-      sort_sequences(sequences, true)
-    }
+    sort_sequences(sequences, params.sort_off, params.max_ambiguous)
     if (params.goi) {
-      goi_sorter(goi)
+      goi_sorter(goi, params.sort_off, params.max_ambiguous)
       goiSorted = goi_sorter.out.sort_result
     } else {
       goiSorted = 'NO FILE'
@@ -194,7 +189,7 @@ workflow preprocessing {
     //   remove_redundancy(sequences)
     //   goiSorted = 'NO FILE'
     // }
-    
+
     non_redundant_ch = remove_redundancy.out.nr_result
     if (params.goi) {
       concat_goi(remove_redundancy.out.nr_result, goiSorted)
@@ -228,11 +223,11 @@ workflow cd_hit_est_wf {
     fasta
     cdhit_params
     goiSorted
-  
+
   main:
     if (!params.cdhit_off) {
       cdhit(fasta, cdhit_params, goiSorted)
-    
+
       cdhit_results = cdhit.out[0]
     } else {
       cdhit_results = Channel.from(['off', 'off', 'off'])
@@ -248,14 +243,14 @@ workflow sumaclust_wf {
     sumaclust_params
     goiSorted
 
-  main: 
+  main:
     if (!params.sumaclust_off) {
       sumaclust(fasta, sumaclust_params, goiSorted)
       sumaclust_results = sumaclust.out[0]
       } else {
         sumaclust_results = Channel.from(['off', 'off', 'off'])
       }
-  
+
   emit:
     sumaclust_results
 
@@ -292,7 +287,7 @@ workflow mmseqs_wf {
     } else {
       mmseqs_results = Channel.from(['off', 'off', 'off'])
     }
-  
+
   emit:
     mmseqs_results
 }
@@ -316,7 +311,7 @@ workflow clustering {
                       .concat(Channel.value('sumaclust').combine(sumaclust_wf.out))
                       .concat(Channel.value('MMseqs2').combine(mmseqs_wf.out))
                       .concat(Channel.value('vclust').combine(vclust_wf.out))
-                      .filter { it[1] != 'off'}   
+                      .filter { it[1] != 'off'}
     if (!params.sort_off) {
       reverseComp(results_channel)
     }
@@ -341,7 +336,7 @@ workflow phylo_wf {
     }
 
   emit:
-    tree_results  
+    tree_results
 }
 
 workflow ncbi_wf {
@@ -371,7 +366,7 @@ workflow evaluation {
     //test = cluster_result.flatten().filter(String).filter(~/[^.]*/)
     phylo_wf(cluster_result)
     ncbi_wf()
-    
+
     eval_channel = cluster_result.combine(non_redundant_ch).
                     join(phylo_wf.out).
                     combine(ncbi_wf.out)
@@ -410,8 +405,8 @@ workflow {
     preprocessing()
     clustering(preprocessing.out.non_redundant_ch, preprocessing.out.goiSorted)
     evaluation(clustering.out.results_channel, preprocessing.out.non_redundant_ch)
-  }  
-  
+  }
+
 }
 
 def helpMSG() {
@@ -454,6 +449,8 @@ def helpMSG() {
     ${c_green}--eval${c_reset}                            After clustering, calculate basic statistics of clustering results. For each
                                       tool, the minimum, maximum, average and median cluster sizes are calculated,
                                       as well as the average distance of two representative genomes.
+
+    ${c_green}--max_ambiguous${c_reset}                   Max fraction of non-ACGT characters allowed per sequence (0..1). [default $params.max_ambiguous]
 
     ${c_green}--ncbi${c_reset}                            Additionally to the evaluation performed by ${c_green}--eval${c_reset}, NCBI metainformation
                                       is included for all genomes of the input set. Therefore, the identifier of fasta records are
@@ -553,27 +550,27 @@ ________________________________________________________________________________
                                           'canberra', 'braycurtis',
                                           'mahalanobis', 'wminkowski', 'seuclidean',
                                           'cosine'.
-                                          If an invalid metric is set, ViralClust will default back to 
+                                          If an invalid metric is set, ViralClust will default back to
                                           the cosine distance.
                                           [Default: cosine]
 
   --pca                                  Flag that determines whether (instead of UMAP) a PCA is used for dimension reduction. [Default: False]
 
   --neighbors NEIGHBORS                   Number of neighbors considered by UMAP to reduce the dimension space.
-                                          Low numbers here mean focus on local structures within the data, whereas 
+                                          Low numbers here mean focus on local structures within the data, whereas
                                           larger numbers may loose fine details. [default: 50]
   --dThreshold dTHRESHOLD                 Sets the threshold for the minimum distance of two points in the low-dimensional space.
                                           Smaller thresholds are recommended for clustering and identifying finer topological structures
                                           in the data. [Default: 0.25]
   --dimension DIMENSION                   UMAP tries to find an embedding for the input data that can be represented by a low-dimensional space.
-                                          This parameter tells UMAP how many dimensions should be used for the embedding. Lower numbers may result 
+                                          This parameter tells UMAP how many dimensions should be used for the embedding. Lower numbers may result
                                           in loss of information, whereas larger numbers will increase the runtime. [Default: 20]
 
   --clusterSize CLUSTERSIZE               This parameter forces HDBSCAN to form cluster with a size larger-equal to CLUSTERSIZE.
                                           Be aware that some data points (i.e. genomes) or even whole subcluster are considered as noise, if this parameter is set too high.
                                           E.g., if a very distinct viral genus has 40 genomes and the parameter is set to anything >40, HDBSCAN will not form
                                           the genus specific cluster. [Default: 5]
-  --minSample MINSAMPLE                   Intuitively, this parameter declares how conservative clustering is performed. Higher values will lead 
+  --minSample MINSAMPLE                   Intuitively, this parameter declares how conservative clustering is performed. Higher values will lead
                                           to more points considered noise, whereas a low value causes "edge-cases" to be grouped into a cluster.
                                           The default parameter is the same as CLUSTERSIZE. [Default: CLUSTERSIZE]
   ____________________________________________________________________________________________

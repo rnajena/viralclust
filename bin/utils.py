@@ -28,7 +28,7 @@ def get_canonical_nt(sequence):
   """
   return(sum([sequence.count(x) for x in ["A","C","G","T"]]))
 
-def parse_fasta(filePath):
+def parse_fasta(filePath, max_ambiguous=0.1):
   """
   """
 
@@ -40,7 +40,7 @@ def parse_fasta(filePath):
       if line.startswith(">"):
         if header:
           # seq = seq
-          if get_canonical_nt(seq) / len(seq) >= 0.9:
+          if 1 - get_canonical_nt(seq) / len(seq) < max_ambiguous:
             yield (header, seq)
 
         header = line.rstrip("\n ").replace(':','_').replace(' ','_').replace('|','_').replace('.','_').rstrip('_')
@@ -55,7 +55,7 @@ def parse_fasta(filePath):
         seq += line.rstrip("\n").upper().replace('U','T')
 
     #seq = seq
-    if get_canonical_nt(seq) / len(seq) >= 0.9:
+    if 1 - get_canonical_nt(seq) / len(seq) < max_ambiguous:
       yield (header, seq)
 
 def parse_clusterFile(clusterFile):

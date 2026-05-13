@@ -12,12 +12,13 @@ process sort_sequences {
   input:
   path(sequences)
   val sort_off
+  val max_ambiguous
 
   output:
   path "${sequences.baseName}_positive.fasta", emit: sort_result
 
   script:
   """
-  python3 ${projectDir}/bin/sort_sequences.py "${sequences}" "${sort_off}" > "${sequences.baseName}_positive.fasta"
+  python3 ${projectDir}/bin/sort_sequences.py "${sequences}" "${sort_off}" "${max_ambiguous}" > "${sequences.baseName}_positive.fasta"
   """
 }

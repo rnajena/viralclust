@@ -16,6 +16,14 @@ sort_off = sys.argv[2]
 if sort_off == 'true': sort_off = True
 elif sort_off == 'false': sort_off = False
 
+max_ambiguous = 0.10
+if len(sys.argv) >= 4:
+  try:
+    max_ambiguous = float(sys.argv[3])
+    if not 0 <= max_ambiguous <= 1:
+      raise ValueError()
+  except ValueError:
+    raise SystemExit(f"ERROR: max_ambiguous must be a number (fraction 0..1), got: {sys.argv[3]!r}")
 regex_orf = re.compile(r'[^*]{200,}')
 
 codon2aminoacid = {
@@ -39,12 +47,12 @@ codon2aminoacid = {
 
 
 
-for header, sequence in utils.parse_fasta(sequenceFile):
+for header, sequence in utils.parse_fasta(sequenceFile, max_ambiguous=max_ambiguous):
   positiveStrand = sequence
   longestCDS = 0
   strands = [sequence, utils.reverseComplement(sequence)]
   if sort_off:
-    print(f">{header}\n{positiveStrand}")
+    print(f">{header}S\n{positiveStrand}")
   else:
     for strand in strands:
       combined_cds_len = 0.
