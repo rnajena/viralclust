@@ -91,6 +91,9 @@ do in the help of message of the pipeline - and at the [end of this file](#help-
 ###### Specific genomes of interest: --goi \<PATH>
 <samp>--goi \<PATH\></samp> is similar to the <samp>--fasta</samp> parameter, but the sequences stored in this specfic fasta file are your **g**enomes **o**f **i**nterest, or shortly GOI. Using this parameter tells <samp>ViralClust</samp> to include all genomes present in <samp>goi.fasta</samp> in the final set of representative sequences. You have a secret in-house lab-strain that is not published yet? Put it in your <samp>goi.fasta</samp>.
 
+###### Filter ambiguous nucleotides: --max_ambiguous <FLOAT>
+<samp>--max_ambiguous</samp> sets the maximum allowed fraction of non-ACGT characters per sequence record in the main input fasta file during preprocessing. The default is <samp>0.10</samp> (i.e. at most 10% ambiguous characters).
+
 ###### Evaluate and rate cluster: --eval and --ncbi
 <samp>--eval</samp> and <samp>--ncbi</samp> are two parameters, that do more for you than just clustering. Since <samp>ViralClust</samp> is running several clustering algorithms, it can be hard to decide which one produced the most appriopate results. Worry not, since <samp>--eval</samp> is here to help you. Additionally to the clustering results, you'll get a brief overview of the clusters, that arose from the different algorithms. With <samp>--ncbi</samp> enabled, <samp>ViralClust</samp> further scans your genome identifiers (the lines in your fasta file starting with <samp>\></samp>) for GenBank accession IDs and uses them to retrieve further information from the NCBI about the taxonomy of the sequence, as well as accession date and country. Note that using <samp>--ncbi</samp> implicitly also sets <samp>--eval</samp>.
 
@@ -131,7 +134,7 @@ And, in case of using any of the results provided by <samp>ViralClust</samp> in 
   * MMSeqs2:
     * `Steinegger, M., Söding, J. "MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets". Nat Biotechnol 35, 1026–1028 (2017)`
 
-  * UMAP & HDBscan: 
+  * UMAP & HDBscan:
     * `McInnes, L, Healy, J, "UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction", ArXiv e-prints 1802.03426, 2018`
     * `L. McInnes, J. Healy, S. Astels, "hdbscan: Hierarchical density based clustering" In: Journal of Open Source Software, The Open Journal, volume 2, number 11. 2017`
 </details>
@@ -191,6 +194,8 @@ Options:
 
 --ncbi_update                     Downloads all current GenBank entries from the NCBI FTP server and processes the data to
                                   the databank stored at data.
+
+--max_ambiguous                   Max fraction of non-ACGT characters allowed per sequence (0..1). [default 0.10]
 
 Cluster options:
 --cdhit_params                    Additional parameters for CD-HIT-EST cluster analysis. [default -c 0.9]
