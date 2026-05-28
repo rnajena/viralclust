@@ -98,6 +98,7 @@ log.info """\
     ${sw -> if (params.hdbscan_params != '') sw << "HDBSCAN parameters:     ${params.hdbscan_params}"}
     ${sw -> if (params.sumaclust_params != '') sw << "sumaclust parameters:     ${params.sumaclust_params}"}
     ${sw -> if (params.vclust_params != '') sw << "vclust parameters:     ${params.vclust_params}"}
+    ${sw -> if (params.mmseqs_mode != '') sw << "MMSeqs2 mode:           ${params.mmseqs_mode}"}
     ${sw -> if (params.mmseqs_params != '') sw << "MMSeqs2 parameters:     ${params.mmseqs_params}"}
     ${sw -> if (params.max_ambiguous != '') sw << "Max ambiguous characters:     ${params.max_ambiguous}"}
     """
@@ -478,6 +479,8 @@ def helpMSG() {
     ${c_green}--vclust_params${c_reset}                   Additional parameters for vsearch cluster analysis. [default $params.vclust_params]
                                       You can use ${c_green}nextflow run viralclust.nf --vclust_help${c_reset}
                                       For more information and options, we refer to the vsearch manual.
+
+    ${c_green}--mmseqs_mode STR${c_reset}                 MMSeqs2 clustering mode: ${c_green}linclust${c_reset} (mmseqs easy-linclust) or ${c_green}cluster${c_reset} (mmseqs easy-cluster). [default $params.mmseqs_mode]
 
     ${c_green}--mmseqs_params${c_reset}                   Additional parameters for MMSeqs2 cluster analysis. [default $params.mmseqs_params]
                                       You can use ${c_green}nextflow run viralclust.nf --mmseqs_help${c_reset}

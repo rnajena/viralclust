@@ -214,6 +214,8 @@ Cluster options:
                                   You can use nextflow run viralclust.nf --vclust_help
                                   For more information and options, we refer to the vsearch manual.
 
+--mmseqs_mode                     MMSeqs2 clustering mode: linclust (mmseqs easy-linclust) or cluster (mmseqs easy-cluster). [default linclust]
+
 --mmseqs_params                   Additional parameters for MMSeqs2 cluster analysis. [default --min-seq-id 0.9]
                                   You can use nextflow run viralclust.nf --mmseqs_help
                                   For more information and options, we refer to the MMSeqs2 manual.
