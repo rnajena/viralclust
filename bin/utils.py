@@ -40,7 +40,7 @@ def parse_fasta(filePath, max_ambiguous=0.1):
       if line.startswith(">"):
         if header:
           # seq = seq
-          if 1 - get_canonical_nt(seq) / len(seq) < max_ambiguous:
+          if 1 - get_canonical_nt(seq) / len(seq) <= max_ambiguous:
             yield (header, seq)
 
         header = line.rstrip("\n ").replace(':','_').replace(' ','_').replace('|','_').replace('.','_').rstrip('_')
