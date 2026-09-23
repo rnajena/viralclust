@@ -1,10 +1,10 @@
 
 ## <samp>ViralClust</samp> - Find representative viruses for your dataset
-[![DOI](https://zenodo.org/badge/778988552.svg)](https://zenodo.org/records/18413373)
+[![DOI](https://zenodo.org/badge/778988552.svg)](https://zenodo.org/records/21994028)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-teal.svg)](https://www.gnu.org/licenses/gpl-3.0)![Python3.8](https://img.shields.io/badge/Language-Python_3.8-darkred.svg)![NextFlow](https://img.shields.io/badge/Nextflow-22.10.06-blue.svg)![conda](https://img.shields.io/badge/Uses-conda-green.svg)
 
-Triebel, S., Lamkiewicz, K., Marz, M. Reducing haystacks to needles - ViralClust: A Nextflow pipeline to cluster viral sequences. bioRxiv (2026). https://www.biorxiv.org/content/10.64898/2026.01.30.702815v1
+Sandra Triebel, Kevin Lamkiewicz, Tom Eulenfeld, Manja Marz, Reducing haystacks to needles - ViralClust: A Nextflow pipeline to cluster viral sequences, GigaScience, 2026, giag090, [https://doi.org/10.1093/gigascience/giag090](https://doi.org/10.1093/gigascience/giag090)
 
 ***
 
